@@ -3,7 +3,9 @@ set -euo pipefail
 
 IMAGE_NAME="${IMAGE_NAME:-openvla-libero:cuda12.1}"
 WORKSPACE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CHECKPOINT="${CHECKPOINT:-/workspace/openvla/checkpoint/baseline_lora_libero_spatial_4gpu_b24_run004/openvla-7b+libero_spatial_no_noops+b24+lr-0.0005+lora-r32+dropout-0.0--image_aug}"
+SERVER_ROOT="${SERVER_ROOT:-/home/ec2-user/wenhan}"
+CHECKPOINT="${CHECKPOINT:-${SERVER_ROOT}/openvla/checkpoints/baseline_lora_libero_spatial_4gpu_b24_run004/openvla-7b+libero_spatial_no_noops+b24+lr-0.0005+lora-r32+dropout-0.0--image_aug}"
+MODIFIED_LIBERO_SPATIAL="${MODIFIED_LIBERO_SPATIAL:-${SERVER_ROOT}/modified_libero_rlds/libero_spatial_no_noops/1.0.0}"
 NUM_TRIALS_PER_TASK="${NUM_TRIALS_PER_TASK:-50}"
 SEED="${SEED:-7}"
 LOAD_IN_4BIT="${LOAD_IN_4BIT:-False}"
@@ -11,6 +13,7 @@ LOAD_IN_8BIT="${LOAD_IN_8BIT:-False}"
 OPENVLA_ATTN_IMPLEMENTATION="${OPENVLA_ATTN_IMPLEMENTATION:-flash_attention_2}"
 
 HOST_CHECKPOINT="${CHECKPOINT/#\/workspace/${WORKSPACE_ROOT}}"
+HOST_CHECKPOINT="${HOST_CHECKPOINT/#${SERVER_ROOT}/${SERVER_ROOT}}"
 if [[ -f "${HOST_CHECKPOINT}/model.safetensors.index.json" ]]; then
   python3 - "${HOST_CHECKPOINT}" <<'PY'
 import glob
@@ -42,15 +45,28 @@ if [[ -t 0 && -t 1 ]]; then
   DOCKER_TTY_ARGS=(-it)
 fi
 
+DOCKER_MOUNTS=(-v "${WORKSPACE_ROOT}:/workspace")
+if [[ -d "${SERVER_ROOT}" ]]; then
+  DOCKER_MOUNTS+=(-v "${SERVER_ROOT}:${SERVER_ROOT}:ro")
+fi
+
+DOCKER_ENV=(
+  -e MUJOCO_GL=egl
+  -e NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
+  -e HF_HOME=/workspace/.cache/huggingface
+  -e WANDB_MODE="${WANDB_MODE:-disabled}"
+  -e OPENVLA_ATTN_IMPLEMENTATION="${OPENVLA_ATTN_IMPLEMENTATION}"
+  -e MODIFIED_LIBERO_SPATIAL="${MODIFIED_LIBERO_SPATIAL}"
+)
+if [[ -n "${CUDA_VISIBLE_DEVICES:-}" ]]; then
+  DOCKER_ENV+=(-e CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}")
+fi
+
 docker run --rm "${DOCKER_TTY_ARGS[@]}" --gpus all \
   --ipc=host \
   --shm-size=32g \
-  -e MUJOCO_GL=egl \
-  -e NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics \
-  -e HF_HOME=/workspace/.cache/huggingface \
-  -e WANDB_MODE="${WANDB_MODE:-disabled}" \
-  -e OPENVLA_ATTN_IMPLEMENTATION="${OPENVLA_ATTN_IMPLEMENTATION}" \
-  -v "${WORKSPACE_ROOT}:/workspace" \
+  "${DOCKER_ENV[@]}" \
+  "${DOCKER_MOUNTS[@]}" \
   -w /workspace/openvla \
   "${IMAGE_NAME}" \
   python experiments/robot/libero/run_libero_eval.py \
