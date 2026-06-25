@@ -52,6 +52,7 @@ fi
 
 DOCKER_ENV=(
   -e MUJOCO_GL=egl
+  -e MUJOCO_EGL_DEVICE_ID="${MUJOCO_EGL_DEVICE_ID:-0}"
   -e NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
   -e HF_HOME=/workspace/.cache/huggingface
   -e WANDB_MODE="${WANDB_MODE:-disabled}"
