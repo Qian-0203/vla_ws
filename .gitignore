@@ -1,0 +1,87 @@
+# Local agent/session metadata
+.agents/
+.codex/
+.cache/
+.libero/
+
+# External repositories cloned into this workspace
+openvla/
+LIBERO/
+
+# Python caches and build output
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-wheel-metadata/
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+
+# Virtual environments
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter/IPython
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+
+# ML experiment output, datasets, and model artifacts
+cache/
+data/
+datasets/
+results/
+outputs/
+experiments/
+experiments_saved/
+checkpoint/
+checkpoints/
+rollouts/
+wandb/
+logs/
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.bin
+*.onnx
+*.h5
+*.mp4
+
+# Secrets and local tokens
+.hf_token
+.wandb_api_key
+.*_token
+.*api_key
+
+# Editor and OS files
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Docker/local compose overrides
+docker-compose.override.yml
+*.local.yml
