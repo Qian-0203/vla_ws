@@ -45,25 +45,35 @@ if [[ -t 0 && -t 1 ]]; then
   DOCKER_TTY_ARGS=(-it)
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 DOCKER_MOUNTS=(-v "${WORKSPACE_ROOT}:/workspace")
 if [[ -d "${SERVER_ROOT}" ]]; then
   DOCKER_MOUNTS+=(-v "${SERVER_ROOT}:${SERVER_ROOT}:ro")
 fi
+# The image ships only the Mesa (software) GLVND EGL vendor ICD, so libEGL falls
+# back to swrast and headless MuJoCo rendering fails. Supply the NVIDIA EGL ICD
+# (the nvidia container runtime injects libEGL_nvidia.so.0 when graphics caps are on).
+DOCKER_MOUNTS+=(-v "${SCRIPT_DIR}/10_nvidia_egl.json:/etc/glvnd/egl_vendor.d/10_nvidia.json:ro")
 
 DOCKER_ENV=(
   -e MUJOCO_GL=egl
   -e MUJOCO_EGL_DEVICE_ID="${MUJOCO_EGL_DEVICE_ID:-0}"
   -e NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
+  -e __EGL_VENDOR_LIBRARY_FILENAMES=/etc/glvnd/egl_vendor.d/10_nvidia.json
   -e HF_HOME=/workspace/.cache/huggingface
   -e WANDB_MODE="${WANDB_MODE:-disabled}"
   -e OPENVLA_ATTN_IMPLEMENTATION="${OPENVLA_ATTN_IMPLEMENTATION}"
   -e MODIFIED_LIBERO_SPATIAL="${MODIFIED_LIBERO_SPATIAL}"
 )
+
+DOCKER_GPU_ARGS=(--gpus all)
 if [[ -n "${CUDA_VISIBLE_DEVICES:-}" ]]; then
-  DOCKER_ENV+=(-e CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}")
+  DOCKER_GPU_ARGS=(--gpus "device=${CUDA_VISIBLE_DEVICES}")
+
 fi
 
-docker run --rm "${DOCKER_TTY_ARGS[@]}" --gpus all \
+docker run --rm "${DOCKER_TTY_ARGS[@]}" "${DOCKER_GPU_ARGS[@]}" \
   --ipc=host \
   --shm-size=32g \
   "${DOCKER_ENV[@]}" \

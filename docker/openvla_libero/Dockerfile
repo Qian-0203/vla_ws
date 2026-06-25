@@ -47,6 +47,7 @@ RUN python -m pip install \
     "tensorflow_datasets==4.9.3" \
     "tensorflow_graphics==2021.12.3" \
     "imageio[ffmpeg]" \
+    "mujoco==2.3.2" \
     "robosuite==1.4.1" \
     "bddl==1.0.1" \
     "easydict" \
@@ -60,6 +61,18 @@ RUN python -m pip install \
 RUN python -m pip install "flash-attn==2.5.5" --no-build-isolation
 
 RUN python -m pip install --no-deps "tensorflow-metadata==1.16.1"
+
+# The base image ships only the Mesa (software) GLVND EGL vendor ICD, so libEGL
+# falls back to swrast and headless MuJoCo rendering fails. Register the NVIDIA
+# EGL ICD (libEGL_nvidia.so.0 is injected by the nvidia container runtime when
+# the graphics driver capability is enabled) so GLVND uses the GPU.
+RUN printf '%s\n' \
+    '{' \
+    '    "file_format_version" : "1.0.0",' \
+    '    "ICD" : {' \
+    '        "library_path" : "libEGL_nvidia.so.0"' \
+    '    }' \
+    '}' > /usr/share/glvnd/egl_vendor.d/10_nvidia.json
 
 COPY docker/openvla_libero/entrypoint.sh /usr/local/bin/openvla-libero-entrypoint
 RUN chmod +x /usr/local/bin/openvla-libero-entrypoint
