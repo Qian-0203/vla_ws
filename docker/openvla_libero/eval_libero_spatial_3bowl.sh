@@ -1,20 +1,30 @@
 #!/usr/bin/env bash
+# Evaluate the libero_spatial LoRA baseline on the libero_spatial_3bowl variant:
+# identical tasks/scenes but each scene has a THIRD akita_black_bowl (one extra
+# distractor). Default (target-only) instructions, so this measures how an extra
+# distractor bowl affects the ordinary-instruction baseline (cf. the 84% two-bowl
+# default number in experiments/explicit_instructions_eval_results.md).
+#
+# The scene variant's suite name differs from the training dataset, so we pass
+# --unnorm_key libero_spatial (resolves to libero_spatial_no_noops in the ckpt).
 set -euo pipefail
 
 IMAGE_NAME="${IMAGE_NAME:-openvla-libero:cuda12.1}"
 WORKSPACE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SERVER_ROOT="${SERVER_ROOT:-/home/ec2-user/wenhan}"
 CHECKPOINT="${CHECKPOINT:-${SERVER_ROOT}/openvla/checkpoints/baseline_lora_libero_spatial_4gpu_b24_run004/openvla-7b+libero_spatial_no_noops+b24+lr-0.0005+lora-r32+dropout-0.0--image_aug}"
-MODIFIED_LIBERO_SPATIAL="${MODIFIED_LIBERO_SPATIAL:-${SERVER_ROOT}/modified_libero_rlds/libero_spatial_no_noops/1.0.0}"
+TASK_SUITE_NAME="${TASK_SUITE_NAME:-libero_spatial_3bowl}"
+UNNORM_KEY="${UNNORM_KEY:-libero_spatial}"
 NUM_TRIALS_PER_TASK="${NUM_TRIALS_PER_TASK:-50}"
 SEED="${SEED:-7}"
 NUM_SHARDS="${NUM_SHARDS:-1}"
 SHARD_INDEX="${SHARD_INDEX:-0}"
-USE_EXPLICIT_PROMPT="${USE_EXPLICIT_PROMPT:-True}"
+# Default instructions for the distractor experiment (target-only prompt).
+USE_EXPLICIT_PROMPT="${USE_EXPLICIT_PROMPT:-False}"
 if [[ "${USE_EXPLICIT_PROMPT}" == "True" ]]; then
-  RUN_ID_NOTE="${RUN_ID_NOTE:-explicit_instructions}"
+  RUN_ID_NOTE="${RUN_ID_NOTE:-explicit_instructions_3bowl}"
 else
-  RUN_ID_NOTE="${RUN_ID_NOTE:-default_instructions}"
+  RUN_ID_NOTE="${RUN_ID_NOTE:-default_instructions_3bowl}"
 fi
 LOAD_IN_4BIT="${LOAD_IN_4BIT:-False}"
 LOAD_IN_8BIT="${LOAD_IN_8BIT:-False}"
@@ -70,16 +80,9 @@ DOCKER_ENV=(
   -e NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
   -e __EGL_VENDOR_LIBRARY_FILENAMES=/etc/glvnd/egl_vendor.d/10_nvidia.json
   -e HF_HOME=/workspace/.cache/huggingface
-  # Multiple libs in this stack (torch, TF, mujoco) each link an OpenMP runtime;
-  # their init order races and intermittently aborts with "OMP: Error #15". Allow
-  # the duplicate runtime so the process continues (the documented workaround).
   -e KMP_DUPLICATE_LIB_OK=TRUE
   -e WANDB_MODE="${WANDB_MODE:-disabled}"
   -e OPENVLA_ATTN_IMPLEMENTATION="${OPENVLA_ATTN_IMPLEMENTATION}"
-  -e MODIFIED_LIBERO_SPATIAL="${MODIFIED_LIBERO_SPATIAL}"
-  # Run as the host user so eval outputs (logs, rollouts) aren't root-owned. HOME
-  # and MPLCONFIGDIR point at writable, mounted paths since the container user has
-  # no /etc/passwd entry or home directory.
   -e HOME=/workspace/.cache/home
   -e MPLCONFIGDIR=/workspace/.cache/matplotlib
   -e XDG_CACHE_HOME=/workspace/.cache
@@ -90,7 +93,6 @@ DOCKER_USER_ARGS=(--user "$(id -u):$(id -g)")
 DOCKER_GPU_ARGS=(--gpus all)
 if [[ -n "${CUDA_VISIBLE_DEVICES:-}" ]]; then
   DOCKER_GPU_ARGS=(--gpus "device=${CUDA_VISIBLE_DEVICES}")
-
 fi
 
 docker run --rm "${DOCKER_TTY_ARGS[@]}" "${DOCKER_USER_ARGS[@]}" "${DOCKER_GPU_ARGS[@]}" \
@@ -105,7 +107,8 @@ docker run --rm "${DOCKER_TTY_ARGS[@]}" "${DOCKER_USER_ARGS[@]}" "${DOCKER_GPU_A
     --pretrained_checkpoint "${CHECKPOINT}" \
     --load_in_4bit "${LOAD_IN_4BIT}" \
     --load_in_8bit "${LOAD_IN_8BIT}" \
-    --task_suite_name libero_spatial \
+    --task_suite_name "${TASK_SUITE_NAME}" \
+    --unnorm_key "${UNNORM_KEY}" \
     --center_crop True \
     --use_explicit_prompt "${USE_EXPLICIT_PROMPT}" \
     --num_trials_per_task "${NUM_TRIALS_PER_TASK}" \
