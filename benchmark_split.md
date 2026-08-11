@@ -28,7 +28,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | Split | Probes | Registry status | Data status |
 |---|---|---|---|
 | 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented | 2/3 run (`default`, `negative_contrast`) |
-| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored) | 0/4 confirmed run (`irrelevant`'s data exists but its condition label is disputed — see Split 2's Progress table) |
+| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined + rebuilt this pass to fix a path-proximity confound | 0/4 confirmed run under current definitions (the old `irrelevant` data survives relabeled as `center_fixed_legacy`) |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented | Run (both conditions) |
 | 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: not built | 4/6 cells derivable from existing Split-1 data; 2/6 not run |
 
@@ -83,15 +83,17 @@ authoring only).
 | Hypothesis | Distractors near the target's own landmark ("landmark") hurt more than neutral ("irrelevant") placement |
 | Changed variable | Position of a 3rd `akita_black_bowl` distractor |
 | Controlled variables | Target bowl position, 2nd (original) distractor, prompt = `default`, checkpoint, seed |
-| Conditions | `irrelevant` (neutral table center/front) · `semantic` (named landmark different from target's) · `landmark` (near target's OWN landmark, farther away — "hard negative") · `path` (between target and plate) — **not yet authored, see §10** |
+| Conditions | `irrelevant` (per-task region, off the reach path, distance-matched to `semantic`/`landmark` — redefined this pass, see below) · `semantic` (named landmark different from target's) · `landmark` (near target's OWN landmark, farther away — "hard negative") · `path` (between target and plate) — **not yet authored, see §10** |
 | Tasks | All 10 tasks, scene = corresponding `libero_spatial_3bowl*` suite |
 | Trials | 50/task/condition, seed 7 |
 | Metrics | `Distractor-type Drop = SR(spatial/default) - SR(condition)`, plus per-task deltas |
 | Output | `EVAL-libero_spatial_3bowl*-openvla-*.txt` + matching `results/*.jsonl` |
 
-Registry: `spatial_3bowl/irrelevant` (suite `libero_spatial_3bowl`), `spatial_3bowl/semantic`
-(suite `libero_spatial_3bowl_semantic`, new), `spatial_3bowl/landmark` (suite
-`libero_spatial_3bowl_hardneg`). All three reuse `unnorm_key=libero_spatial` since the checkpoint
+Registry: `spatial_3bowl/irrelevant` (suite `libero_spatial_3bowl_neutral`, new, redefined this
+pass), `spatial_3bowl/center_fixed_legacy` (suite `libero_spatial_3bowl`, the retired single-fixed-
+coordinate definition, kept only so `eval_results.md`'s existing Exp 2 number stays attributable),
+`spatial_3bowl/semantic` (suite `libero_spatial_3bowl_semantic`, new), `spatial_3bowl/landmark`
+(suite `libero_spatial_3bowl_hardneg`). All reuse `unnorm_key=libero_spatial` since the checkpoint
 was trained on the 2-bowl scene. `spatial_3bowl/landmark_with_hardneg_prompt` additionally swaps
 in the `hardneg` prompt condition on the same scene, combining Split 1 x Split 2.
 
@@ -116,47 +118,64 @@ Per-task 3-bowl placement (bowl_1 = target, bowl_2 = original distractor, bowl_3
 Object-relative placements (`cookies_1`, `wooden_cabinet_1_top_side`, `flat_stove_1_cook_region`,
 `glazed_rim_porcelain_ramekin_1`, task 4's `In wooden_cabinet_1_top_region`) have no `main_table`
 coordinate in the BDDL, so they're listed by object name, not fabricated numbers. bowl_1/bowl_2
-are identical across `irrelevant`/`semantic`/`landmark` (only bowl_3 differs):
+are identical across all four bowl_3 columns below (only bowl_3 differs):
 
-| id | target | bowl_1 | bowl_2 | bowl_3 `irrelevant` | bowl_3 `semantic` | bowl_3 `landmark` (`hardneg_region`, per-task) |
-|--:|---|---|---|---|---|---|
-| 0 | between plate & ramekin | `between_plate_ramekin_region` | `next_to_ramekin_region` | `table_center` | `next_to_box_region` | (−0.070,0.040)–(−0.050,0.060) |
-| 1 | next to ramekin | `next_to_ramekin_region` | `next_to_box_region` | `table_center` | `next_to_plate_region` | (−0.210,0.040)–(−0.190,0.060) |
-| 2 | table center | `table_center` | `next_to_plate_region` | `table_front`* | `next_to_ramekin_region` | (−0.290,0.010)–(−0.270,0.030) |
-| 3 | on cookie box | `cookies_1` (obj) | `wooden_cabinet_1_top_side` (obj) | `table_center` | `next_to_ramekin_region` | (0.180,−0.070)–(0.200,−0.050) |
-| 4 | in top drawer | `In wooden_cabinet_1_top_region` (obj) | `wooden_cabinet_1_top_side` (obj) | `table_center` | `next_to_plate_region` | (−0.060,−0.070)–(−0.040,−0.050) |
-| 5 | on ramekin | `glazed_rim_porcelain_ramekin_1` (obj) | `cookies_1` (obj) | `table_center` | `next_to_plate_region` | (−0.210,0.040)–(−0.190,0.060) |
-| 6 | next to cookie box | `next_to_box_region` | `flat_stove_1_cook_region` (obj) | `table_center` | `next_to_ramekin_region` | (−0.030,−0.120)–(−0.010,−0.100) |
-| 7 | on stove | `flat_stove_1_cook_region` (obj) | `wooden_cabinet_1_top_side` (obj) | `table_center` | `next_to_box_region` | (−0.310,−0.010)–(−0.290,0.010) |
-| 8 | next to plate | `next_to_plate_region` | `next_to_ramekin_region` | `table_center` | `next_to_box_region` | (0.190,0.080)–(0.210,0.100) |
-| 9 | on wooden cabinet | `wooden_cabinet_1_top_side` (obj) | `flat_stove_1_cook_region` (obj) | `table_center` | `next_to_ramekin_region` | (−0.010,−0.060)–(0.010,−0.040) |
+| id | target | bowl_1 | bowl_2 | bowl_3 `irrelevant` (redefined) | bowl_3 `center_fixed_legacy` | bowl_3 `semantic` | bowl_3 `landmark` (`hardneg_region`, per-task) |
+|--:|---|---|---|---|---|---|---|
+| 0 | between plate & ramekin | `between_plate_ramekin_region` | `next_to_ramekin_region` | `next_to_box_region` | `table_center` | `next_to_box_region` | (−0.070,0.040)–(−0.050,0.060) |
+| 1 | next to ramekin | `next_to_ramekin_region` | `next_to_box_region` | `table_center` | `table_center` | `next_to_plate_region` | (−0.210,0.040)–(−0.190,0.060) |
+| 2 | table center | `table_center` | `next_to_plate_region` | `next_to_ramekin_region` | `table_front`* | `next_to_ramekin_region` | (−0.290,0.010)–(−0.270,0.030) |
+| 3 | on cookie box | `cookies_1` (obj) | `wooden_cabinet_1_top_side` (obj) | `next_to_ramekin_region` | `table_center` | `next_to_ramekin_region` | (0.180,−0.070)–(0.200,−0.050) |
+| 4 | in top drawer | `In wooden_cabinet_1_top_region` (obj) | `wooden_cabinet_1_top_side` (obj) | `next_to_ramekin_region` | `table_center` | `next_to_plate_region` | (−0.060,−0.070)–(−0.040,−0.050) |
+| 5 | on ramekin | `glazed_rim_porcelain_ramekin_1` (obj) | `cookies_1` (obj) | `table_center` | `table_center` | `next_to_plate_region` | (−0.210,0.040)–(−0.190,0.060) |
+| 6 | next to cookie box | `next_to_box_region` | `flat_stove_1_cook_region` (obj) | `next_to_ramekin_region` | `table_center` | `next_to_ramekin_region` | (−0.030,−0.120)–(−0.010,−0.100) |
+| 7 | on stove | `flat_stove_1_cook_region` (obj) | `wooden_cabinet_1_top_side` (obj) | `next_to_box_region` | `table_center` | `next_to_box_region` | (−0.310,−0.010)–(−0.290,0.010) |
+| 8 | next to plate | `next_to_plate_region` | `next_to_ramekin_region` | `table_front` | `table_center` | `next_to_box_region` | (0.190,0.080)–(0.210,0.100) |
+| 9 | on wooden cabinet | `wooden_cabinet_1_top_side` (obj) | `flat_stove_1_cook_region` (obj) | `next_to_ramekin_region` | `table_center` | `next_to_ramekin_region` | (−0.010,−0.060)–(0.010,−0.040) |
 
-\* Task 2's `irrelevant` bowl_3 uses `table_front` instead of `table_center` only because bowl_1
-already occupies `table_center` there.
+\* Task 2's `center_fixed_legacy` bowl_3 uses `table_front` instead of `table_center` only because
+bowl_1 already occupies `table_center` there.
 
-**Design confound found while building this table**: `irrelevant`'s bowl_3 sits at the *same
-fixed absolute coordinate* in 9 of 10 tasks, regardless of the target's location — it is not
-"neutral" relative to every task's reach path. This is exactly what produced task 6's outlier
-result in `eval_results.md` Exp 2 (90%→44%): `table_center` (−0.075,0.0) sits roughly on the
-straight line between `next_to_box_region` (0.13,−0.07) and `plate_region` (0.06,0.20) — a rough
-perpendicular-distance estimate puts it ~0.18m off that line, comparable to the ~0.115m bowl
-diameter plus gripper clearance. `landmark`'s bowl_3, by contrast, gets a bespoke `hardneg_region`
-per task, so it doesn't share this flaw. See §9/§10 for what this means for trusting `irrelevant`'s
-numbers, and the advice in §10 item 4.
+**Design confound found, then fixed.** `center_fixed_legacy`'s bowl_3 sits at the *same fixed
+absolute coordinate* in 9 of 10 tasks, regardless of the target's location — it is not "neutral"
+relative to every task's reach path. This is exactly what produced task 6's outlier result in
+`eval_results.md` Exp 2 (90%→44%): `table_center` (−0.075,0.0) sits roughly on the straight line
+between `next_to_box_region` (0.13,−0.07) and `plate_region` (0.06,0.20) — a rough perpendicular-
+distance estimate puts it ~0.18m off that line, comparable to the ~0.115m bowl diameter plus
+gripper clearance.
+
+`irrelevant` was redefined (new suite `libero_spatial_3bowl_neutral`) to fix this: for each task,
+bowl_3 is placed in whichever of the 6 named regions independently confirmed safe for free bowl
+placement (never a fixture base — `cabinet_region`/`stove_region`/`ramekin_region`/`box_region`
+are excluded, they're where the cabinet/stove/ramekin/cookie-box objects themselves sit) gives the
+largest clearance from *both* the target-to-plate reach path (≥0.20m in every task) and bowl_2's
+own position, picking the least-reused region on ties to keep some diversity. Verified via
+`LIBERO/scripts/verify_suite_init_states.py` — passes, worst separation 0.122m (task 4's
+persistent bowl_1/bowl_2 constraint present in every suite, unrelated to bowl_3), initially caught
+one real overlap (task 1: `table_front` was only 0.099m from bowl_2's `next_to_box_region`, fixed
+by reassigning to `table_center`). One residual imperfection, disclosed rather than hidden:
+`next_to_ramekin_region` is reused for 5 of 10 tasks since only 6 safe regions exist and several
+tasks exclude 2-3 of them (own target + bowl_2's region) — "neutral" leans toward the ramekin
+vicinity more than an ideal design would. Distances to target range 0.236–0.626m, comparable to or
+larger than `semantic`'s 0.33–0.50m and clearly farther than `landmark`'s 0.15–0.29m, so the
+ordering (`landmark` closest → `semantic` mid → `irrelevant` farthest) is intact. `landmark`'s
+bowl_3 gets a bespoke `hardneg_region` per task and never shared this flaw.
 
 **Progress**
 
 | Condition | Status | Overall SR | Rollouts | Source |
 |---|---|--:|--:|---|
-| `irrelevant` | ⬜ **not confirmed as run under this definition** | (80.2% exists, see caveat) | 401/500 | `eval_results.md` Exp 2 ("3 bowls") measured a 3rd bowl fixed at `table_center`/`table_front`; whether that run was performed *as* the "irrelevant" condition (vs. incidentally landing on this geometry) is disputed — treat the 80.2% number as real 3-bowl data, not as validated "irrelevant" condition data, until re-run or reconciled |
+| `irrelevant` | ⬜ redefined + built this pass, not run | — | — | new suite `libero_spatial_3bowl_neutral`; BDDL authored, init states generated and verified (`RESULT: PASS`, worst sep 0.122m), contact sheet eyeballed — 3 distinct bowls, no overlaps. Policy never invoked |
+| `center_fixed_legacy` | ✅ run (retired definition) | 80.2% | 401/500 | `eval_results.md` Exp 2 ("3 bowls"); this is the old single-fixed-coordinate placement, kept under this label so the number stays attributable — **not** the current `irrelevant` |
 | `semantic` | ⬜ scene authored, not run | — | — | BDDL + init states generated/verified on this machine this pass; policy never invoked |
 | `landmark` | ⬜ scene verified+rendered this pass, not run | — | — | BDDL/init states pre-existed but had never been checked with the current pipeline; regenerated (byte-identical to the committed data, confirming determinism), verified (min sep 0.121m vs. 0.12m threshold — **passes but narrowly**, task 3 is the tightest), contact sheet eyeballed — no overlaps visible. Old per-suite launch scripts existed but were never invoked for a real run; no rollouts recorded anywhere. Earlier drafts of this doc incorrectly claimed this was run — corrected |
 | `landmark_with_hardneg_prompt` | ⬜ not run | — | — | Split 1 x Split 2 combination, not built/run |
 | `path` | ⬜ not authored | — | — | open design question, §10 |
 
-No condition in this split has confirmed, unambiguous rollout data yet. `Distractor-type Drop` is
-not computable for any condition until `irrelevant` is reconciled and the others are run — deferred
-to a server session.
+No condition in this split has confirmed rollout data under its current definition yet (only the
+retired `center_fixed_legacy` does). `Distractor-type Drop` is not computable for any condition —
+all four registry-ready conditions (`irrelevant`, `semantic`, `landmark`,
+`landmark_with_hardneg_prompt`) need GPU runs, deferred to a server session.
 
 ### Split 3 — Scene Complexity Probe
 
@@ -165,8 +184,8 @@ to a server session.
 | Goal | Whether clutter/occlusion degrades the policy, independent of scene feasibility |
 | Hypothesis | Clutter costs real success rate, but naive deltas overstate it by conflating policy failure with physically blocked trajectories |
 | Changed variable | Wooden cabinet's top drawer: closed vs. open |
-| Controlled variables | 3-bowl scene (`irrelevant` placement), prompt = `default`, checkpoint, seed |
-| Conditions | `drawer_closed` (= Split 2's `irrelevant`) · `drawer_open` |
+| Controlled variables | 3-bowl scene (`center_fixed_legacy` placement — see Split 2's redefinition note), prompt = `default`, checkpoint, seed |
+| Conditions | `drawer_closed` (= Split 2's `center_fixed_legacy`, not the current `irrelevant`) · `drawer_open` |
 | Tasks | All 10 tasks; **tasks 3, 6, 7 excluded from the adjusted metric** — rollout review showed the open drawer physically blocks their trajectories (`eval_results.md` Exp 3) |
 | Trials | 50/task/condition, seed 7 |
 | Metrics | `Raw Clutter Drop = SR(drawer_closed) - SR(drawer_open)` over all 10 tasks; `Adjusted Clutter Drop` = same formula restricted to the 7 feasible tasks {0,1,2,4,5,8,9} |
@@ -178,7 +197,7 @@ Registry: `spatial_3bowl/drawer_open` (suite `libero_spatial_3bowl_open`).
 
 | Condition | Status | Raw SR (10 tasks) | Adjusted SR (7 tasks) | Rollouts | Source |
 |---|---|--:|--:|--:|---|
-| `drawer_closed` (= Split 2 `irrelevant`) | ✅ run | 80.2% | 84.3% | 401/500, 295/350 | `eval_results.md` Exp 2/3 |
+| `drawer_closed` (= Split 2 `center_fixed_legacy`) | ✅ run | 80.2% | 84.3% | 401/500, 295/350 | `eval_results.md` Exp 2/3 |
 | `drawer_open` | ✅ run | 60.0% | 73.1% | 300/500, 256/350 | `eval_results.md` Exp 3 |
 
 `Raw Clutter Drop = 80.2 - 60.0 = 20.2 pts`. `Adjusted Clutter Drop = 84.3 - 73.1 = 11.1 pts` (vs.
@@ -308,11 +327,11 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
   even though the scene changed — correct for action un-normalization (the action space didn't
   change), but means none of these variants test whether the *policy* generalizes to a
   re-trained distribution, only whether a fixed policy holds up to distribution shift.
-- `spatial_3bowl/irrelevant`'s bowl_3 is a single fixed coordinate (`table_center`/`table_front`)
-  reused across all 10 tasks, not a per-task-neutral position — see Split 2's confound note. This
-  is a real design gap, not just a labeling dispute: whatever this condition is called, the same
-  data can't cleanly separate "does an extra distractor hurt" from "does this specific spot
-  happen to sit on this specific task's path."
+- `spatial_3bowl/center_fixed_legacy`'s bowl_3 is a single fixed coordinate
+  (`table_center`/`table_front`) reused across all 10 tasks, not a per-task-neutral position — see
+  Split 2's confound note. This is why it's kept only as a retired label for `eval_results.md`'s
+  existing number, not reused as the current `irrelevant` definition. `irrelevant` was redefined
+  and rebuilt this pass (new suite `libero_spatial_3bowl_neutral`) but has no rollouts yet.
 
 ## 10. Open design questions (do not implement without a decision)
 
@@ -332,17 +351,11 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
    `run_libero_eval.py` does not currently record (it only logs final success + video). Adding
    this is a moderate scope change to the rollout loop — worth doing once Split 4a's cell
    mapping is validated as useful, not preemptively.
-4. **Split 2 `irrelevant`'s "neutral" position isn't actually distance-controlled**: a single
-   fixed `table_center` coordinate is not equally far from every task's target-to-plate path (see
-   Split 2's confound note). Two fixes are on the table, not yet decided between: (a) treat this
-   the same way Split 3 handled drawer-blocked tasks — run it, then compute per-task whether
-   bowl_3 intersects a rough target-to-plate line, and report both raw and path-adjusted overalls;
-   or (b) redefine `irrelevant` as a per-task position chosen to be a fixed *distance* from the
-   target's own landmark in a direction away from the plate, so "neutral" means distance-matched
-   to `landmark`/`semantic` rather than a single shared coordinate. (b) is more work (new BDDL
-   geometry per task, same effort as authoring `path`) but removes the confound at the source
-   instead of correcting for it after the fact. No GPU time should be spent validating `irrelevant`
-   until one of these is chosen.
+
+**Resolved this pass:** Split 2 `irrelevant`'s "neutral" position wasn't actually distance- or
+path-controlled (option (b) from an earlier draft of this section was chosen and built — see
+Split 2's Bowl coordinates section for the redefinition, the new suite
+`libero_spatial_3bowl_neutral`, and the residual `next_to_ramekin_region` reuse limitation).
 
 ## 11. Execution checklist
 
@@ -360,7 +373,7 @@ laptop, no rollouts yet:
 | Split id | Suite ready? |
 |---|---|
 | `spatial/positive_contrast` | yes |
-| `spatial_3bowl/irrelevant` | **decide the redefinition question in §10 item 4 first** — re-running as-is repeats the same confound |
+| `spatial_3bowl/irrelevant` | yes (redefined + rebuilt this pass, `libero_spatial_3bowl_neutral`, init states verified) |
 | `spatial_3bowl/semantic` | yes (init states verified this pass) |
 | `spatial_3bowl/landmark` | yes (pre-existing suite; init states verified+rendered this pass, margin is tight — 0.121m vs. 0.12m threshold on task 3 — worth a second look if it turns out to matter) |
 | `spatial_3bowl/landmark_with_hardneg_prompt` | yes |
