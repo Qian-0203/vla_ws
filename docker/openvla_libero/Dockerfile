@@ -62,6 +62,12 @@ RUN python -m pip install "flash-attn==2.5.5" --no-build-isolation
 
 RUN python -m pip install --no-deps "tensorflow-metadata==1.16.1"
 
+# Defensive re-pin: robosuite==1.4.1's own mujoco dependency range can resolve to a
+# newer mujoco whose Python bindings break robosuite's `mj_fullM()` call signature
+# (env stepping fails with "incompatible function arguments", looks GPU-related but
+# isn't -- see CLAUDE.md "Known pitfalls"). Force the pinned version as the last word.
+RUN python -m pip install --no-deps --force-reinstall "mujoco==2.3.2"
+
 # The base image ships only the Mesa (software) GLVND EGL vendor ICD, so libEGL
 # falls back to swrast and headless MuJoCo rendering fails. Register the NVIDIA
 # EGL ICD (libEGL_nvidia.so.0 is injected by the nvidia container runtime when
