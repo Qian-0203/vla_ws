@@ -1,25 +1,16 @@
-# OpenVLA · LIBERO-Spatial Benchmark Specification
+# OpenVLA · LIBERO-Spatial Benchmark Plan
 
-Canonical, human-readable spec for the evaluation suite. The executable source of truth for
-which (task suite, unnorm key, prompt condition) a split actually runs is
-`openvla/experiments/robot/libero/eval_registry.py::SPLITS` — this document and that registry
-must agree; if you change one, change the other. Operational details (environment setup, exact
-commands, log/result locations) live in `CLAUDE.md` and are linked, not repeated, here.
+Canonical, human-readable spec for the evaluation suite: what each split tests, why, and how it's
+built. The executable source of truth for which (task suite, unnorm key, prompt condition) a split
+actually runs is `openvla/experiments/robot/libero/eval_registry.py::SPLITS` — this document and
+that registry must agree; if you change one, change the other. Operational details (environment
+setup, exact commands, log/result locations) live in `CLAUDE.md` and are linked, not repeated, here.
 
-**This file is the plan and progress tracker; the eval detail (per-task breakdowns, takeaways,
-rendered scenes) lives elsewhere.** Every condition below is something we intend to (or already
-did) run. Each split's **Progress** subsection states, per condition, whether it's only
-planned/authored or whether it has actually been executed — and if executed, the headline
-success-rate number, with a pointer to where the full detail lives:
-- `test_eval_results.md` — the pre-existing experiment record, append-only, frozen. Historical
-  numbers cited here (Split 1 Exp 1, Split 2/3's `center_fixed_legacy`/`drawer_*`) are sourced from
-  it and not recomputed.
-- `benchmark_split_result.md` — the current/ongoing eval-detail record for everything run under
-  this plan going forward, organized in the same split order as this file, including rendered
-  scenes. New results are recorded there, not appended to `test_eval_results.md`.
-
-If a number appears here, it was copied from one of those two files, not recomputed. Nothing in
-this file should be read as "already run" unless its Progress table says so explicitly.
+**This is the plan and process doc.** It answers "what is each split, what's the hypothesis, what's
+built." It does **not** track whether a condition has actually been run or what the numbers were —
+that's `benchmark_split_result.md` (status/progress dashboard + cross-experiment analysis) and
+`eval_results.md` (append-only, full per-experiment write-ups — the ultimate source for any number).
+When a split's definition changes, update this file. When an eval finishes, update the other two.
 
 ## 1. Research motivation
 
@@ -32,16 +23,16 @@ in success rate can be attributed to a specific capability gap rather than confo
 
 ## 2. Splits overview
 
-| Split | Probes | Registry status | Data status |
-|---|---|---|---|
-| 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented | 3/3 run (`default`, `negative_contrast`, `positive_contrast`) |
-| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined + rebuilt this pass to fix a path-proximity confound | 1/4 confirmed run under current definitions (`irrelevant`: 88.8%; the old `irrelevant` data survives relabeled as `center_fixed_legacy`) |
-| 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented | Run (both conditions) |
-| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: not built | 4/6 cells derivable from existing Split-1 data; 2/6 not run |
+| Split | Probes | Registry status |
+|---|---|---|
+| 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented |
+| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined to fix a path-proximity confound (see Split 2 below) |
+| 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
+| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: not built |
 
 "Implemented" = task suite + prompts exist in the registry and can be run with one `run_eval.sh`
-command. "Run" = rollouts actually executed and success-rate numbers exist in `test_eval_results.md`.
-Implemented ≠ run — see each split's **Progress** subsection below and §10 for what's outstanding.
+command. Whether a condition has actually been *run* is tracked in `benchmark_split_result.md`, not
+here — see that doc's status overview and §9 (open design questions) below for what's outstanding.
 
 ## 3. Splits in detail
 
@@ -50,7 +41,7 @@ Implemented ≠ run — see each split's **Progress** subsection below and §10 
 | Field | Description |
 |---|---|
 | Goal | Whether describing/negating a distractor in language helps or hurts disambiguation |
-| Hypothesis | Naming a distractor without practice at contrastive language *confuses* rather than helps (confirmed, see §8) |
+| Hypothesis | Naming a distractor without practice at contrastive language *confuses* rather than helps |
 | Changed variable | Prompt text only |
 | Controlled variables | Scene, bowl positions, init states, checkpoint, seed |
 | Conditions | `default` (target only) · `positive_contrast` (mentions distractor, no negation) · `negative_contrast` (names + negates distractor, previously called "explicit") |
@@ -69,41 +60,41 @@ Negation-specific Drop  = SR(positive_contrast) - SR(negative_contrast)
 
 Registry: `spatial/default`, `spatial/positive_contrast`, `spatial/negative_contrast`.
 
-**Progress**
-
-| Condition | Status | Overall SR | Rollouts | Source |
-|---|---|--:|--:|---|
-| `default` | ✅ run | 84.0% | 420/500 | `test_eval_results.md` Exp 1 |
-| `negative_contrast` | ✅ run | 36.8% | 184/500 | `test_eval_results.md` Exp 1 |
-| `positive_contrast` | ✅ run | 32.4% | 500/500 | `benchmark_split_result.md` §1.2 (server, 2026-08-19) |
-
-Computed from the above: `Negative Contrast Drop = 84.0 - 36.8 = 47.2 pts`.
-`Distractor Mention Drop = 84.0 - 32.4 = 51.6 pts`.
-`Negation-specific Drop = 32.4 - 36.8 = -4.4 pts` — i.e. `positive_contrast` is not milder than
-`negative_contrast`, it's marginally *worse*. Merely mentioning the distractor's location, with no
-negation clause at all, costs about as much as naming-and-negating it. See §8 for interpretation.
-
 ### Split 2 — Distractor Placement Probe
 
 | Field | Description |
 |---|---|
 | Goal | Whether an extra distractor's *position* — not just its presence — drives failures |
-| Hypothesis | Distractors near the target's own landmark ("landmark") hurt more than neutral ("irrelevant") placement |
+| Hypothesis | Distractors near the target's own landmark ("landmark") hurt more than neutral ("irrelevant") or other-landmark ("semantic") placement |
 | Changed variable | Position of a 3rd `akita_black_bowl` distractor |
-| Controlled variables | Target bowl position, 2nd (original) distractor, prompt = `default`, checkpoint, seed |
-| Conditions | `irrelevant` (per-task region, off the reach path, distance-matched to `semantic`/`landmark` — redefined this pass, see below) · `semantic` (named landmark different from target's) · `landmark` (near target's OWN landmark, farther away — "hard negative") · `path` (between target and plate) — **not yet authored, see §10** |
+| Controlled variables | Target bowl position, 2nd (original) distractor, prompt = `default` (except the combo condition below), checkpoint, seed |
+| Conditions | `irrelevant` (per-task region, off the reach path, distance-matched to `semantic`/`landmark`) · `semantic` (named landmark different from target's) · `landmark` (near target's OWN landmark, farther away — "hard negative") · `path` (between target and plate) — **not yet authored, see §9** |
 | Tasks | All 10 tasks, scene = corresponding `libero_spatial_3bowl*` suite |
 | Trials | 50/task/condition, seed 7 |
 | Metrics | `Distractor-type Drop = SR(spatial/default) - SR(condition)`, plus per-task deltas |
 | Output | `EVAL-libero_spatial_3bowl*-openvla-*.txt` + matching `results/*.jsonl` |
 
-Registry: `spatial_3bowl/irrelevant` (suite `libero_spatial_3bowl_neutral`, new, redefined this
-pass), `spatial_3bowl/center_fixed_legacy` (suite `libero_spatial_3bowl`, the retired single-fixed-
-coordinate definition, kept only so `test_eval_results.md`'s existing Exp 2 number stays attributable),
-`spatial_3bowl/semantic` (suite `libero_spatial_3bowl_semantic`, new), `spatial_3bowl/landmark`
-(suite `libero_spatial_3bowl_hardneg`). All reuse `unnorm_key=libero_spatial` since the checkpoint
-was trained on the 2-bowl scene. `spatial_3bowl/landmark_with_hardneg_prompt` additionally swaps
-in the `hardneg` prompt condition on the same scene, combining Split 1 x Split 2.
+Registry: `spatial_3bowl/irrelevant` (suite `libero_spatial_3bowl_neutral`, redefined — see below),
+`spatial_3bowl/center_fixed_legacy` (suite `libero_spatial_3bowl`, the retired single-fixed-
+coordinate definition, kept only so `eval_results.md`'s original Exp 2 number stays attributable),
+`spatial_3bowl/semantic` (suite `libero_spatial_3bowl_semantic`), `spatial_3bowl/landmark` (suite
+`libero_spatial_3bowl_hardneg`). All reuse `unnorm_key=libero_spatial` since the checkpoint was
+trained on the 2-bowl scene. `spatial_3bowl/landmark_with_hardneg_prompt` additionally swaps in the
+`hardneg` prompt condition on the same scene, combining Split 1 x Split 2.
+
+**Distractor types & purpose.** The four conditions aren't just four placements — each targets a
+different failure mode:
+
+| Condition | Placement | Tests |
+|---|---|---|
+| `irrelevant` | Neutral, off the target-to-plate reach path, not tied to any relational language | Object-count robustness — does an extra bowl hurt regardless of where it sits |
+| `semantic` | At a named landmark region (`next_to_X`/`on_X`) that is **not** the target's own landmark | Relation disambiguation — does sitting at *some* nameable relational spot pull the policy even when that landmark doesn't match the prompt |
+| `landmark` | Near the target's **own** landmark, farther away than the real target (hard negative) | Fine-grained spatial grounding — can the policy still pick the closer, correct bowl when a plausible look-alike sits nearby |
+| `path` | Between the target and the plate | Trajectory interference — physically fouls the transport path, independent of language grounding. **Not yet authored** (§9) |
+
+For several tasks `irrelevant` and `semantic` land on the *same coordinate* (e.g. task 0's
+`next_to_box_region`) — the two conditions are distinguished by *why* that region was chosen (least-
+crowded neutral spot vs. deliberately a named non-target landmark), not by geometry alone.
 
 **Bowl coordinates** (all ranges are `[x1,y1]`–`[x2,y2]` meters relative to `main_table`'s
 origin; shared region catalog, identical across suites unless noted):
@@ -146,11 +137,11 @@ bowl_1 already occupies `table_center` there.
 
 **Design confound found, then fixed.** `center_fixed_legacy`'s bowl_3 sits at the *same fixed
 absolute coordinate* in 9 of 10 tasks, regardless of the target's location — it is not "neutral"
-relative to every task's reach path. This is exactly what produced task 6's outlier result in
-`test_eval_results.md` Exp 2 (90%→44%): `table_center` (−0.075,0.0) sits roughly on the straight line
-between `next_to_box_region` (0.13,−0.07) and `plate_region` (0.06,0.20) — a rough perpendicular-
-distance estimate puts it ~0.18m off that line, comparable to the ~0.115m bowl diameter plus
-gripper clearance.
+relative to every task's reach path. This produced task 6's outlier result in `eval_results.md`
+Exp 2 (90%→44%): `table_center` (−0.075,0.0) sits roughly on the straight line between
+`next_to_box_region` (0.13,−0.07) and `plate_region` (0.06,0.20) — a rough perpendicular-distance
+estimate puts it ~0.18m off that line, comparable to the ~0.115m bowl diameter plus gripper
+clearance.
 
 `irrelevant` was redefined (new suite `libero_spatial_3bowl_neutral`) to fix this: for each task,
 bowl_3 is placed in whichever of the 6 named regions independently confirmed safe for free bowl
@@ -167,23 +158,9 @@ tasks exclude 2-3 of them (own target + bowl_2's region) — "neutral" leans tow
 vicinity more than an ideal design would. Distances to target range 0.236–0.626m, comparable to or
 larger than `semantic`'s 0.33–0.50m and clearly farther than `landmark`'s 0.15–0.29m, so the
 ordering (`landmark` closest → `semantic` mid → `irrelevant` farthest) is intact. `landmark`'s
-bowl_3 gets a bespoke `hardneg_region` per task and never shared this flaw.
-
-**Progress**
-
-| Condition | Status | Overall SR | Rollouts | Source |
-|---|---|--:|--:|---|
-| `irrelevant` | ✅ run | 88.8% | 444/500 | `benchmark_split_result.md` § Split 2 `irrelevant`; server run (4x RTX PRO 6000 Blackwell), `openvla` commit `8c7ffa3`, 2026-08-19. Confirms the confound diagnosis: task 6 (44% under `center_fixed_legacy`) recovers to 94% under the redefined placement; overall is +4.8 pts over the 2-bowl baseline and +8.6 pts over `center_fixed_legacy` |
-| `center_fixed_legacy` | ✅ run (retired definition) | 80.2% | 401/500 | `test_eval_results.md` Exp 2 ("3 bowls"); this is the old single-fixed-coordinate placement, kept under this label so the number stays attributable — **not** the current `irrelevant` |
-| `semantic` | ⬜ scene authored, not run | — | — | BDDL + init states generated/verified on this machine this pass; policy never invoked |
-| `landmark` | ⬜ scene verified+rendered this pass, not run | — | — | BDDL/init states pre-existed but had never been checked with the current pipeline; regenerated (byte-identical to the committed data, confirming determinism), verified (min sep 0.121m vs. 0.12m threshold — **passes but narrowly**, task 3 is the tightest), contact sheet eyeballed — no overlaps visible. Old per-suite launch scripts existed but were never invoked for a real run; no rollouts recorded anywhere. Earlier drafts of this doc incorrectly claimed this was run — corrected |
-| `landmark_with_hardneg_prompt` | ⬜ not run | — | — | Split 1 x Split 2 combination, not built/run |
-| `path` | ⬜ not authored | — | — | open design question, §10 |
-
-`irrelevant` now has confirmed rollout data under its current (redefined) definition: 88.8% overall,
-`Distractor-type Drop = -4.8 pts` (i.e. a gain, since SR(irrelevant) > SR(spatial/default)=84.0%).
-The other three registry-ready conditions (`semantic`, `landmark`, `landmark_with_hardneg_prompt`)
-still need GPU runs, deferred to a future server session.
+bowl_3 gets a bespoke `hardneg_region` per task and never shared this flaw. `center_fixed_legacy`
+is kept in the registry only as a retired label so `eval_results.md`'s original Exp 2 number stays
+attributable — it is **not** reused as the current `irrelevant` definition.
 
 ### Split 3 — Scene Complexity Probe
 
@@ -194,25 +171,12 @@ still need GPU runs, deferred to a future server session.
 | Changed variable | Wooden cabinet's top drawer: closed vs. open |
 | Controlled variables | 3-bowl scene (`center_fixed_legacy` placement — see Split 2's redefinition note), prompt = `default`, checkpoint, seed |
 | Conditions | `drawer_closed` (= Split 2's `center_fixed_legacy`, not the current `irrelevant`) · `drawer_open` |
-| Tasks | All 10 tasks; **tasks 3, 6, 7 excluded from the adjusted metric** — rollout review showed the open drawer physically blocks their trajectories (`test_eval_results.md` Exp 3) |
+| Tasks | All 10 tasks; **tasks 3, 6, 7 excluded from the adjusted metric** — rollout review showed the open drawer physically blocks their trajectories (`eval_results.md` Exp 3; see `benchmark_split_result.md` for the methodology caveat on this exclusion) |
 | Trials | 50/task/condition, seed 7 |
 | Metrics | `Raw Clutter Drop = SR(drawer_closed) - SR(drawer_open)` over all 10 tasks; `Adjusted Clutter Drop` = same formula restricted to the 7 feasible tasks {0,1,2,4,5,8,9} |
 | Output | `EVAL-libero_spatial_3bowl_open-openvla-*.txt` + matching `results/*.jsonl` |
 
 Registry: `spatial_3bowl/drawer_open` (suite `libero_spatial_3bowl_open`).
-
-**Progress**
-
-| Condition | Status | Raw SR (10 tasks) | Adjusted SR (7 tasks) | Rollouts | Source |
-|---|---|--:|--:|--:|---|
-| `drawer_closed` (= Split 2 `center_fixed_legacy`) | ✅ run | 80.2% | 84.3% | 401/500, 295/350 | `test_eval_results.md` Exp 2/3 |
-| `drawer_open` | ✅ run | 60.0% | 73.1% | 300/500, 256/350 | `test_eval_results.md` Exp 3 |
-
-`Raw Clutter Drop = 80.2 - 60.0 = 20.2 pts`. `Adjusted Clutter Drop = 84.3 - 73.1 = 11.1 pts` (vs.
-the original 2-bowl baseline recomputed on the same 7 tasks, 84.9%, the drop is 11.7 pts — see §4).
-Both numbers are final; this split is fully run. The task-3/6/7 exclusion was a manual
-rollout-video review, not an automated feasibility check — see §9 (confounders) and §10 (open
-question) for why that's a limitation worth flagging, not silently treating as solved.
 
 ### Split 4 — Surface vs. Landmark Grounding Probe
 
@@ -231,46 +195,22 @@ change, this is purely about what's physically present.
 | Conditions | 6 cells: {landmark, surface, region} target x {landmark, surface} distractor (containment target excluded — only 1 task, `top_drawer`, and no distractor-placement variants exist for it) |
 | Tasks | 4 cells (10 tasks total) already exist inside baseline `libero_spatial` — see `eval_registry.GROUNDING_PROBE_CELLS`; 2 cells (`surface`/`landmark` and `region`/`surface`) needed a new scene (existing distractor bowl moved to a different pre-existing region; canonical `libero_spatial` untouched) |
 | Trials | 50/task/cell, seed 7 |
-| Metrics | Final success, first-pick accuracy, wrong-bowl pick rate, distractor attraction rate (see §10 — the latter three need per-step contact logging not yet implemented) |
+| Metrics | Final success, first-pick accuracy, wrong-bowl pick rate, distractor attraction rate (see §9 — the latter three need per-step contact logging not yet implemented) |
 | Output | `libero_spatial` results filtered by `--task_ids` for the 4 existing cells; `EVAL-libero_spatial_grounding_*-openvla-*.txt` for the 2 new ones |
 
 Registry: existing-scene cells run via `--split spatial/default --task_ids <ids from
 GROUNDING_PROBE_CELLS>`; new cells are `grounding/surface_landmark`, `grounding/region_surface`.
 
-**Progress**
-
-4 of 6 cells reuse rollouts already collected under `spatial/default` (Split 1, Exp 1) — no new
-GPU run needed, just re-aggregating existing per-task numbers by relation-family cell. The other
-2 cells need their own new-scene suites run. Per-task `default` success rates below are copied
-from `test_eval_results.md` Exp 1's table (task 4, containment, is excluded from this matrix per §3).
-
-| (target, distractor) family | Tasks (id: SR) | Cell SR | Status |
-|---|---|--:|---|
-| (landmark, landmark) | 0: 92%, 1: 84%, 8: 84% | **86.7%** | ✅ derived from existing data |
-| (region, landmark) | 2: 92% | **92.0%** | ✅ derived from existing data |
-| (surface, surface) | 3: 84%, 5: 94%, 7: 72%, 9: 72% | **80.5%** | ✅ derived from existing data |
-| (landmark, surface) | 6: 90% | **90.0%** | ✅ derived from existing data |
-| (surface, landmark) | new suite, task 0 | — | ⬜ scene authored + init states generated this pass, not run |
-| (region, surface) | new suite, task 0 | — | ⬜ scene authored + init states generated this pass, not run |
-
-**Preliminary observation** (from the 4 derived cells only, n is small — 1-4 tasks/cell, treat as
-suggestive not conclusive): landmark-target cells (86.7%, 92.0%, 90.0%) are **not** lower than the
-surface-target cell (80.5%) — if anything the opposite of the stated hypothesis ("landmark-target
-scenes are more attraction-prone"). This is a real signal worth noting, but it's confounded with
-per-task variation the hypothesis wasn't designed to control for (e.g. task 7's 72% may reflect
-something task-specific, not its relation family) — the 2 missing cells (needing an actual GPU
-run) are what would let this be tested properly rather than eyeballed from 4 small buckets.
-
 **4b. Target-cue x distractor-cue prompt matrix.** The original spec's 3x3 matrix ("Pick the
 bowl next to the ramekin, not the one next to the cookie box...") requires describing the SAME
 physical target/distractor pair truthfully via 3 different cue types each. **Not built** — see
-§10, this needs either new scene geometry or a relaxed truthfulness constraint, not a decision to
+§9, this needs either new scene geometry or a relaxed truthfulness constraint, not a decision to
 make silently.
 
 ## 4. Baselines
 
 The single reference number everything compares against: `spatial/default` — 2 bowls, default
-prompt, `libero_spatial` scene, 84.0% (420/500), `test_eval_results.md` Exp 1. Split 3's adjusted
+prompt, `libero_spatial` scene, 84.0% (420/500), `eval_results.md` Exp 1. Split 3's adjusted
 comparison uses a recomputed 7-task baseline (84.9%, 297/350) instead — see Split 3's row above.
 
 ## 5. Rollout & seed protocol
@@ -281,7 +221,7 @@ comparison uses a recomputed 7-task baseline (84.9%, 297/350) instead — see Sp
   differences are attributable to the changed variable, not sampling noise.
 - Success = LIBERO's own goal predicate for that task (`env.step` returns `done=True`).
 - At n=50/task, 1 standard error is roughly ±5-7 points — treat single-task deltas below ~10
-  points as noise (stated explicitly in `test_eval_results.md`, carried forward here).
+  points as noise (stated explicitly in `eval_results.md`, carried forward here).
 
 ## 6. Aggregation rule
 
@@ -297,61 +237,23 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
 - Rollout videos: `openvla/rollouts/{date}/`
 - See `CLAUDE.md` for the exact commands that produce these.
 
-## 8. Preliminary findings (full detail in `test_eval_results.md` / `benchmark_split_result.md`)
+## 8. Design-level limitations & confounders
 
-1. **Negative-contrast prompts badly hurt** the policy (-47.2 pts overall; up to -90 on some
-   tasks) — the model does not know how to use a "not the one X" clause, it seems to actively
-   confuse it. `positive_contrast` (mentions the distractor's location, no negation) resolves the
-   question of whether this is *negation specifically* or any distractor mention: it's the latter.
-   `positive_contrast` scores 32.4% — a 51.6 pt drop from baseline and *slightly below*
-   `negative_contrast`'s 36.8% (Negation-specific Drop = -4.4 pts). The negation clause itself adds
-   essentially nothing on top of the damage merely mentioning the distractor already does; almost
-   all of the -47.2 pt "explicit prompt" effect from Exp 1 is attributable to bringing the
-   distractor into the prompt at all, not to the negation grammar.
-2. **One extra distractor barely dents overall success** (-3.8 pts) but concentrates almost
-   entirely on one task (next to cookie box: 90% -> 44%) where the extra bowl lands on the
-   direct path. This is the empirical motivation for Split 2's `path` condition — and, on closer
-   inspection of the actual coordinates (see Split 2's Bowl coordinates table), also evidence that
-   the fixed `table_center` spot used for every task isn't a uniformly "neutral" placement, since
-   it happens to sit near task 6's reach path specifically.
-3. **Open-drawer clutter's raw drop (-20.2 pts) overstates the policy effect** — about half is 3
-   tasks where the drawer physically blocks the arm's path, not a perception failure. Adjusted
-   (7 feasible tasks): -11.1 to -11.7 pts, a real but smaller robustness gap.
-4. **Re-aggregating existing Split 1 data by relation family (Split 4a) does not support the
-   landmark-attraction hypothesis** — the 3 landmark-target cells (86.7%, 92.0%, 90.0%) score at
-   or above the one derived surface-target cell (80.5%), not below it. Weak evidence (1-4 tasks
-   per cell, confounded with per-task variation) — see Split 4's Progress table — but notable
-   enough that the 2 still-unrun new-scene cells matter for actually testing this.
-5. **The redefined Split 2 `irrelevant` condition confirms finding 2's confound diagnosis** — with
-   the 3rd bowl placed off each task's own reach path instead of at one shared coordinate, overall
-   success is 88.8% (+4.8 pts over the 2-bowl baseline, +8.6 pts over `center_fixed_legacy`), and
-   task 6 specifically recovers from 44% to 94%. This is strong evidence the old -3.8 pt "extra
-   distractor" effect was mostly a scene-placement artifact, not a genuine perceptual-ambiguity cost.
+- **Manual feasibility calls aren't automated.** Split 3's task-3/6/7 exclusion was decided by
+  watching rollout videos, not an automated "is this trajectory kinematically feasible" check. A
+  different reviewer might draw the line differently — documented as a limitation of the
+  methodology, not silently treated as ground truth.
+- **Fixed `unnorm_key` across all scene variants.** Every Split 2/3/4 suite keeps the checkpoint's
+  original `unnorm_key` (`libero_spatial_no_noops`) even though the scene changed — correct for
+  action un-normalization (the action space didn't change), but means none of these variants test
+  whether the *policy* generalizes to a re-trained distribution, only whether a fixed policy holds
+  up to distribution shift.
+- **`center_fixed_legacy` is a single fixed coordinate** (`table_center`/`table_front`) reused
+  across all 10 tasks, not a per-task-neutral position — see Split 2's confound note above. It's
+  kept only as a retired label for `eval_results.md`'s original Exp 2 number, never reused as the
+  current `irrelevant` definition.
 
-## 9. Limitations & confounders
-
-- The task-3/6/7 exclusion in Split 3 was decided by manually watching rollout videos, not an
-  automated "is this trajectory kinematically feasible" check. A different reviewer might draw
-  the line differently. Documented as a limitation, not silently treated as ground truth.
-- `positive_contrast`, `semantic`, `grounding/surface_landmark`, and `grounding/region_surface`
-  were authored this pass (prompts and/or BDDL scenes + verified init states) but never run
-  through the policy — the phrasing/placement choices are reasoned but unvalidated. `landmark`
-  (`libero_spatial_3bowl_hardneg`) has existed in the registry from before this pass; this pass
-  verified its init states for the first time (min separation 0.121m against a 0.12m threshold —
-  passes, but with the narrowest margin of any suite so far, task 3 specifically) and confirmed
-  the checked-in data is deterministically reproducible, but it still has no rollouts recorded
-  anywhere in `test_eval_results.md`.
-- All current variants keep the checkpoint's original `unnorm_key` (`libero_spatial_no_noops`)
-  even though the scene changed — correct for action un-normalization (the action space didn't
-  change), but means none of these variants test whether the *policy* generalizes to a
-  re-trained distribution, only whether a fixed policy holds up to distribution shift.
-- `spatial_3bowl/center_fixed_legacy`'s bowl_3 is a single fixed coordinate
-  (`table_center`/`table_front`) reused across all 10 tasks, not a per-task-neutral position — see
-  Split 2's confound note. This is why it's kept only as a retired label for `test_eval_results.md`'s
-  existing number, not reused as the current `irrelevant` definition. `irrelevant` was redefined
-  and rebuilt this pass (new suite `libero_spatial_3bowl_neutral`) but has no rollouts yet.
-
-## 10. Open design questions (do not implement without a decision)
+## 9. Open design questions (do not implement without a decision)
 
 1. **Split 2 `path` distractor**: needs a new per-task numeric region (not a reused named
    region), since "between target and plate" is geometrically different for every task. Proposed
@@ -370,33 +272,16 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
    this is a moderate scope change to the rollout loop — worth doing once Split 4a's cell
    mapping is validated as useful, not preemptively.
 
-**Resolved this pass:** Split 2 `irrelevant`'s "neutral" position wasn't actually distance- or
-path-controlled (option (b) from an earlier draft of this section was chosen and built — see
-Split 2's Bowl coordinates section for the redefinition, the new suite
-`libero_spatial_3bowl_neutral`, and the residual `next_to_ramekin_region` reuse limitation).
-
-## 11. Execution checklist
+## 10. Execution checklist
 
 1. Pick a split id from `eval_registry.SPLITS` (or add one — see `CLAUDE.md`'s "how to add a
    benchmark split").
 2. Run `python scripts/preflight.py` once per machine to confirm GPU/checkpoint/image are ready.
-3. `MACHINE_CONFIG=config/<machine>.env bash docker/openvla_libero/run_eval.sh --split <id>`
-4. `python scripts/aggregate_results.py --filter <suite name>` to get the per-task/overall table.
-5. Compare against the baseline/adjusted formulas in the relevant split's row above.
-6. Record the eval detail (per-task table, takeaway, rendered scene) in `benchmark_split_result.md`
-   under the matching split section, and update this file's Progress table/row for the condition.
-
-**Queued for the next GPU (server) session** — registry-ready, content authored/verified on this
-laptop, no rollouts yet:
-
-| Split id | Suite ready? |
-|---|---|
-| `spatial/positive_contrast` | yes |
-| `spatial_3bowl/semantic` | yes (init states verified this pass) |
-| `spatial_3bowl/landmark` | yes (pre-existing suite; init states verified+rendered this pass, margin is tight — 0.121m vs. 0.12m threshold on task 3 — worth a second look if it turns out to matter) |
-| `spatial_3bowl/landmark_with_hardneg_prompt` | yes |
-| `grounding/surface_landmark` | yes (init states verified this pass) |
-| `grounding/region_surface` | yes (init states verified this pass) |
-
-Not registry-ready yet (open design questions, §10): Split 2's `path` distractor, Split 4b's
-cue-phrasing matrix.
+3. If the scene is new or its render hasn't been eyeballed yet, render its contact sheet and check
+   it before spending GPU time (`LIBERO/scripts/render_suite_contact_sheet.py <suite>` — see
+   `CLAUDE.md`'s "how to add a benchmark split").
+4. `MACHINE_CONFIG=config/<machine>.env bash docker/openvla_libero/run_eval.sh --split <id>`
+5. `python scripts/aggregate_results.py --filter <suite name>` to get the per-task/overall table.
+6. Compare against the baseline/formulas in the relevant split's row above.
+7. Record the result in `eval_results.md` (append — never overwrite existing experiments) **and**
+   update `benchmark_split_result.md`'s status tables + findings. Every real run touches both.

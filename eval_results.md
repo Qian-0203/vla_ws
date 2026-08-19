@@ -257,7 +257,7 @@ plain fact, with no negation: *"…the other black bowl is on X."*
 | 8 | next to the plate | 84% | 68% | 36% | −16 | −32 |
 | 9 | on the wooden cabinet | 72% | 0% | 8% | **−72** | +8 |
 
-**Metrics** (formulas from `benchmark_split.md` Split 1):
+**Metrics** (formulas from `benchmark_split_plan.md` Split 1):
 - `Distractor Mention Drop = SR(default) − SR(positive_contrast) = 84.0 − 32.4 = 51.6 pts`
 - `Negation-specific Drop = SR(positive_contrast) − SR(negative_contrast) = 32.4 − 36.8 = −4.4 pts`
 
@@ -283,7 +283,7 @@ failures. This is the first condition run under Split 2's current (redefined) de
 places the 3rd bowl at a **named landmark that is not the target's own** — e.g. task 0's target is
 "between the plate and the ramekin," and its 3rd bowl sits `next_to_box_region` (the cookie box, an
 unrelated landmark) — testing whether sitting at *any* nameable relational spot pulls the policy, even
-when that landmark doesn't match the prompt. See `benchmark_split.md` §Split 2 "Distractor types &
+when that landmark doesn't match the prompt. See `benchmark_split_plan.md` §Split 2 "Distractor types &
 purpose" for how this differs from `irrelevant` (neutral, no landmark) and `landmark` (near the
 target's *own* landmark — not yet run).
 
@@ -319,7 +319,7 @@ test) shows a real effect where `semantic` didn't.
 
 Scene: BDDL + init states authored and verified this pass; contact sheet rendered and eyeballed (3
 distinct bowls per task, no overlaps/clipping, drawer open only for task 4 as expected) before this
-run — see `benchmark_split.md` for the per-task placement table. Run: 2026-08-19, 4× RTX PRO 6000
+run — see `benchmark_split_plan.md` for the per-task placement table. Run: 2026-08-19, 4× RTX PRO 6000
 Blackwell, `openvla-libero:blackwell` (sdpa), same checkpoint/seed as all prior experiments. Results:
 `results/libero_spatial_3bowl_semantic--default--shard{0..3}of4.jsonl`.
 
@@ -381,7 +381,7 @@ relational language at all — testing whether an extra distractor costs anythin
 *present*, independent of where exactly it sits. This is the redefined suite
 (`libero_spatial_3bowl_neutral`): each task's 3rd bowl goes to whichever safe region gives the
 largest clearance from both the reach path and bowl_2, replacing the retired `center_fixed_legacy`
-placement (a single fixed coordinate that confounded task 6 in Exp 2 — see `benchmark_split.md`
+placement (a single fixed coordinate that confounded task 6 in Exp 2 — see `benchmark_split_plan.md`
 Split 2 for the redefinition details).
 
 This run was already complete when this session picked up Split 2 (timestamp 14:02, earlier the same
