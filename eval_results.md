@@ -14,6 +14,7 @@ exactly one thing and is reported against the same 84.0% baseline.
 | 3 | Cluttered scene | 3 bowls **+ top drawer open**, default prompt | 60.0% (raw) / **73.1%**† | −24.0 (raw) / **−11.7**† |
 | 4 | Distractor mention, no negation | prompt states distractor's location but doesn't say "not the one…" | 32.4% | **−51.6** |
 | 5 | Semantic distractor (Split 2) | 3rd bowl at a *different* task's named landmark, default prompt | 84.8% | +0.8 |
+| 6 | Landmark distractor / hard negative (Split 2) | 3rd bowl near the target's **own** landmark, farther away, default prompt | 80.6% | −3.4 |
 
 † Adjusted: tasks 3, 6, 7 excluded — rollout review showed the open drawer **physically blocks their
 trajectories**, so those failures measure scene feasibility, not policy robustness (see Exp 3). The
@@ -32,7 +33,12 @@ outright. Excluding those, the drawer's *policy-attributable* cost is **−11.7 
 one…" clause isn't the culprit. (5) Split 2's first real data point complicates its own hypothesis:
 a distractor deliberately placed at another task's named landmark costs **~0 pts** (84.8% vs. 84.0%
 baseline) — indistinguishable from noise. Where a distractor sits seems to matter far less than
-whether the *prompt* talks about it (compare Exp 4/1's −52 pts for pure language).
+whether the *prompt* talks about it (compare Exp 4/1's −52 pts for pure language). (6) The harder
+version of that same test — a distractor near the target's *own* landmark — does move the needle
+(−3.4 pts overall), but the drop isn't spread across the suite: it's almost entirely two tasks
+(task 0: 92%→48%, task 9: 72%→54%), both far outside single-task noise. Scene changes *can* hurt,
+but only when the distractor is placed to be genuinely confusable with the target, not merely
+present or semantically labeled.
 
 ---
 
@@ -303,6 +309,55 @@ distinct bowls per task, no overlaps/clipping, drawer open only for task 4 as ex
 run — see `benchmark_split.md` for the per-task placement table. Run: 2026-08-19, 4× RTX PRO 6000
 Blackwell, `openvla-libero:blackwell` (sdpa), same checkpoint/seed as all prior experiments. Results:
 `results/libero_spatial_3bowl_semantic--default--shard{0..3}of4.jsonl`.
+
+---
+
+## Experiment 6 — Split 2: landmark distractor / hard negative (3 bowls, default prompt)
+
+**Question.** `landmark` is Split 2's hardest confusability test: the 3rd bowl sits near the
+target's **own** landmark — the same relational word the prompt uses — just farther from the exact
+target point than the real bowl (e.g. task 0's target is "between the plate and the ramekin"; its
+3rd bowl also sits near that plate/ramekin area, at `hardneg_region` (−0.070,0.040)–(−0.050,0.060)).
+Unlike `semantic` (Exp 5, different landmark) or `irrelevant` (no landmark), this distractor is a
+genuine look-alike for "the bowl near X."
+
+| Condition (default prompt) | Overall | Rollouts |
+|---|--:|--:|
+| **2 bowls** (baseline, Exp 1) | **84.0%** | 420 / 500 |
+| **3 bowls, landmark/hard-negative distractor** | **80.6%** | 403 / 500 |
+| **Δ (Distractor-type Drop)** | **−3.4 pts** | |
+
+| id | target | Default (2-bowl) | Landmark (3-bowl) | Δ |
+|--:|---|--:|--:|--:|
+| 0 | between the plate and the ramekin | 92% | 48% | **−44** |
+| 1 | next to the ramekin | 84% | 92% | +8 |
+| 2 | table center | 92% | 98% | +6 |
+| 3 | on the cookie box | 84% | 88% | +4 |
+| 4 | in the top drawer | 76% | 84% | +8 |
+| 5 | on the ramekin | 94% | 92% | −2 |
+| 6 | next to the cookie box | 90% | 80% | −10 |
+| 7 | on the stove | 72% | 86% | +14 |
+| 8 | next to the plate | 84% | 84% | 0 |
+| 9 | on the wooden cabinet | 72% | 54% | **−18** |
+
+**Takeaway.** The overall drop (−3.4 pts) looks mild — comparable to Exp 2's plain extra distractor
+(−3.8 pts) — but that headline number hides a **concentrated, task-specific effect**: task 0 collapses
+92%→48% and task 9 drops 72%→54%, both far beyond the ~±7 pt single-task noise band at n=50; every
+other task is flat or actually improves. This is the first Split 2 condition where the distractor's
+*placement relative to the target's own landmark* — not just its presence (Exp 2) or its placement at
+some other landmark (Exp 5) — produces a real, attributable failure. It's concentrated rather than
+uniform, similar in shape to Exp 2's single-task collapse (task 6), reinforcing that this policy's
+distractor sensitivity is about specific near-miss geometry, not general clutter aversion. Together
+with Exp 5, this narrows *where* scene-driven failures come from: proximity to the target's own
+landmark matters; unrelated landmarks and neutral placement don't.
+
+Scene: BDDL/init states pre-existed but were unchecked with the current pipeline; regenerated
+(byte-identical, confirming determinism), verified (min separation 0.121 m vs. the 0.12 m threshold —
+passes narrowly, task 3 tightest), contact sheet rendered and eyeballed before this run — 3 distinct
+bowls per task, no overlaps/clipping (task 3's close pair confirmed as two separate bowls, not
+merged). Run: 2026-08-19, 4× RTX PRO 6000 Blackwell, `openvla-libero:blackwell` (sdpa), same
+checkpoint/seed as all prior experiments. Results:
+`results/libero_spatial_3bowl_hardneg--default--shard{0..3}of4.jsonl`.
 
 ---
 

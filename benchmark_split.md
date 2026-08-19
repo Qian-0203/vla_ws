@@ -28,7 +28,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | Split | Probes | Registry status | Data status |
 |---|---|---|---|
 | 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented | 3/3 run (`default`, `negative_contrast`, `positive_contrast`) |
-| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined + rebuilt this pass to fix a path-proximity confound | 1/4 confirmed run under current definitions (`semantic`; the old `irrelevant` data survives relabeled as `center_fixed_legacy`) |
+| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined + rebuilt this pass to fix a path-proximity confound | 2/4 confirmed run under current definitions (`semantic`, `landmark`; the old `irrelevant` data survives relabeled as `center_fixed_legacy`) |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented | Run (both conditions) |
 | 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: not built | 4/6 cells derivable from existing Split-1 data; 2/6 not run |
 
@@ -183,16 +183,18 @@ bowl_3 gets a bespoke `hardneg_region` per task and never shared this flaw.
 | `irrelevant` | ⬜ redefined + built this pass, not run | — | — | new suite `libero_spatial_3bowl_neutral`; BDDL authored, init states generated and verified (`RESULT: PASS`, worst sep 0.122m), contact sheet eyeballed — 3 distinct bowls, no overlaps. Policy never invoked |
 | `center_fixed_legacy` | ✅ run (retired definition) | 80.2% | 401/500 | `eval_results.md` Exp 2 ("3 bowls"); this is the old single-fixed-coordinate placement, kept under this label so the number stays attributable — **not** the current `irrelevant` |
 | `semantic` | ✅ run | 84.8% | 424/500 | `eval_results.md` Exp 5; scene BDDL + init states authored/verified this pass, contact sheet eyeballed — 3 distinct bowls per task, no overlaps/clipping, drawer open only for task 4 as expected |
-| `landmark` | ⬜ scene verified+rendered this pass, not run | — | — | BDDL/init states pre-existed but had never been checked with the current pipeline; regenerated (byte-identical to the committed data, confirming determinism), verified (min sep 0.121m vs. 0.12m threshold — **passes but narrowly**, task 3 is the tightest), contact sheet eyeballed — no overlaps visible. Old per-suite launch scripts existed but were never invoked for a real run; no rollouts recorded anywhere. Earlier drafts of this doc incorrectly claimed this was run — corrected |
+| `landmark` | ✅ run | 80.6% | 403/500 | `eval_results.md` Exp 6; BDDL/init states regenerated (byte-identical, confirming determinism), verified (min sep 0.121m vs. 0.12m threshold — passes narrowly, task 3 tightest), contact sheet eyeballed — no overlaps, task 3's close pair confirmed as two distinct bowls |
 | `landmark_with_hardneg_prompt` | ⬜ not run | — | — | Split 1 x Split 2 combination, not built/run |
 | `path` | ⬜ not authored | — | — | open design question, §10 |
 
-`semantic` is the first condition run under Split 2's current definitions:
+`semantic` and `landmark` are now run under Split 2's current definitions:
 `Distractor-type Drop = SR(spatial/default) - SR(spatial_3bowl/semantic) = 84.0 - 84.8 = -0.8 pts` —
 negative (a slight gain), i.e. no measurable cost from a distractor sitting at an unrelated named
-landmark; see `eval_results.md` Exp 5 for the per-task breakdown and how this compares to Exp 4's
-pure-language manipulation. `irrelevant`, `landmark`, and `landmark_with_hardneg_prompt` still need
-GPU runs to compute their own `Distractor-type Drop`.
+landmark. `Distractor-type Drop = SR(spatial/default) - SR(spatial_3bowl/landmark) = 84.0 - 80.6 =
+3.4 pts` — small overall, but concentrated almost entirely in two tasks (task 0: -44pts, task 9:
+-18pts), both far outside single-task noise; see `eval_results.md` Exp 5/6 for per-task breakdowns
+and how these compare to Exp 4's pure-language manipulation. `irrelevant` and
+`landmark_with_hardneg_prompt` still need GPU runs to compute their own `Distractor-type Drop`.
 
 ### Split 3 — Scene Complexity Probe
 
@@ -331,13 +333,18 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
    (-47.2 pts) — `positive_contrast` (32.4%) even scores slightly *below* `negative_contrast`
    (36.8%). The policy has no practice grounding a second referent at all; negation specifically
    isn't the issue.
-6. **Split 2's first real result cuts against its own hypothesis, so far.** A distractor placed at
-   an unrelated named landmark (`semantic`) costs ~0 pts (84.8% vs. 84.0% baseline) — well inside
-   noise. Combined with finding 5, the emerging pattern across this project is that failures track
-   *what the prompt says*, not *what's on the table*: a scene change (extra bowl, semantic or
-   otherwise) barely registers, while a prompt change referencing a second location is
-   catastrophic. Still open: whether `landmark` (distractor near the target's *own* landmark) shows
-   a real effect where `semantic` didn't — that's the harder confusability test.
+6. **Split 2's first real result cut against its own hypothesis.** A distractor placed at an
+   unrelated named landmark (`semantic`) costs ~0 pts (84.8% vs. 84.0% baseline) — well inside
+   noise. Combined with finding 5, the pattern was that failures track *what the prompt says*, not
+   *what's on the table*.
+7. **The harder version of the test — `landmark` — does show a real effect, but a concentrated
+   one.** A distractor near the target's *own* landmark costs -3.4 pts overall (80.6% vs. 84.0%),
+   similar in size to Exp 2's plain extra bowl. But like Exp 2, that headline number hides a
+   task-specific collapse: task 0 (92%→48%) and task 9 (72%→54%) account for nearly all of it,
+   every other task flat or improved. Revised picture: scene changes barely matter *in general*,
+   but a distractor placed to be a genuine near-miss for the target's own landmark can badly hurt
+   specific tasks — proximity-to-own-landmark is the one scene manipulation so far with a real,
+   attributable (if concentrated) cost.
 
 ## 9. Limitations & confounders
 
