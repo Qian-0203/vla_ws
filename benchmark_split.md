@@ -27,8 +27,8 @@ in success rate can be attributed to a specific capability gap rather than confo
 
 | Split | Probes | Registry status | Data status |
 |---|---|---|---|
-| 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented | 2/3 run (`default`, `negative_contrast`) |
-| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined + rebuilt this pass to fix a path-proximity confound | 0/4 confirmed run under current definitions (the old `irrelevant` data survives relabeled as `center_fixed_legacy`) |
+| 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented | 3/3 run (`default`, `negative_contrast`, `positive_contrast`) |
+| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined + rebuilt this pass to fix a path-proximity confound | 1/4 confirmed run under current definitions (`semantic`; the old `irrelevant` data survives relabeled as `center_fixed_legacy`) |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented | Run (both conditions) |
 | 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: not built | 4/6 cells derivable from existing Split-1 data; 2/6 not run |
 
@@ -68,12 +68,13 @@ Registry: `spatial/default`, `spatial/positive_contrast`, `spatial/negative_cont
 |---|---|--:|--:|---|
 | `default` | ✅ run | 84.0% | 420/500 | `eval_results.md` Exp 1 |
 | `negative_contrast` | ✅ run | 36.8% | 184/500 | `eval_results.md` Exp 1 |
-| `positive_contrast` | ⬜ planned, not run | — | — | prompts exist in `instructions.py::LIBERO_SPATIAL_POSITIVE_CONTRAST_INSTRUCTIONS`, never executed |
+| `positive_contrast` | ✅ run | 32.4% | 162/500 | `eval_results.md` Exp 4 |
 
 Computed from the above: `Negative Contrast Drop = 84.0 - 36.8 = 47.2 pts`. `Distractor Mention
-Drop` and `Negation-specific Drop` are blocked on `positive_contrast` — needs a GPU run (see
-CLAUDE.md's one-GPU workflow; deferred to a server session, this laptop is scoped to content
-authoring only).
+Drop = 84.0 - 32.4 = 51.6 pts`. `Negation-specific Drop = 32.4 - 36.8 = -4.4 pts` — negative, meaning
+the negation clause is not the source of Exp 1's damage; bare mention of a second location does
+effectively all of it on its own (see `eval_results.md` Exp 4 for the full per-task breakdown and
+takeaway).
 
 ### Split 2 — Distractor Placement Probe
 
@@ -181,15 +182,17 @@ bowl_3 gets a bespoke `hardneg_region` per task and never shared this flaw.
 |---|---|--:|--:|---|
 | `irrelevant` | ⬜ redefined + built this pass, not run | — | — | new suite `libero_spatial_3bowl_neutral`; BDDL authored, init states generated and verified (`RESULT: PASS`, worst sep 0.122m), contact sheet eyeballed — 3 distinct bowls, no overlaps. Policy never invoked |
 | `center_fixed_legacy` | ✅ run (retired definition) | 80.2% | 401/500 | `eval_results.md` Exp 2 ("3 bowls"); this is the old single-fixed-coordinate placement, kept under this label so the number stays attributable — **not** the current `irrelevant` |
-| `semantic` | 🔄 launched this pass | — | — | BDDL + init states generated/verified on this machine this pass; contact sheet rendered and eyeballed — 3 distinct bowls per task, no overlaps/clipping, drawer open only for task 4 as expected; real GPU run launched (4x Blackwell, 50 trials/task) |
+| `semantic` | ✅ run | 84.8% | 424/500 | `eval_results.md` Exp 5; scene BDDL + init states authored/verified this pass, contact sheet eyeballed — 3 distinct bowls per task, no overlaps/clipping, drawer open only for task 4 as expected |
 | `landmark` | ⬜ scene verified+rendered this pass, not run | — | — | BDDL/init states pre-existed but had never been checked with the current pipeline; regenerated (byte-identical to the committed data, confirming determinism), verified (min sep 0.121m vs. 0.12m threshold — **passes but narrowly**, task 3 is the tightest), contact sheet eyeballed — no overlaps visible. Old per-suite launch scripts existed but were never invoked for a real run; no rollouts recorded anywhere. Earlier drafts of this doc incorrectly claimed this was run — corrected |
 | `landmark_with_hardneg_prompt` | ⬜ not run | — | — | Split 1 x Split 2 combination, not built/run |
 | `path` | ⬜ not authored | — | — | open design question, §10 |
 
-No condition in this split has confirmed rollout data under its current definition yet (only the
-retired `center_fixed_legacy` does). `Distractor-type Drop` is not computable for any condition —
-all four registry-ready conditions (`irrelevant`, `semantic`, `landmark`,
-`landmark_with_hardneg_prompt`) need GPU runs, deferred to a server session.
+`semantic` is the first condition run under Split 2's current definitions:
+`Distractor-type Drop = SR(spatial/default) - SR(spatial_3bowl/semantic) = 84.0 - 84.8 = -0.8 pts` —
+negative (a slight gain), i.e. no measurable cost from a distractor sitting at an unrelated named
+landmark; see `eval_results.md` Exp 5 for the per-task breakdown and how this compares to Exp 4's
+pure-language manipulation. `irrelevant`, `landmark`, and `landmark_with_hardneg_prompt` still need
+GPU runs to compute their own `Distractor-type Drop`.
 
 ### Split 3 — Scene Complexity Probe
 
@@ -323,6 +326,18 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
    or above the one derived surface-target cell (80.5%), not below it. Weak evidence (1-4 tasks
    per cell, confounded with per-task variation) — see Split 4's Progress table — but notable
    enough that the 2 still-unrun new-scene cells matter for actually testing this.
+5. **The negation clause wasn't the source of Exp 1's damage.** Bare mention of the distractor's
+   location, with no "not the one…" clause, is just as bad (-51.6 pts) as mentioning + negating it
+   (-47.2 pts) — `positive_contrast` (32.4%) even scores slightly *below* `negative_contrast`
+   (36.8%). The policy has no practice grounding a second referent at all; negation specifically
+   isn't the issue.
+6. **Split 2's first real result cuts against its own hypothesis, so far.** A distractor placed at
+   an unrelated named landmark (`semantic`) costs ~0 pts (84.8% vs. 84.0% baseline) — well inside
+   noise. Combined with finding 5, the emerging pattern across this project is that failures track
+   *what the prompt says*, not *what's on the table*: a scene change (extra bowl, semantic or
+   otherwise) barely registers, while a prompt change referencing a second location is
+   catastrophic. Still open: whether `landmark` (distractor near the target's *own* landmark) shows
+   a real effect where `semantic` didn't — that's the harder confusability test.
 
 ## 9. Limitations & confounders
 
