@@ -15,6 +15,7 @@ exactly one thing and is reported against the same 84.0% baseline.
 | 4 | Distractor mention, no negation | prompt states distractor's location but doesn't say "not the one…" | 32.4% | **−51.6** |
 | 5 | Semantic distractor (Split 2) | 3rd bowl at a *different* task's named landmark, default prompt | 84.8% | +0.8 |
 | 6 | Landmark distractor / hard negative (Split 2) | 3rd bowl near the target's **own** landmark, farther away, default prompt | 80.6% | −3.4 |
+| 7 | Irrelevant distractor, redefined (Split 2) | 3rd bowl at a per-task neutral region, off-path, distance-matched | 88.8% | +4.8 |
 
 † Adjusted: tasks 3, 6, 7 excluded — rollout review showed the open drawer **physically blocks their
 trajectories**, so those failures measure scene feasibility, not policy robustness (see Exp 3). The
@@ -38,7 +39,12 @@ version of that same test — a distractor near the target's *own* landmark — 
 (−3.4 pts overall), but the drop isn't spread across the suite: it's almost entirely two tasks
 (task 0: 92%→48%, task 9: 72%→54%), both far outside single-task noise. Scene changes *can* hurt,
 but only when the distractor is placed to be genuinely confusable with the target, not merely
-present or semantically labeled.
+present or semantically labeled. (7) The redefined `irrelevant` condition — the "control" for Split
+2 — actually scores *above* baseline (88.8% vs. 84.0%, +4.8 pts, ~3 SE), with no task collapsing and
+two tasks (4, 7) jumping +16-20 pts. Across all three Split 2 conditions run so far, `Distractor-type
+Drop` only ever turns negative (real cost) when the distractor sits near the target's *own* landmark
+— neutral and other-landmark placements don't cost anything and may even help slightly, plausibly
+because a 3rd bowl elsewhere in the scene doesn't compete for the target's identity at all.
 
 ---
 
@@ -358,6 +364,64 @@ bowls per task, no overlaps/clipping (task 3's close pair confirmed as two separ
 merged). Run: 2026-08-19, 4× RTX PRO 6000 Blackwell, `openvla-libero:blackwell` (sdpa), same
 checkpoint/seed as all prior experiments. Results:
 `results/libero_spatial_3bowl_hardneg--default--shard{0..3}of4.jsonl`.
+
+---
+
+## Experiment 7 — Split 2: irrelevant distractor, redefined (3 bowls, default prompt)
+
+**Question.** `irrelevant` is Split 2's control: a 3rd bowl placed somewhere that isn't tied to any
+relational language at all — testing whether an extra distractor costs anything purely from being
+*present*, independent of where exactly it sits. This is the redefined suite
+(`libero_spatial_3bowl_neutral`): each task's 3rd bowl goes to whichever safe region gives the
+largest clearance from both the reach path and bowl_2, replacing the retired `center_fixed_legacy`
+placement (a single fixed coordinate that confounded task 6 in Exp 2 — see `benchmark_split.md`
+Split 2 for the redefinition details).
+
+This run was already complete when this session picked up Split 2 (timestamp 14:02, earlier the same
+day as Exp 4-6) but had not been aggregated or written up — recovered and documented here rather than
+re-run.
+
+| Condition (default prompt) | Overall | Rollouts |
+|---|--:|--:|
+| **2 bowls** (baseline, Exp 1) | **84.0%** | 420 / 500 |
+| **3 bowls, irrelevant/neutral distractor** | **88.8%** | 444 / 500 |
+| **Δ (Distractor-type Drop)** | **+4.8 pts** | |
+
+| id | target | Default (2-bowl) | Irrelevant (3-bowl) | Δ |
+|--:|---|--:|--:|--:|
+| 0 | between the plate and the ramekin | 92% | 86% | −6 |
+| 1 | next to the ramekin | 84% | 90% | +6 |
+| 2 | table center | 92% | 96% | +4 |
+| 3 | on the cookie box | 84% | 90% | +6 |
+| 4 | in the top drawer | 76% | 96% | **+20** |
+| 5 | on the ramekin | 94% | 96% | +2 |
+| 6 | next to the cookie box | 90% | 94% | +4 |
+| 7 | on the stove | 72% | 88% | **+16** |
+| 8 | next to the plate | 84% | 84% | 0 |
+| 9 | on the wooden cabinet | 72% | 68% | −4 |
+
+**Takeaway.** Unlike Exp 2's old `center_fixed_legacy` placement (−3.8 pts, one task collapsing),
+the redefined neutral placement doesn't cost anything at all — it scores *above* baseline (+4.8 pts,
+~3 pooled SE, so plausibly a real if modest effect rather than pure noise) with no single-task
+collapse. Tasks 4 and 7 gain the most (+20, +16); no obvious explanation stands out from the
+success-rate numbers alone (not investigated further at the rollout-video level). Completes Split 2's
+three-way distractor-position comparison:
+
+| Condition | Overall | Δ vs. baseline | Task-level pattern |
+|---|--:|--:|---|
+| `irrelevant` (neutral, no landmark) | 88.8% | +4.8 | no collapse; broadly flat/positive |
+| `semantic` (different landmark) | 84.8% | +0.8 | no collapse; flat |
+| `landmark` (target's own landmark, hard negative) | 80.6% | −3.4 | **concentrated collapse**, tasks 0 & 9 only |
+
+The only condition with a real cost is the one where the distractor is a plausible look-alike for the
+target's own described location. Neutral and other-landmark placements don't hurt — if anything they
+trend positive — reinforcing Exp 4-6's overall pattern: this policy's failures are about *matching
+the wrong bowl to the described landmark*, not about scene clutter or extra-object presence per se.
+
+Scene: BDDL authored, init states generated and verified this pass (`RESULT: PASS`, worst separation
+0.122 m), contact sheet eyeballed — 3 distinct bowls per task, no overlaps. Run: 2026-08-19, 4× RTX
+PRO 6000 Blackwell, `openvla-libero:blackwell` (sdpa), same checkpoint/seed as all prior experiments.
+Results: `results/libero_spatial_3bowl_neutral--default--shard{0..3}of4.jsonl`.
 
 ---
 

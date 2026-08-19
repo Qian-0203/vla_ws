@@ -28,7 +28,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | Split | Probes | Registry status | Data status |
 |---|---|---|---|
 | 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented | 3/3 run (`default`, `negative_contrast`, `positive_contrast`) |
-| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined + rebuilt this pass to fix a path-proximity confound | 2/4 confirmed run under current definitions (`semantic`, `landmark`; the old `irrelevant` data survives relabeled as `center_fixed_legacy`) |
+| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined + rebuilt this pass to fix a path-proximity confound | 3/4 confirmed run under current definitions (`irrelevant`, `semantic`, `landmark`; the old `irrelevant` data survives relabeled as `center_fixed_legacy`) |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented | Run (both conditions) |
 | 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: not built | 4/6 cells derivable from existing Split-1 data; 2/6 not run |
 
@@ -180,21 +180,23 @@ bowl_3 gets a bespoke `hardneg_region` per task and never shared this flaw.
 
 | Condition | Status | Overall SR | Rollouts | Source |
 |---|---|--:|--:|---|
-| `irrelevant` | ⬜ redefined + built this pass, not run | — | — | new suite `libero_spatial_3bowl_neutral`; BDDL authored, init states generated and verified (`RESULT: PASS`, worst sep 0.122m), contact sheet eyeballed — 3 distinct bowls, no overlaps. Policy never invoked |
+| `irrelevant` | ✅ run | 88.8% | 444/500 | `eval_results.md` Exp 7; new suite `libero_spatial_3bowl_neutral`, BDDL authored, init states generated and verified (`RESULT: PASS`, worst sep 0.122m), contact sheet eyeballed — 3 distinct bowls, no overlaps |
 | `center_fixed_legacy` | ✅ run (retired definition) | 80.2% | 401/500 | `eval_results.md` Exp 2 ("3 bowls"); this is the old single-fixed-coordinate placement, kept under this label so the number stays attributable — **not** the current `irrelevant` |
 | `semantic` | ✅ run | 84.8% | 424/500 | `eval_results.md` Exp 5; scene BDDL + init states authored/verified this pass, contact sheet eyeballed — 3 distinct bowls per task, no overlaps/clipping, drawer open only for task 4 as expected |
 | `landmark` | ✅ run | 80.6% | 403/500 | `eval_results.md` Exp 6; BDDL/init states regenerated (byte-identical, confirming determinism), verified (min sep 0.121m vs. 0.12m threshold — passes narrowly, task 3 tightest), contact sheet eyeballed — no overlaps, task 3's close pair confirmed as two distinct bowls |
 | `landmark_with_hardneg_prompt` | ⬜ not run | — | — | Split 1 x Split 2 combination, not built/run |
 | `path` | ⬜ not authored | — | — | open design question, §10 |
 
-`semantic` and `landmark` are now run under Split 2's current definitions:
-`Distractor-type Drop = SR(spatial/default) - SR(spatial_3bowl/semantic) = 84.0 - 84.8 = -0.8 pts` —
-negative (a slight gain), i.e. no measurable cost from a distractor sitting at an unrelated named
-landmark. `Distractor-type Drop = SR(spatial/default) - SR(spatial_3bowl/landmark) = 84.0 - 80.6 =
-3.4 pts` — small overall, but concentrated almost entirely in two tasks (task 0: -44pts, task 9:
--18pts), both far outside single-task noise; see `eval_results.md` Exp 5/6 for per-task breakdowns
-and how these compare to Exp 4's pure-language manipulation. `irrelevant` and
-`landmark_with_hardneg_prompt` still need GPU runs to compute their own `Distractor-type Drop`.
+`irrelevant`, `semantic`, and `landmark` are now all run under Split 2's current definitions:
+`Distractor-type Drop = SR(spatial/default) - SR(spatial_3bowl/irrelevant) = 84.0 - 88.8 = -4.8 pts` —
+negative, i.e. the neutral 3rd bowl costs nothing (if anything, scores above baseline, no task
+collapses). `Distractor-type Drop = SR(spatial/default) - SR(spatial_3bowl/semantic) = 84.0 - 84.8 =
+-0.8 pts` — also negative, no measurable cost from a distractor at an unrelated named landmark.
+`Distractor-type Drop = SR(spatial/default) - SR(spatial_3bowl/landmark) = 84.0 - 80.6 = 3.4 pts` —
+the one positive (real-cost) result, concentrated almost entirely in two tasks (task 0: -44pts,
+task 9: -18pts), both far outside single-task noise. See `eval_results.md` Exp 5/6/7 for per-task
+breakdowns and the three-way comparison table. Only `landmark_with_hardneg_prompt` (and unauthored
+`path`) still need work in this split.
 
 ### Split 3 — Scene Complexity Probe
 
@@ -345,6 +347,14 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
    but a distractor placed to be a genuine near-miss for the target's own landmark can badly hurt
    specific tasks — proximity-to-own-landmark is the one scene manipulation so far with a real,
    attributable (if concentrated) cost.
+8. **Split 2's three-way distractor-position comparison is now complete, and the pattern holds.**
+   `irrelevant` (+4.8 pts) and `semantic` (+0.8 pts) both cost nothing — if anything they trend
+   positive with no task collapsing. Only `landmark` (-3.4 pts, concentrated in 2 tasks) shows a
+   real effect. Combined with findings 5-6, the picture across this entire project so far: failures
+   come from **language that references a second location** (catastrophic, -47 to -52 pts) or from
+   **a distractor that's a genuine look-alike for the target's own described location**
+   (task-concentrated, tens of pts on the affected tasks) — not from scene clutter, extra-object
+   presence, or a distractor merely sitting at *some* named place in general.
 
 ## 9. Limitations & confounders
 
