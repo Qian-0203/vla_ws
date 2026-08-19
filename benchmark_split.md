@@ -97,6 +97,20 @@ coordinate definition, kept only so `eval_results.md`'s existing Exp 2 number st
 was trained on the 2-bowl scene. `spatial_3bowl/landmark_with_hardneg_prompt` additionally swaps
 in the `hardneg` prompt condition on the same scene, combining Split 1 x Split 2.
 
+**Distractor types & purpose.** The four conditions aren't just four placements — each targets a
+different failure mode:
+
+| Condition | Placement | Tests |
+|---|---|---|
+| `irrelevant` | Neutral, off the target-to-plate reach path, not tied to any relational language | Object-count robustness — does an extra bowl hurt regardless of where it sits |
+| `semantic` | At a named landmark region (`next_to_X`/`on_X`) that is **not** the target's own landmark | Relation disambiguation — does sitting at *some* nameable relational spot pull the policy even when that landmark doesn't match the prompt |
+| `landmark` | Near the target's **own** landmark, farther away than the real target (hard negative) | Fine-grained spatial grounding — can the policy still pick the closer, correct bowl when a plausible look-alike sits nearby |
+| `path` | Between the target and the plate | Trajectory interference — physically fouls the transport path, independent of language grounding. **Not yet authored** (§10) |
+
+For several tasks `irrelevant` and `semantic` land on the *same coordinate* (e.g. task 0's
+`next_to_box_region`) — the two conditions are distinguished by *why* that region was chosen (least-
+crowded neutral spot vs. deliberately a named non-target landmark), not by geometry alone.
+
 **Bowl coordinates** (all ranges are `[x1,y1]`–`[x2,y2]` meters relative to `main_table`'s
 origin; shared region catalog, identical across suites unless noted):
 
