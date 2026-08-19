@@ -16,6 +16,7 @@ exactly one thing and is reported against the same 84.0% baseline.
 | 5 | Semantic distractor (Split 2) | 3rd bowl at a *different* task's named landmark, default prompt | 84.8% | +0.8 |
 | 6 | Landmark distractor / hard negative (Split 2) | 3rd bowl near the target's **own** landmark, farther away, default prompt | 80.6% | −3.4 |
 | 7 | Irrelevant distractor, redefined (Split 2) | 3rd bowl at a per-task neutral region, off-path, distance-matched | 88.8% | +4.8 |
+| 8 | Landmark scene + disambiguating prompt (Split 1×2) | Same hard-negative scene as Exp 6, prompt adds "closest to X, not the one farther" | 41.2% | **−42.8** |
 
 † Adjusted: tasks 3, 6, 7 excluded — rollout review showed the open drawer **physically blocks their
 trajectories**, so those failures measure scene feasibility, not policy robustness (see Exp 3). The
@@ -45,6 +46,12 @@ two tasks (4, 7) jumping +16-20 pts. Across all three Split 2 conditions run so 
 Drop` only ever turns negative (real cost) when the distractor sits near the target's *own* landmark
 — neutral and other-landmark placements don't cost anything and may even help slightly, plausibly
 because a 3rd bowl elsewhere in the scene doesn't compete for the target's identity at all.
+(8) The natural next question — can a disambiguating prompt *rescue* the `landmark` scene's task 0/9
+collapse — has a clear answer: no. Adding "closest to X, not the one farther" on top of the
+`landmark` scene doesn't fix tasks 0/9, and it wrecks every other task that was previously fine
+(e.g. task 7: 86%→4%, task 2: 98%→50%). Overall drops from 80.6% to 41.2%. Once again, language that
+references a second location dominates — this time stacking on top of, rather than compensating for,
+the scene-level confusability.
 
 ---
 
@@ -422,6 +429,53 @@ Scene: BDDL authored, init states generated and verified this pass (`RESULT: PAS
 0.122 m), contact sheet eyeballed — 3 distinct bowls per task, no overlaps. Run: 2026-08-19, 4× RTX
 PRO 6000 Blackwell, `openvla-libero:blackwell` (sdpa), same checkpoint/seed as all prior experiments.
 Results: `results/libero_spatial_3bowl_neutral--default--shard{0..3}of4.jsonl`.
+
+---
+
+## Experiment 8 — Split 1×2: landmark scene + disambiguating prompt
+
+**Question.** Exp 6 showed the `landmark` scene (hard-negative distractor) collapses two specific
+tasks (0, 9) while leaving the rest alone. Can a prompt that explicitly disambiguates — *"pick up the
+black bowl closest to X, not the one farther from it, …"* — rescue those two tasks, the way it might
+if the failure were really about the model needing to be told which bowl is closer? Same scene as
+Exp 6 (`libero_spatial_3bowl_hardneg`), condition = `hardneg` prompt
+(`instructions.py::LIBERO_SPATIAL_HARDNEG_INSTRUCTIONS`).
+
+| Condition | Overall | Rollouts |
+|---|--:|--:|
+| **2 bowls, default prompt** (baseline, Exp 1) | **84.0%** | 420 / 500 |
+| **Landmark scene, default prompt** (Exp 6) | **80.6%** | 403 / 500 |
+| **Landmark scene, disambiguating prompt** | **41.2%** | 412 / 500 |
+| **Δ (prompt effect, same scene)** | **−39.4 pts** | |
+
+| id | target | Landmark scene, default | + disambiguating prompt | Δ |
+|--:|---|--:|--:|--:|
+| 0 | between the plate and the ramekin | 48% | 38% | −10 |
+| 1 | next to the ramekin | 92% | 34% | **−58** |
+| 2 | table center | 98% | 50% | **−48** |
+| 3 | on the cookie box | 88% | 62% | −26 |
+| 4 | in the top drawer | 84% | 80% | −4 |
+| 5 | on the ramekin | 92% | 38% | **−54** |
+| 6 | next to the cookie box | 80% | 52% | −28 |
+| 7 | on the stove | 86% | 4% | **−82** |
+| 8 | next to the plate | 84% | 48% | −36 |
+| 9 | on the wooden cabinet | 54% | 6% | **−48** |
+
+**Takeaway.** The disambiguating prompt does not rescue the two tasks that actually needed help —
+task 0 barely changes (48%→38%) and task 9 gets *worse*, not better (54%→6%) — while every task that
+was fine without it collapses instead, several catastrophically (task 7: 86%→4%, task 1: 92%→34%,
+task 5: 92%→38%). Net effect is strongly negative (−39.4 pts on the same scene) and lands the overall
+number (41.2%) close to Exp 1's `negative_contrast` on the plain 2-bowl scene (36.8%) — consistent
+with Exp 1/4's finding that *any* prompt referencing a second bowl/location is what hurts, regardless
+of whether the scene actually contains a confusable distractor. Combining a hard scene with a hard
+prompt doesn't compound narrowly on the hard cases; the prompt damage dominates and spreads to tasks
+the scene alone never touched. This is the clearest evidence yet that language, not scene design, is
+the primary lever on this checkpoint's failures — trying to fix a scene-level confound with more
+language makes things worse, not better.
+
+Scene: identical to Exp 6 (`libero_spatial_3bowl_hardneg`), no changes. Run: 2026-08-19, 4× RTX PRO
+6000 Blackwell, `openvla-libero:blackwell` (sdpa), same checkpoint/seed as all prior experiments.
+Results: `results/libero_spatial_3bowl_hardneg--hardneg--shard{0..3}of4.jsonl`.
 
 ---
 

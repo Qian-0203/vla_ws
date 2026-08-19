@@ -28,7 +28,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | Split | Probes | Registry status | Data status |
 |---|---|---|---|
 | 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented | 3/3 run (`default`, `negative_contrast`, `positive_contrast`) |
-| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined + rebuilt this pass to fix a path-proximity confound | 3/4 confirmed run under current definitions (`irrelevant`, `semantic`, `landmark`; the old `irrelevant` data survives relabeled as `center_fixed_legacy`) |
+| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined + rebuilt this pass to fix a path-proximity confound | 4/4 implemented conditions run (`irrelevant`, `semantic`, `landmark`, `landmark_with_hardneg_prompt`; the old `irrelevant` data survives relabeled as `center_fixed_legacy`); only unauthored `path` remains |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented | Run (both conditions) |
 | 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: not built | 4/6 cells derivable from existing Split-1 data; 2/6 not run |
 
@@ -184,7 +184,7 @@ bowl_3 gets a bespoke `hardneg_region` per task and never shared this flaw.
 | `center_fixed_legacy` | ✅ run (retired definition) | 80.2% | 401/500 | `eval_results.md` Exp 2 ("3 bowls"); this is the old single-fixed-coordinate placement, kept under this label so the number stays attributable — **not** the current `irrelevant` |
 | `semantic` | ✅ run | 84.8% | 424/500 | `eval_results.md` Exp 5; scene BDDL + init states authored/verified this pass, contact sheet eyeballed — 3 distinct bowls per task, no overlaps/clipping, drawer open only for task 4 as expected |
 | `landmark` | ✅ run | 80.6% | 403/500 | `eval_results.md` Exp 6; BDDL/init states regenerated (byte-identical, confirming determinism), verified (min sep 0.121m vs. 0.12m threshold — passes narrowly, task 3 tightest), contact sheet eyeballed — no overlaps, task 3's close pair confirmed as two distinct bowls |
-| `landmark_with_hardneg_prompt` | ⬜ not run | — | — | Split 1 x Split 2 combination, not built/run |
+| `landmark_with_hardneg_prompt` | ✅ run | 41.2% | 412/500 | `eval_results.md` Exp 8; same scene as `landmark` (Exp 6), disambiguating prompt does not rescue tasks 0/9 and wrecks every other task instead (−39.4 pts vs. `landmark`'s default prompt on the identical scene) |
 | `path` | ⬜ not authored | — | — | open design question, §10 |
 
 `irrelevant`, `semantic`, and `landmark` are now all run under Split 2's current definitions:
@@ -194,9 +194,11 @@ collapses). `Distractor-type Drop = SR(spatial/default) - SR(spatial_3bowl/seman
 -0.8 pts` — also negative, no measurable cost from a distractor at an unrelated named landmark.
 `Distractor-type Drop = SR(spatial/default) - SR(spatial_3bowl/landmark) = 84.0 - 80.6 = 3.4 pts` —
 the one positive (real-cost) result, concentrated almost entirely in two tasks (task 0: -44pts,
-task 9: -18pts), both far outside single-task noise. See `eval_results.md` Exp 5/6/7 for per-task
-breakdowns and the three-way comparison table. Only `landmark_with_hardneg_prompt` (and unauthored
-`path`) still need work in this split.
+task 9: -18pts), both far outside single-task noise. `landmark_with_hardneg_prompt` (same scene as
+`landmark`, plus a disambiguating prompt) scores 41.2% — the prompt doesn't rescue tasks 0/9 and
+instead wrecks the rest of the suite (-39.4 pts vs. `landmark`'s default-prompt run on the identical
+scene). See `eval_results.md` Exp 5/6/7/8 for per-task breakdowns and the three-way comparison table.
+Only the unauthored `path` condition remains in this split.
 
 ### Split 3 — Scene Complexity Probe
 
@@ -355,6 +357,15 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
    **a distractor that's a genuine look-alike for the target's own described location**
    (task-concentrated, tens of pts on the affected tasks) — not from scene clutter, extra-object
    presence, or a distractor merely sitting at *some* named place in general.
+9. **A disambiguating prompt does not rescue the `landmark` scene's task-0/9 collapse — it makes
+   things much worse overall.** `landmark_with_hardneg_prompt` (same hard-negative scene as finding
+   7, plus "closest to X, not the one farther") scores 41.2%, a further -39.4 pts on top of
+   `landmark`'s already-reduced 80.6%. Tasks 0 and 9 barely improve or get worse (48%→38%, 54%→6%),
+   while every task that was fine without the prompt collapses instead (task 7: 86%→4%). Language
+   that references a second location dominates regardless of whether the scene actually contains a
+   confusable distractor — it doesn't compound narrowly on the hard cases, it spreads damage to the
+   whole suite. Strongest evidence in the project that this checkpoint's failures are fundamentally
+   about prompt grounding, not scene design.
 
 ## 9. Limitations & confounders
 
@@ -413,16 +424,15 @@ Split 2's Bowl coordinates section for the redefinition, the new suite
 5. Compare against the baseline/adjusted formulas in the relevant split's row above.
 6. Record the result in `eval_results.md` (append — never overwrite existing experiments).
 
-**Queued for the next GPU (server) session** — registry-ready, content authored/verified on this
-laptop, no rollouts yet:
+**Run this pass** (server session, 2026-08-19): `spatial/positive_contrast`,
+`spatial_3bowl/irrelevant`, `spatial_3bowl/semantic`, `spatial_3bowl/landmark`,
+`spatial_3bowl/landmark_with_hardneg_prompt` — see `eval_results.md` Exp 4-8 and each split's
+Progress table above.
+
+**Still queued** — registry-ready, content authored/verified, no rollouts yet:
 
 | Split id | Suite ready? |
 |---|---|
-| `spatial/positive_contrast` | yes |
-| `spatial_3bowl/irrelevant` | yes (redefined + rebuilt this pass, `libero_spatial_3bowl_neutral`, init states verified) |
-| `spatial_3bowl/semantic` | yes (init states verified this pass) |
-| `spatial_3bowl/landmark` | yes (pre-existing suite; init states verified+rendered this pass, margin is tight — 0.121m vs. 0.12m threshold on task 3 — worth a second look if it turns out to matter) |
-| `spatial_3bowl/landmark_with_hardneg_prompt` | yes |
 | `grounding/surface_landmark` | yes (init states verified this pass) |
 | `grounding/region_surface` | yes (init states verified this pass) |
 
