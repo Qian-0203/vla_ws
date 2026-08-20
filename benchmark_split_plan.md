@@ -29,7 +29,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented |
 | 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined to fix a path-proximity confound (see Split 2 below) |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
-| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: redesigned as a target-cue-type probe, registry entries not yet added (see below) |
+| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`), not yet run |
 
 "Implemented" = task suite + prompts exist in the registry and can be run with one `run_eval.sh`
 command. Whether a condition has actually been *run* is tracked in `benchmark_split_result.md`, not
@@ -281,13 +281,21 @@ Trials: 50/task/condition, seed 7, same protocol as every other split — reuses
 existing per-task numbers as the "native cue" baseline for both metrics (no re-run of that
 condition needed, same pattern as 4a's 4 reused cells).
 
-**Registry (not yet added — this is a design, not yet "implemented" per this doc's own bar):**
-would need two new dicts in `openvla/experiments/robot/libero/instructions.py`
-(`LIBERO_SPATIAL_TARGET_CUE_REGION_INSTRUCTIONS`, `LIBERO_SPATIAL_TARGET_CUE_LANDMARK_INSTRUCTIONS`,
-task-id-filtered per the table above) and two entries in `eval_registry.SPLITS`/`CONDITIONS`
-(`grounding/target_cue_region`, `grounding/target_cue_landmark`), both on suite `libero_spatial`.
-No new BDDL, no new init states, no new contact-sheet check — see CLAUDE.md's "how to add a
-benchmark split," steps 2-3 only (no step 1, no new scene).
+**Registry: implemented, not yet run.** The two instruction dicts
+(`LIBERO_SPATIAL_TARGET_CUE_REGION_INSTRUCTIONS`, `LIBERO_SPATIAL_TARGET_CUE_LANDMARK_INSTRUCTIONS`)
+and the two `eval_registry.SPLITS`/`CONDITIONS` entries (`grounding/target_cue_region`,
+`grounding/target_cue_landmark`) exist on `openvla` branch `worktree-split4-target-cue-probe`
+(pushed to origin, not yet merged to `main`) — both on suite `libero_spatial`, no new BDDL, no new
+init states, no new contact-sheet check needed. Verified: `python3 -m py_compile` on both files,
+plus a runtime check that `CONDITIONS['target_cue_region']`/`CONDITIONS['target_cue_landmark']`
+resolve to dicts of exactly 8 and 4 task names respectively, matching the table above. Both
+conditions **must** be run with `--task_ids` restricted to their covered subset (`0 1 3 5 6 7 8 9`
+and `3 5 7 9`) — `run_libero_eval.py` asserts `task.name in instruction_map` and does not skip
+missing tasks, so running the full 10-task suite would hard-fail on tasks 2/4 (region_cue) or
+0/1/2/4/6/8 (landmark_cue). Still needed before this is "run" per this doc's own bar: (i) sanity-
+check the region-zone directional wording against a render (see §9), (ii) merge/deploy the branch,
+(iii) launch via `run_eval.sh --split grounding/target_cue_region --task_ids 0 1 3 5 6 7 8 9` and
+the analogous command for `grounding/target_cue_landmark`.
 
 **Deprioritized stretch option — the original 3x3 target x distractor mention matrix.** Kept as an
 explicitly optional follow-on, not part of 4b's core design: a full truthful 3x3 would need a
@@ -356,18 +364,21 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
    approach: midpoint between the target's region center and `plate_region`, verified via
    `LIBERO/scripts/gen_suite_init_states.py` + `verify_suite_init_states.py`'s overlap check
    before trusting it. Deferred rather than rushed without enough render/verify iterations.
-2. **Split 4b cue-phrasing matrix — resolved, not yet implemented.** Decision: drop the
+2. **Split 4b cue-phrasing matrix — resolved and implemented, not yet run.** Decision: drop the
    distractor-mention axis (confounded with Split 1's already-established mention penalty — see
    Split 4's 4b section above), keep only a target-cue-type axis (landmark/surface/region
    rephrasing of the same unmentioned target), and use relaxed/disclosed truthfulness (option (b))
    rather than new scene geometry for that axis. Full design — conditions, per-task prompts,
-   metrics — is written up in Split 4's 4b section above. Remaining before it's "implemented" per
-   this doc's bar: (i) sanity-check the inferred region-zone directional wording (back-left,
-   front-right, etc.) against `libero_spatial`'s existing contact sheet
-   (`LIBERO/scratch_render/libero_spatial/`) — those phrasings were derived from BDDL coordinate
-   signs, not confirmed visually; (ii) add the two instruction dicts + two `SPLITS`/`CONDITIONS`
-   entries; (iii) run. The original full 3x3 (with distractor mention) is kept only as an
-   explicitly deprioritized stretch option, not a commitment.
+   metrics — is written up in Split 4's 4b section above; the two instruction dicts and two
+   `SPLITS`/`CONDITIONS` entries are implemented on `openvla` branch
+   `worktree-split4-target-cue-probe` (pushed, not yet merged). Remaining before it's "run": (i)
+   sanity-check the inferred region-zone directional wording (back-left, front-right, etc.)
+   against `libero_spatial`'s existing contact sheet (`LIBERO/scratch_render/libero_spatial/`) —
+   those phrasings were derived from BDDL coordinate signs, not confirmed visually; (ii) merge the
+   branch; (iii) launch both conditions with `--task_ids` restricted per their `SPLITS`
+   description (required — `run_libero_eval.py` hard-fails on a task id missing from the
+   condition's instruction dict). The original full 3x3 (with distractor mention) is kept only as
+   an explicitly deprioritized stretch option, not a commitment.
 3. **First-pick accuracy / wrong-bowl pick rate / distractor attraction rate** (referenced by
    Split 4a): these need per-step end-effector-to-object contact/proximity logging that
    `run_libero_eval.py` does not currently record (it only logs final success + video). Adding
