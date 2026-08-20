@@ -29,7 +29,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented |
 | 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined to fix a path-proximity confound (see Split 2 below) |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
-| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: not built |
+| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: redesigned as a target-cue-type probe, registry entries not yet added (see below) |
 
 "Implemented" = task suite + prompts exist in the registry and can be run with one `run_eval.sh`
 command. Whether a condition has actually been *run* is tracked in `benchmark_split_result.md`, not
@@ -202,11 +202,105 @@ change, this is purely about what's physically present.
 Registry: existing-scene cells run via `--split spatial/default --task_ids <ids from
 GROUNDING_PROBE_CELLS>`; new cells are `grounding/surface_landmark`, `grounding/region_surface`.
 
-**4b. Target-cue x distractor-cue prompt matrix.** The original spec's 3x3 matrix ("Pick the
-bowl next to the ramekin, not the one next to the cookie box...") requires describing the SAME
-physical target/distractor pair truthfully via 3 different cue types each. **Not built** — see
-§9, this needs either new scene geometry or a relaxed truthfulness constraint, not a decision to
-make silently.
+**4b. Target Cue-Type Probe (redesigned).** The original spec was a 3x3 target-cue x
+distractor-cue prompt matrix ("Pick the bowl next to the ramekin, not the one next to the cookie
+box..."), requiring the SAME physical target/distractor pair to be described truthfully via 3 cue
+types each — flagged as an open question (§9) because a genuine 3x3 needs either new scene
+geometry (most cells can't be truthfully phrased 3 ways without moving fixtures) or a relaxed
+truthfulness constraint, and because mentioning the distractor at all pushes into Split 1's
+territory. **Resolved** by decoupling the two axes rather than forcing a joint matrix:
+
+- **Distractor-mention axis is dropped from 4b entirely.** Split 1 already answered this
+  question for this checkpoint (findings 1, 5 in `benchmark_split_result.md` §6): mentioning a
+  second bowl's location at all, negated or not, costs 47-52 pts overall. Any 4b design that
+  mentions the distractor would mostly re-measure that floor effect, not cue *type* — the two are
+  confounded and 4b should isolate the one Split 1 hasn't tested: cue type, holding "distractor
+  unmentioned" fixed (matching every other split's `default`-prompt convention).
+- **Target-cue axis becomes the whole probe.** For each task, rephrase *only* the target
+  description using an alternate cue type, scene and init states completely unchanged from
+  `spatial/default` — this isolates "does describing the same bowl at the same place via a
+  different cue type change success," independent of scene content (that's 4a's axis) and
+  independent of distractor mention (that's Split 1's axis).
+
+**Truthfulness tiers.** Not every (native family -> alternate cue type) rephrasing is available
+without moving the bowl — each task's target sits in exactly one real place, and only some
+alternate phrasings remain honest descriptions of that place:
+
+| Native family | -> landmark cue | -> surface cue | -> region cue |
+|---|---|---|---|
+| landmark | exact (already `default`) | infeasible — bowl isn't resting on anything | approximate — table-zone phrasing is always constructible |
+| surface | approximate — bowl is co-located with (resting on) the named object, so "next to X" is a defensible if loose reading | exact (already `default`) | approximate — same as above |
+| region | infeasible — no nameable object sits near `table_center` | infeasible — nothing under the bowl | exact (already `default`) |
+
+"Approximate" cells are used and their relaxation is disclosed in the results write-up, not
+silently treated as equivalent to "exact" — same disclosure norm as Split 2's `irrelevant`
+redefinition. "Infeasible" cells are skipped, not faked.
+
+This yields exactly 2 new conditions, both reusing the stock `libero_spatial` scene/init
+states/BDDL untouched (zero new geometry, zero new render-check burden — same scene `spatial/default`
+was already checked against):
+
+| Condition | Applies to (task ids) | New phrasing per task |
+|---|---|---|
+| `target_cue_region` | 0, 1, 3, 5, 6, 7, 8, 9 (landmark- and surface-family tasks; excludes task 2 — already native region — and task 4, containment) | table-zone description instead of the native landmark/surface phrasing |
+| `target_cue_landmark` | 3, 5, 7, 9 (surface-family tasks only; landmark-family tasks already use this cue natively, region-family task 2 has no nearby nameable object) | "next to `<the object the bowl rests on>`" instead of "on `<object>`" |
+
+Proposed instruction text (region-zone wording derived from each region's `(x,y)` sign in the
+shared catalog above — positive x = robot-right, positive y = table-back, inferred from the
+relative positions of `stove_region`/`cabinet_region`/`box_region` vs. `ramekin_region`/
+`plate_region`; **not yet confirmed against a fresh render, sanity-check before running** — see
+checklist item below):
+
+| id | native target phrase | `target_cue_region` | `target_cue_landmark` |
+|--:|---|---|---|
+| 0 | between the plate and the ramekin | at the back of the table, just left of center | — (already landmark) |
+| 1 | next to the ramekin | at the far back-left of the table | — (already landmark) |
+| 3 | on the cookie box | near the center of the table | next to the cookie box |
+| 5 | on the ramekin | at the back-left of the table | next to the ramekin |
+| 6 | next to the cookie box | at the front-right of the table | — (already landmark) |
+| 7 | on the stove | at the front-left of the table | next to the stove |
+| 8 | next to the plate | at the far back of the table | — (already landmark) |
+| 9 | on the wooden cabinet | at the front of the table, just right of center | next to the wooden cabinet |
+
+**Metrics:**
+
+```
+Region-cue Drop (per task)     = SR(spatial/default, task) - SR(target_cue_region, task)
+Landmark-cue Drop (per task)   = SR(spatial/default, task) - SR(target_cue_landmark, task)
+Region-cue Drop, landmark-family pool = mean over tasks {0,1,6,8}
+Region-cue Drop, surface-family pool  = mean over tasks {3,5,7,9}
+```
+
+The family-pooled comparison directly tests 4a's hypothesis from the language side: does forcing
+a *landmark-located* bowl into region-style language cost more than forcing a *surface-located*
+bowl into region-style language? If landmark-family's region-cue drop is meaningfully larger than
+surface-family's, that's evidence the policy leans on landmark-style relational language
+specifically, not just target-family-appropriate language in general.
+
+Trials: 50/task/condition, seed 7, same protocol as every other split — reuses `spatial/default`'s
+existing per-task numbers as the "native cue" baseline for both metrics (no re-run of that
+condition needed, same pattern as 4a's 4 reused cells).
+
+**Registry (not yet added — this is a design, not yet "implemented" per this doc's own bar):**
+would need two new dicts in `openvla/experiments/robot/libero/instructions.py`
+(`LIBERO_SPATIAL_TARGET_CUE_REGION_INSTRUCTIONS`, `LIBERO_SPATIAL_TARGET_CUE_LANDMARK_INSTRUCTIONS`,
+task-id-filtered per the table above) and two entries in `eval_registry.SPLITS`/`CONDITIONS`
+(`grounding/target_cue_region`, `grounding/target_cue_landmark`), both on suite `libero_spatial`.
+No new BDDL, no new init states, no new contact-sheet check — see CLAUDE.md's "how to add a
+benchmark split," steps 2-3 only (no step 1, no new scene).
+
+**Deprioritized stretch option — the original 3x3 target x distractor mention matrix.** Kept as an
+explicitly optional follow-on, not part of 4b's core design: a full truthful 3x3 would need a
+purpose-built pilot scene (e.g. relocating `cookies_1` adjacent to `ramekin_region` so a single
+bowl sitting on the cookie box is simultaneously "on the cookie box" (surface), "next to the
+ramekin" (landmark), and "at the back-left of the table" (region) — all exactly true at once,
+for both target and distractor). That's new-geometry work at the same scope as Split 2's
+unauthored `path` distractor (§9) — a new per-task numeric region, not reusable from the shared
+catalog, needing `gen_suite_init_states.py` + `verify_suite_init_states.py` + a contact-sheet
+eyeball before trusting it. Given the expected floor effect from distractor mention (see above),
+this is unlikely to isolate cue-type effects cleanly even if built, so it's not recommended as the
+next use of engineering time unless the target-cue-only results above turn out to need it as a
+follow-up.
 
 ## 4. Baselines
 
@@ -262,12 +356,18 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
    approach: midpoint between the target's region center and `plate_region`, verified via
    `LIBERO/scripts/gen_suite_init_states.py` + `verify_suite_init_states.py`'s overlap check
    before trusting it. Deferred rather than rushed without enough render/verify iterations.
-2. **Split 4b cue-phrasing matrix**: the existing scene catalog gives each bowl exactly one
-   truthful spatial description; a 3x3 truthful-phrasing matrix isn't obtainable by relabeling.
-   Either (a) build new scenes where a bowl is genuinely near multiple landmark/surface/region
-   cues simultaneously, or (b) relax "truthful" to "salient but approximate" and accept some
-   prompts describe a real but non-primary relation. Needs a call from whoever owns the research
-   design before either is built.
+2. **Split 4b cue-phrasing matrix — resolved, not yet implemented.** Decision: drop the
+   distractor-mention axis (confounded with Split 1's already-established mention penalty — see
+   Split 4's 4b section above), keep only a target-cue-type axis (landmark/surface/region
+   rephrasing of the same unmentioned target), and use relaxed/disclosed truthfulness (option (b))
+   rather than new scene geometry for that axis. Full design — conditions, per-task prompts,
+   metrics — is written up in Split 4's 4b section above. Remaining before it's "implemented" per
+   this doc's bar: (i) sanity-check the inferred region-zone directional wording (back-left,
+   front-right, etc.) against `libero_spatial`'s existing contact sheet
+   (`LIBERO/scratch_render/libero_spatial/`) — those phrasings were derived from BDDL coordinate
+   signs, not confirmed visually; (ii) add the two instruction dicts + two `SPLITS`/`CONDITIONS`
+   entries; (iii) run. The original full 3x3 (with distractor mention) is kept only as an
+   explicitly deprioritized stretch option, not a commitment.
 3. **First-pick accuracy / wrong-bowl pick rate / distractor attraction rate** (referenced by
    Split 4a): these need per-step end-effector-to-object contact/proximity logging that
    `run_libero_eval.py` does not currently record (it only logs final success + video). Adding
