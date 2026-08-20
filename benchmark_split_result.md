@@ -47,7 +47,7 @@ Applies to every condition below unless a section says otherwise.
 | 1. Prompt Sensitivity | 3/3 conditions implemented | 3/3 run (`default`, `negative_contrast`, `positive_contrast`) |
 | 2. Distractor Placement | 3/4 conditions implemented (`path` not authored) | 4/4 implemented conditions run (`irrelevant`, `semantic`, `landmark`, `landmark_with_hardneg_prompt`; the old `irrelevant` data survives relabeled as `center_fixed_legacy`); only unauthored `path` remains |
 | 3. Scene Complexity | Implemented | Run (both conditions) |
-| 4. Surface vs. Landmark Grounding | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: not built | 4/6 cells derivable from existing Split-1 data; 2/6 not run |
+| 4. Surface vs. Landmark Grounding | 4a: cells implemented, 2 new-scene cells' contact sheets now checked (§7); 4b: implemented as a target cue-type probe | 4/6 cells derivable from existing Split-1 data; 2/6 not run; 4b's 2 conditions not run |
 
 ---
 
@@ -449,8 +449,8 @@ this matrix — see `benchmark_split_plan.md` §3).
 | (region, landmark) | 2: 92% | **92.0%** | ✅ derived from existing data |
 | (surface, surface) | 3: 84%, 5: 94%, 7: 72%, 9: 72% | **80.5%** | ✅ derived from existing data |
 | (landmark, surface) | 6: 90% | **90.0%** | ✅ derived from existing data |
-| (surface, landmark) | new suite, task 0 | — | ⬜ scene authored + init states generated, not run |
-| (region, surface) | new suite, task 0 | — | ⬜ scene authored + init states generated, not run |
+| (surface, landmark) | new suite, task 0 | — | ⬜ scene authored + init states verified + contact sheet checked (§7), not run |
+| (region, surface) | new suite, task 0 | — | ⬜ scene authored + init states verified + contact sheet checked (§7), not run |
 
 **Preliminary observation** (from the 4 derived cells only, n is small — 1-4 tasks/cell, treat as
 suggestive not conclusive): landmark-target cells (86.7%, 92.0%, 90.0%) are **not** lower than the
@@ -460,10 +460,14 @@ per-task variation the hypothesis wasn't designed to control for (e.g. task 7's 
 something task-specific, not its relation family) — the 2 missing cells (needing an actual GPU run)
 are what would let this be tested properly rather than eyeballed from 4 small buckets.
 
-**4b.** Not built — see `benchmark_split_plan.md` §9.
+**4b.** Redesigned as a target cue-type probe and implemented (`grounding/target_cue_region`,
+`grounding/target_cue_landmark` on `openvla` branch `worktree-split4-target-cue-probe`), not yet
+run — see `benchmark_split_plan.md` Split 4's 4b section.
 
-**Still queued:** `grounding/surface_landmark`, `grounding/region_surface` — both registry-ready,
-init states verified, no rollouts yet.
+**Still queued:** `grounding/surface_landmark`, `grounding/region_surface` — registry-ready, init
+states verified, contact sheets checked (§7), no rollouts yet. `grounding/target_cue_region`,
+`grounding/target_cue_landmark` — implemented on `openvla` branch `worktree-split4-target-cue-probe`
+(pushed, not merged), no rollouts yet.
 
 ---
 
@@ -537,9 +541,19 @@ embedded inline in each condition's section above (§3-4).
 | `libero_spatial_3bowl_neutral` (`irrelevant`) | PASS, worst sep 0.122m | ✅ | 3 distinct bowls per task, no overlaps |
 | `libero_spatial_3bowl_semantic` (`semantic`) | verified | ✅ | 3 distinct bowls per task, no overlaps/clipping, drawer open only on task 4 (expected — task 4's target lives in the drawer) |
 | `libero_spatial_3bowl_hardneg` (`landmark` / `landmark_with_hardneg_prompt`, same scene) | PASS but narrow — min sep 0.121m vs. 0.12m threshold, task 3 tightest | ✅ | 3 distinct bowls per task; task 3's close pair confirmed as two separate bowls, not merged |
+| `libero_spatial_grounding_surface_landmark` (`grounding/surface_landmark`) | PASS, sep 0.393m | ✅ | Single task (`on_the_ramekin`). Cross-checked exact xyz against the BDDL, not just pixels: target `akita_black_bowl_1` = (-0.210, 0.192, z=1.080) — inside `ramekin_region` (-0.21,0.19)-(-0.19,0.21), elevated (on top of the ramekin, as intended). Distractor `akita_black_bowl_2` = (0.116, -0.067, z=0.970) — inside `next_to_box_region` (0.12,-0.08)-(0.14,-0.06) (0.004m outside on x, negligible), flat on the table (not elevated) — confirms it moved off `cookies_1` (was elevated/surface in the original task 5) to a landmark placement, as designed. No overlap/clipping. |
+| `libero_spatial_grounding_region_surface` (`grounding/region_surface`) | PASS, sep 0.210m | ✅ | Single task (`from_table_center`). Target `akita_black_bowl_1` = (-0.075, 0.003, z=0.970) — inside `table_center` (-0.10,-0.01)-(-0.05,0.01), flat on table (region cue, as intended). Distractor `akita_black_bowl_2` = (-0.263, -0.137, z=1.010) — y matches `stove_region`'s -0.14 almost exactly, x offset from the stove's base anchor (-0.41) is consistent with `flat_stove_1_cook_region` being the stove's own top surface (same region used by tasks 6/9's distractors elsewhere in the suite), elevated (on top of the stove) — confirms surface placement, moved off `next_to_plate_region` (landmark in the original task 2). No overlap/clipping. |
 
 `libero_spatial` (baseline) and `libero_spatial_3bowl`/`libero_spatial_3bowl_open`
 (`center_fixed_legacy`/`drawer_open`) predate this render-before-run practice being tracked here;
-no issues have surfaced in their data, but no dedicated check is logged. `grounding/surface_landmark`
-and `grounding/region_surface` have generated + verified init states but have **not** had a contact
-sheet eyeballed yet — do that before running them.
+no issues have surfaced in their data, but no dedicated check is logged. The two grounding suites
+above are now checked and ready to run — see Split 4a's row in the status table.
+
+Note on method: for these two single-task suites, plain pixel-diffing the new render against the
+original `libero_spatial` task's render (t5 for surface_landmark, t2 for region_surface) was tried
+first and was inconclusive — moving one bowl shifts shadows/specular highlights across a large
+fraction of a 256x256 frame, so a large diff bounding box doesn't distinguish "one bowl moved" from
+"something is wrong." Reading the actual simulator joint `qpos` for each bowl (as tabulated above)
+and comparing against the BDDL region catalog is unambiguous and is the more reliable check for a
+single-object scene change — recommended over pixel-diffing for any future single-task gap-fill
+suite in this project.
