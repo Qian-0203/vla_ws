@@ -198,7 +198,7 @@ a path-proximity confound (see analysis below); kept only as a labeled historica
 **Render compare** (left = 2 bowls `libero_spatial`, right = 3 bowls `libero_spatial_3bowl`; rows =
 task ids 0–9, each panel the real episode-0 state restored via `set_init_state`):
 
-![2-bowl vs 3-bowl init states](figures/compare_2v3bowl_grid.png)
+![2-bowl vs 3-bowl init states](openvla/experiments/figures/compare_2v3bowl_grid.png)
 
 **Analysis.** Overall success is **robust** to one extra distractor (−3.8 pts) — but the loss is
 **concentrated**: task 6 (*next to the cookie box*) collapses 90%→44% because the fixed-coordinate
@@ -419,7 +419,7 @@ the cabinet model; only its position changes.
 **Render compare** (left = drawer closed `libero_spatial_3bowl`, right = drawer open
 `libero_spatial_3bowl_open`; rows = task ids 0–9):
 
-![3-bowl: drawer closed vs open](figures/compare_3bowl_closed_vs_open_grid.png)
+![3-bowl: drawer closed vs open](openvla/experiments/figures/compare_3bowl_closed_vs_open_grid.png)
 
 **Analysis.** The raw −20.2 pt drop overstates the policy effect: nearly half of it comes from the
 three blocked tasks (3, 6, 7), where no policy could succeed because the open drawer occupies the
