@@ -7,10 +7,11 @@ that registry must agree; if you change one, change the other. Operational detai
 setup, exact commands, log/result locations) live in `CLAUDE.md` and are linked, not repeated, here.
 
 **This is the plan and process doc.** It answers "what is each split, what's the hypothesis, what's
-built." It does **not** track whether a condition has actually been run or what the numbers were —
-that's `benchmark_split_result.md` (status/progress dashboard + cross-experiment analysis) and
-`eval_results.md` (append-only, full per-experiment write-ups — the ultimate source for any number).
-When a split's definition changes, update this file. When an eval finishes, update the other two.
+built." It does **not** track whether a condition has actually been run, what its detailed setting/
+results/analysis were, or when it was launched — that's `benchmark_split_result.md` (detailed
+per-condition setting, render compare, results, analysis — the authoritative source for any number)
+and `eval_log.md` (append-only launch log: what ran, in what order, on what hardware). When a split's
+definition changes, update this file. When an eval finishes, update the other two.
 
 ## 1. Research motivation
 
@@ -76,7 +77,7 @@ Registry: `spatial/default`, `spatial/positive_contrast`, `spatial/negative_cont
 
 Registry: `spatial_3bowl/irrelevant` (suite `libero_spatial_3bowl_neutral`, redefined — see below),
 `spatial_3bowl/center_fixed_legacy` (suite `libero_spatial_3bowl`, the retired single-fixed-
-coordinate definition, kept only so `eval_results.md`'s original Exp 2 number stays attributable),
+coordinate definition, kept only so `benchmark_split_result.md`'s original Exp 2 number stays attributable),
 `spatial_3bowl/semantic` (suite `libero_spatial_3bowl_semantic`), `spatial_3bowl/landmark` (suite
 `libero_spatial_3bowl_hardneg`). All reuse `unnorm_key=libero_spatial` since the checkpoint was
 trained on the 2-bowl scene. `spatial_3bowl/landmark_with_hardneg_prompt` additionally swaps in the
@@ -137,7 +138,7 @@ bowl_1 already occupies `table_center` there.
 
 **Design confound found, then fixed.** `center_fixed_legacy`'s bowl_3 sits at the *same fixed
 absolute coordinate* in 9 of 10 tasks, regardless of the target's location — it is not "neutral"
-relative to every task's reach path. This produced task 6's outlier result in `eval_results.md`
+relative to every task's reach path. This produced task 6's outlier result in `benchmark_split_result.md`
 Exp 2 (90%→44%): `table_center` (−0.075,0.0) sits roughly on the straight line between
 `next_to_box_region` (0.13,−0.07) and `plate_region` (0.06,0.20) — a rough perpendicular-distance
 estimate puts it ~0.18m off that line, comparable to the ~0.115m bowl diameter plus gripper
@@ -159,7 +160,7 @@ vicinity more than an ideal design would. Distances to target range 0.236–0.62
 larger than `semantic`'s 0.33–0.50m and clearly farther than `landmark`'s 0.15–0.29m, so the
 ordering (`landmark` closest → `semantic` mid → `irrelevant` farthest) is intact. `landmark`'s
 bowl_3 gets a bespoke `hardneg_region` per task and never shared this flaw. `center_fixed_legacy`
-is kept in the registry only as a retired label so `eval_results.md`'s original Exp 2 number stays
+is kept in the registry only as a retired label so `benchmark_split_result.md`'s original Exp 2 number stays
 attributable — it is **not** reused as the current `irrelevant` definition.
 
 ### Split 3 — Scene Complexity Probe
@@ -171,7 +172,7 @@ attributable — it is **not** reused as the current `irrelevant` definition.
 | Changed variable | Wooden cabinet's top drawer: closed vs. open |
 | Controlled variables | 3-bowl scene (`center_fixed_legacy` placement — see Split 2's redefinition note), prompt = `default`, checkpoint, seed |
 | Conditions | `drawer_closed` (= Split 2's `center_fixed_legacy`, not the current `irrelevant`) · `drawer_open` |
-| Tasks | All 10 tasks; **tasks 3, 6, 7 excluded from the adjusted metric** — rollout review showed the open drawer physically blocks their trajectories (`eval_results.md` Exp 3; see `benchmark_split_result.md` for the methodology caveat on this exclusion) |
+| Tasks | All 10 tasks; **tasks 3, 6, 7 excluded from the adjusted metric** — rollout review showed the open drawer physically blocks their trajectories (see `benchmark_split_result.md` §4 for per-task detail and the methodology caveat on this exclusion) |
 | Trials | 50/task/condition, seed 7 |
 | Metrics | `Raw Clutter Drop = SR(drawer_closed) - SR(drawer_open)` over all 10 tasks; `Adjusted Clutter Drop` = same formula restricted to the 7 feasible tasks {0,1,2,4,5,8,9} |
 | Output | `EVAL-libero_spatial_3bowl_open-openvla-*.txt` + matching `results/*.jsonl` |
@@ -210,8 +211,9 @@ make silently.
 ## 4. Baselines
 
 The single reference number everything compares against: `spatial/default` — 2 bowls, default
-prompt, `libero_spatial` scene, 84.0% (420/500), `eval_results.md` Exp 1. Split 3's adjusted
-comparison uses a recomputed 7-task baseline (84.9%, 297/350) instead — see Split 3's row above.
+prompt, `libero_spatial` scene, 84.0% (420/500), see `benchmark_split_result.md` §2. Split 3's
+adjusted comparison uses a recomputed 7-task baseline (84.9%, 297/350) instead — see Split 3's row
+above.
 
 ## 5. Rollout & seed protocol
 
@@ -221,7 +223,7 @@ comparison uses a recomputed 7-task baseline (84.9%, 297/350) instead — see Sp
   differences are attributable to the changed variable, not sampling noise.
 - Success = LIBERO's own goal predicate for that task (`env.step` returns `done=True`).
 - At n=50/task, 1 standard error is roughly ±5-7 points — treat single-task deltas below ~10
-  points as noise (stated explicitly in `eval_results.md`, carried forward here).
+  points as noise (stated explicitly in `benchmark_split_result.md` §0, carried forward here).
 
 ## 6. Aggregation rule
 
@@ -250,8 +252,8 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
   up to distribution shift.
 - **`center_fixed_legacy` is a single fixed coordinate** (`table_center`/`table_front`) reused
   across all 10 tasks, not a per-task-neutral position — see Split 2's confound note above. It's
-  kept only as a retired label for `eval_results.md`'s original Exp 2 number, never reused as the
-  current `irrelevant` definition.
+  kept only as a retired label for `benchmark_split_result.md`'s original Exp 2 number, never
+  reused as the current `irrelevant` definition.
 
 ## 9. Open design questions (do not implement without a decision)
 
@@ -283,5 +285,6 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
 4. `MACHINE_CONFIG=config/<machine>.env bash docker/openvla_libero/run_eval.sh --split <id>`
 5. `python scripts/aggregate_results.py --filter <suite name>` to get the per-task/overall table.
 6. Compare against the baseline/formulas in the relevant split's row above.
-7. Record the result in `eval_results.md` (append — never overwrite existing experiments) **and**
-   update `benchmark_split_result.md`'s status tables + findings. Every real run touches both.
+7. Append an entry to `eval_log.md` (launch batch, hardware, order, results-file paths) **and**
+   update `benchmark_split_result.md` (the condition's detail section, status tables, findings).
+   Every real run touches both — never overwrite existing sections in either.

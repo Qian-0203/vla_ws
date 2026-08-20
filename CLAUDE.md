@@ -1,8 +1,9 @@
 # CLAUDE.md
 
-Operating guide for working in this repo. For the research spec (splits, hypotheses, metrics), see
-`benchmark_split_plan.md`; for current status/findings, see `benchmark_split_result.md` — this file
-is operational only; don't duplicate that content here.
+Operating guide for working in this repo. For the research spec (splits, hypotheses, process), see
+`benchmark_split_plan.md`; for detailed per-condition settings/results/analysis, see
+`benchmark_split_result.md`; for the chronological record of eval launches, see `eval_log.md` — this
+file is operational only; don't duplicate that content here.
 
 ## What this is
 
@@ -14,12 +15,15 @@ separate real spatial/language grounding from overfitting to the training distri
 
 ```
 vla_ws/                    <- THIS repo. Docs, config, docker orchestration. No model/eval code.
-  benchmark_split_plan.md      research spec: splits, hypotheses, scene design (update when a
-                                split's definition changes)
-  benchmark_split_result.md    status dashboard: run/not-run, success rates, drop metrics,
-                                cross-experiment findings, render/contact-sheet check log (update
-                                after every real eval run)
-  eval_results.md              detailed per-experiment results (append-only, never overwrite)
+  benchmark_split_plan.md      plan & process: splits, hypotheses, scene design, execution
+                                checklist (update when a split's definition changes)
+  benchmark_split_result.md    detailed record: per-condition setting (instruction/prompt text,
+                                render scene, distractor placement), render compare figures, full
+                                per-task results, analysis, status dashboard, cross-experiment
+                                findings (update after every real eval run)
+  eval_log.md                  launch log: what ran, in what order, on what hardware/config,
+                                where outputs landed (append-only, never overwrite; update after
+                                every real eval run)
   config/                      machine profiles (laptop.env, server.env.example)
   docker/openvla_libero/       Dockerfiles + run_eval.sh (the one eval launcher)
   scripts/                     aggregate_results.py, preflight.py
@@ -56,9 +60,11 @@ eval logic or scenes, `cd` into the relevant fork and commit there separately.
   `libero_suite_task_map.py` (task lists) + `bddl_files/<suite>/*.bddl` (scene geometry)
 - **Research semantics (hypotheses, metrics, scene design, what's implemented vs. open):**
   `benchmark_split_plan.md`
-- **Current status (run vs. not, success rates, findings):** `benchmark_split_result.md`
-- **Historical results (full per-experiment detail):** `eval_results.md` (append new experiments,
-  never edit old ones)
+- **Per-condition setting, results, and analysis (instruction text, render scene, distractor
+  placement, render compare, full per-task results, status dashboard, cross-experiment findings):**
+  `benchmark_split_result.md` — the authoritative source for any number
+- **When something was launched (batch order, hardware/config, results-file paths):** `eval_log.md`
+  (append-only, never edit old entries)
 
 ## Environment setup
 
@@ -109,13 +115,14 @@ Any flag not consumed by `run_eval.sh` (`--split`, `--resume`, ...) forwards str
 - Run metadata (config, checkpoint, git commit, python/torch/GPU, timestamp): sibling `*.meta.json`
 - Rollout videos: `openvla/rollouts/{date}/`
 - Aggregate: `python scripts/aggregate_results.py [--filter <suite substring>]` — per-task +
-  suite-wide success rate (mean of per-task rates, matching `eval_results.md`'s convention).
-- After a real run, update all three docs by hand (none are auto-generated):
-  1. Append a summary to `eval_results.md` — narrative, full per-task table, takeaway. Never
-     overwrite existing experiment sections.
-  2. Update `benchmark_split_result.md` — the condition's status table row (SR/rollouts/source),
-     any computed drop metric, and the cross-experiment findings list if this run changes the
-     picture. This is the file to update on *every* run, without exception.
+  suite-wide success rate (mean of per-task rates, matching `benchmark_split_result.md`'s convention).
+- After a real run, update the docs by hand (none are auto-generated):
+  1. Append an entry to `eval_log.md` — batch date, hardware/image/checkpoint, launch order, one-line
+     headline + rollouts per condition, results-file paths. Never overwrite existing entries.
+  2. Update `benchmark_split_result.md` — add/extend the condition's detail section (setting,
+     render compare, full per-task table, analysis), the status table row (SR/rollouts), any
+     computed drop metric, and the cross-experiment findings list if this run changes the picture.
+     This is the file to update on *every* run, without exception.
   3. Update `benchmark_split_plan.md` only if the run changed a split's *definition* (e.g. a scene
      redefinition, a newly authored condition) — most runs don't touch this file.
 
@@ -176,13 +183,15 @@ Any flag not consumed by `run_eval.sh` (`--split`, `--resume`, ...) forwards str
    new suite).
 4. Add a row to `benchmark_split_plan.md` (§3) describing the hypothesis/metrics — code and doc
    must agree. Add the new condition to `benchmark_split_result.md`'s status table too (as
-   not-yet-run) so it isn't dropped from tracking.
+   not-yet-run) so it isn't dropped from tracking, and to `eval_log.md`'s "still queued" list.
 5. Commit scene changes in `LIBERO/`, code changes in `openvla/`, and doc changes here —
    separately, in their own repos.
 
 ## Protected files
 
-- `eval_results.md` — append-only, historical record. Never edit or delete existing sections.
+- `eval_log.md` — append-only, historical launch record. Never edit or delete existing entries.
+- `benchmark_split_result.md` — never delete an existing condition's detail section; extend or
+  append instead.
 - `openvla/checkpoint/`, `openvla/libero_spatial/` (training data, not read at eval time) — large,
   gitignored, never delete without explicit instruction.
 - Canonical `libero_spatial` BDDL files — never modify (the 84% baseline depends on exact scene
@@ -197,6 +206,6 @@ clobber uncommitted work in `openvla/`/`LIBERO/`.
 After: `python3 -m py_compile` on any touched `.py`; if you touched scene BDDLs, re-run
 `verify_suite_init_states.py` and eyeball the contact sheet (log the check in
 `benchmark_split_result.md` §7); if you touched `eval_registry.py`, confirm `benchmark_split_plan.md`
-still matches; after any real eval run, update `benchmark_split_result.md` and `eval_results.md`
+still matches; after any real eval run, update `benchmark_split_result.md` and `eval_log.md`
 (see "Results & logs" above); run `python scripts/preflight.py` before claiming a new machine is
 eval-ready.

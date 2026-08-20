@@ -5,7 +5,7 @@ aggregate_results.py
 Canonical aggregation for eval runs: reads the structured per-rollout JSONL
 files written by openvla/experiments/robot/libero/run_libero_eval.py (under
 openvla/experiments/logs/results/) and prints per-task + suite-wide success
-rates, in the same "mean of per-task rates" convention eval_results.md uses.
+rates, in the same "mean of per-task rates" convention benchmark_split_result.md uses.
 
 Multi-GPU runs write one JSONL per shard (name ends in --shard{i}of{N}); this
 merges shards of the same run back into one suite-wide result automatically.
