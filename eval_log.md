@@ -89,15 +89,57 @@ results/libero_spatial_3bowl_hardneg--hardneg--shard{0..3}of4.jsonl
 
 ---
 
+## 2026-08-20 — Split 4 batch: 4a's 2 gap-fill cells + 4b's target-cue-type probe
+
+- **Hardware:** 4× RTX PRO 6000 Blackwell (same server as the 2026-08-19 batch), `openvla-libero:blackwell`
+  (sdpa). Only GPUs 1 and 3 used — GPUs 0 and 2 were occupied by other concurrent work on this shared
+  server at launch time, left untouched throughout.
+- **Checkpoint/seed:** unchanged from the baseline batch (`baseline_lora_libero_spatial_4gpu_b24_run004`,
+  seed 7).
+- **Protocol:** 50 trials/task, sharded 2-way across GPUs 1/3 (round-robin task assignment produced
+  uneven per-shard task counts for `target_cue_region` (3 vs. 5 tasks) and `target_cue_landmark` (0
+  vs. 4 tasks) since sharding happens before the `--task_ids` filter narrows the set — correctness
+  unaffected (verified below), only wall-clock balance).
+- **Pre-launch fixes required** (both applied on `LIBERO` branch `worktree-split4-contact-sheets`,
+  merged to `master`): `torch.load` in `verify_suite_init_states.py` and
+  `Benchmark.get_task_init_states` both needed `weights_only=False` for current PyTorch (>=2.6
+  flipped the default) — caught via a 1-trial smoke test before committing to the full run.
+
+Launched, in order:
+
+| # | Split/condition | Suite | Headline SR | Rollouts |
+|--:|---|---|--:|--:|
+| 1 | `grounding/surface_landmark` | `libero_spatial_grounding_surface_landmark` | 88.0% | 50/50 |
+| 2 | `grounding/region_surface` | `libero_spatial_grounding_region_surface` | 92.0% | 50/50 |
+| 3 | `grounding/target_cue_region` | `libero_spatial` (task_ids 0,1,3,5,6,7,8,9) | 17.0% | 400/400 |
+| 4 | `grounding/target_cue_landmark` | `libero_spatial` (task_ids 3,5,7,9) | 30.5% | 200/200 |
+
+**Verification before writing up results:** exact task-id coverage and per-task trial counts
+cross-checked programmatically for #3/#4 (all requested task ids present, exactly 50/task, zero
+duplicate `(task_id, episode_idx)` pairs across shards) — see `benchmark_split_result.md` §5.2 for
+the full per-task table and analysis. Numbers cross-verified against
+`scripts/aggregate_results.py --filter <suite>` (canonical aggregator), not just ad hoc counting.
+
+**Results files:**
+```
+results/libero_spatial_grounding_surface_landmark--default--shard0of2.jsonl
+results/libero_spatial_grounding_region_surface--default--shard0of2.jsonl
+results/libero_spatial--target_cue_region--shard{0,1}of2.jsonl
+results/libero_spatial--target_cue_landmark--shard{0,1}of2.jsonl
+```
+
+**Status:** complete. This finishes Split 4 (4a: 6/6 cells, 4b: 2/2 conditions) — see
+`benchmark_split_result.md` §5 for the full write-up and §6 findings 10-11 for the headline result
+(target cue-type rephrasing alone costs 50-67 pts, the largest effect measured in this project).
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
-| Split/condition | Suite | Readiness |
-|---|---|---|
-| `grounding/surface_landmark` | new scene | init states verified; contact sheet not yet eyeballed |
-| `grounding/region_surface` | new scene | init states verified; contact sheet not yet eyeballed |
+_(none — Split 4's `path` distractor (Split 2) remains the only open item, see below)_
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
-distractor, Split 4b's cue-phrasing matrix.
+distractor.
 
 ---
 
@@ -116,6 +158,8 @@ distractor, Split 4b's cue-phrasing matrix.
   | `libero_spatial_3bowl_neutral` | +1 bowl, redefined `irrelevant` |
   | `libero_spatial_3bowl_semantic` | +1 bowl, `semantic` |
   | `libero_spatial_3bowl_hardneg` | +1 bowl, `landmark` / `landmark_with_hardneg_prompt` |
+  | `libero_spatial_grounding_surface_landmark` | 2 bowls, distractor moved to a landmark region |
+  | `libero_spatial_grounding_region_surface` | 2 bowls, distractor moved to a surface region |
 
 - Helper scripts (`LIBERO/scripts/`): `gen_suite_init_states.py <suite>`,
   `verify_suite_init_states.py <suite>`, `render_suite_contact_sheet.py <suite>`,

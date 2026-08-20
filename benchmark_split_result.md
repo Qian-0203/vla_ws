@@ -47,7 +47,7 @@ Applies to every condition below unless a section says otherwise.
 | 1. Prompt Sensitivity | 3/3 conditions implemented | 3/3 run (`default`, `negative_contrast`, `positive_contrast`) |
 | 2. Distractor Placement | 3/4 conditions implemented (`path` not authored) | 4/4 implemented conditions run (`irrelevant`, `semantic`, `landmark`, `landmark_with_hardneg_prompt`; the old `irrelevant` data survives relabeled as `center_fixed_legacy`); only unauthored `path` remains |
 | 3. Scene Complexity | Implemented | Run (both conditions) |
-| 4. Surface vs. Landmark Grounding | 4a: cells implemented, 2 new-scene cells' contact sheets now checked (§7); 4b: implemented as a target cue-type probe | 4/6 cells derivable from existing Split-1 data; 2/6 not run; 4b's 2 conditions not run |
+| 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe | ✅ fully run — 6/6 cells (4a), 2/2 conditions (4b) |
 
 ---
 
@@ -438,10 +438,17 @@ pts), not the collapse the raw number suggests.
 
 ## 5. Split 4 — Surface vs. Landmark Grounding Probe
 
-**4a.** 4 of 6 cells reuse rollouts already collected under `spatial/default` (Split 1) — no new GPU
-run needed, just re-aggregating existing per-task numbers by relation-family cell. Per-task `default`
-success rates below are copied from Split 1's `default` table (task 4, containment, is excluded from
-this matrix — see `benchmark_split_plan.md` §3).
+**Split fully run** — both 4a's two missing cells and 4b (redesigned as a target cue-type probe)
+completed 2026-08-20. See `eval_log.md` for the launch batch.
+
+### 5.1 — 4a: Grounding-by-scene probe (complete, all 6 cells)
+
+4 of 6 cells reuse rollouts already collected under `spatial/default` (Split 1) — no new GPU run
+needed for those, just re-aggregating existing per-task numbers by relation-family cell. The other 2
+cells (`grounding/surface_landmark`, `grounding/region_surface`) are new 50-trial/task runs on the
+gap-fill scenes described in §7's render-check log. Per-task `default` success rates are copied from
+Split 1's `default` table (task 4, containment, is excluded from this matrix — see
+`benchmark_split_plan.md` §3).
 
 | (target, distractor) family | Tasks (id: SR) | Cell SR | Status |
 |---|---|--:|---|
@@ -449,25 +456,97 @@ this matrix — see `benchmark_split_plan.md` §3).
 | (region, landmark) | 2: 92% | **92.0%** | ✅ derived from existing data |
 | (surface, surface) | 3: 84%, 5: 94%, 7: 72%, 9: 72% | **80.5%** | ✅ derived from existing data |
 | (landmark, surface) | 6: 90% | **90.0%** | ✅ derived from existing data |
-| (surface, landmark) | new suite, task 0 | — | ⬜ scene authored + init states verified + contact sheet checked (§7), not run |
-| (region, surface) | new suite, task 0 | — | ⬜ scene authored + init states verified + contact sheet checked (§7), not run |
+| (surface, landmark) | new suite, task 0: 88% (44/50) | **88.0%** | ✅ run |
+| (region, surface) | new suite, task 0: 92% (46/50) | **92.0%** | ✅ run |
 
-**Preliminary observation** (from the 4 derived cells only, n is small — 1-4 tasks/cell, treat as
-suggestive not conclusive): landmark-target cells (86.7%, 92.0%, 90.0%) are **not** lower than the
-surface-target cell (80.5%) — if anything the opposite of the stated hypothesis ("landmark-target
-scenes are more attraction-prone"). This is a real signal worth noting, but it's confounded with
-per-task variation the hypothesis wasn't designed to control for (e.g. task 7's 72% may reflect
-something task-specific, not its relation family) — the 2 missing cells (needing an actual GPU run)
-are what would let this be tested properly rather than eyeballed from 4 small buckets.
+**Conclusion (now conclusive, all 6 cells run — supersedes the earlier "preliminary" read).**
+Pooling cells by target family (simple mean of that family's cell SRs, same convention as the
+original 4-cell read):
 
-**4b.** Redesigned as a target cue-type probe and implemented (`grounding/target_cue_region`,
-`grounding/target_cue_landmark` on `openvla` branch `worktree-split4-target-cue-probe`), not yet
-run — see `benchmark_split_plan.md` Split 4's 4b section.
+| Target family | Cells (SR) | Family mean |
+|---|---|--:|
+| landmark | (landmark,landmark)=86.7%, (landmark,surface)=90.0% | **88.35%** |
+| surface | (surface,surface)=80.5%, (surface,landmark)=88.0% | **84.25%** |
+| region | (region,landmark)=92.0%, (region,surface)=92.0% | **92.0%** |
 
-**Still queued:** `grounding/surface_landmark`, `grounding/region_surface` — registry-ready, init
-states verified, contact sheets checked (§7), no rollouts yet. `grounding/target_cue_region`,
-`grounding/target_cue_landmark` — implemented on `openvla` branch `worktree-split4-target-cue-probe`
-(pushed, not merged), no rollouts yet.
+The hypothesis ("landmark-target scenes are more attraction-prone than surface/region-target
+scenes") is **not supported** — landmark-target (88.35%) scores *above* surface-target (84.25%),
+and region-target scores highest of all three (92.0%). The 2 new cells confirm rather than
+overturn the earlier 4-cell reading: whatever drives this checkpoint's failures, it isn't the
+target's own relation-family under a fixed, correctly-phrased prompt. Given 4b's results below,
+the far larger effect by orders of magnitude is *prompt phrasing*, not scene relation type.
+
+### 5.2 — 4b: Target Cue-Type Probe (complete)
+
+**Question.** Holding the scene and distractor completely fixed (distractor never mentioned), does
+rephrasing *only* how the target is described — landmark ("next to X") vs. surface ("on X") vs.
+region (table-zone) — change success, independent of what relation family the scene actually is?
+Full design (truthfulness tiers, which tasks get which rephrasing and why) is in
+`benchmark_split_plan.md` Split 4's 4b section.
+
+**Result: this is the single largest effect measured anywhere in this project so far, and it comes
+from a manipulation that never mentions a second bowl at all.**
+
+| Condition | Tasks | Overall SR | Rollouts |
+|---|---|--:|--:|
+| `target_cue_region` | 0,1,3,5,6,7,8,9 (8 tasks) | **17.0%** | 400/400 |
+| `target_cue_landmark` | 3,5,7,9 (4 tasks) | **30.5%** | 200/200 |
+
+Per-task, against the `spatial/default` baseline for the same task:
+
+| id | target (native phrasing) | Default SR | `target_cue_region` | Δ | `target_cue_landmark` | Δ |
+|--:|---|--:|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin (landmark) | 92% | 58% | −34 | — | — |
+| 1 | next to the ramekin (landmark) | 84% | 10% | −74 | — | — |
+| 3 | on the cookie box (surface) | 84% | 28% | −56 | 52% | −32 |
+| 5 | on the ramekin (surface) | 94% | 28% | −66 | 10% | **−84** |
+| 6 | next to the cookie box (landmark) | 90% | 2% | **−88** | — | — |
+| 7 | on the stove (surface) | 72% | 0% | −72 | 44% | −28 |
+| 8 | next to the plate (landmark) | 84% | 10% | −74 | — | — |
+| 9 | on the wooden cabinet (surface) | 72% | 0% | −72 | 16% | −56 |
+
+**Metrics** (SR(default) restricted to the same task subset each condition covers, matching
+`benchmark_split_plan.md`'s formulas):
+
+```
+Region-cue Drop   = SR(default, 8 tasks: 84.0%) − SR(target_cue_region: 17.0%)   = 67.0 pts
+Landmark-cue Drop = SR(default, 4 tasks: 80.5%) − SR(target_cue_landmark: 30.5%) = 50.0 pts
+
+Region-cue Drop, landmark-family pool {0,1,6,8}: 87.5% → 20.0%  = 67.5 pts
+Region-cue Drop, surface-family pool  {3,5,7,9}: 80.5% → 14.0%  = 66.5 pts
+```
+
+**Analysis.** Three findings, in order of how surprising they are:
+
+1. **The effect size is enormous** — 50 to 67 points overall, with several tasks collapsing to
+   0-10%. This is *larger* than Split 1's `negative_contrast`/`positive_contrast` drops (47.2 /
+   51.6 pts), the previous largest effect in the project — and 4b's prompts never reference a
+   second bowl or location at all. Purely restating the *same true fact about the same bowl* in a
+   different relation-family's words is enough to devastate the policy.
+2. **No landmark-vs-surface asymmetry in the region-cue condition** — landmark-family (67.5 pt
+   drop) and surface-family (66.5 pt drop) are damaged almost identically when forced into
+   region-style phrasing. This rules out the original hypothesis's language-side analogue
+   (landmark language being harder to compute than surface language) — the damage tracks
+   *phrasing-template mismatch*, not relation-type difficulty.
+3. **Landmark-cue (the "approximate/disclosed" relaxation) hurts less than region-cue for the same
+   4 surface-family tasks** (50.0 vs. 66.5 pts) — describing a bowl resting on X as "next to X"
+   survives better than describing it by table position. Plausibly because "next to X" is at least
+   *structurally* the phrasing template the checkpoint was fine-tuned on for other tasks (landmark
+   phrasing appears natively in 4/10 training tasks), whereas region-style phrasing
+   ("at the back-left of the table") never appears in any of the 10 original `libero_spatial`
+   prompts in any form.
+
+Together with 4a's conclusion above, this reframes the whole split's headline finding: **the
+policy's apparent "grounding" is templated surface-pattern matching on the exact phrasing structure
+seen at fine-tuning time, not a semantic understanding of landmark/surface/region relations** — the
+scene's actual relation family barely matters (4a, ≤8 pt spread across all 6 cells) while the
+prompt's relation *wording* matters enormously (4b, 50-67 pt drops) even with the referenced fact
+held perfectly true and the distractor never mentioned.
+
+Results: `results/libero_spatial--target_cue_region--shard{0,1}of2.jsonl`,
+`results/libero_spatial--target_cue_landmark--shard{0,1}of2.jsonl`,
+`results/libero_spatial_grounding_surface_landmark--default--shard0of2.jsonl`,
+`results/libero_spatial_grounding_region_surface--default--shard0of2.jsonl`.
 
 ---
 
@@ -485,11 +564,11 @@ states verified, contact sheets checked (§7), no rollouts yet. `grounding/targe
 3. **Open-drawer clutter's raw drop (-20.2 pts) overstates the policy effect** — about half is 3
    tasks where the drawer physically blocks the arm's path, not a perception failure. Adjusted
    (7 feasible tasks): -11.1 to -11.7 pts, a real but smaller robustness gap.
-4. **Re-aggregating existing Split 1 data by relation family (Split 4a) does not support the
-   landmark-attraction hypothesis** — the 3 landmark-target cells (86.7%, 92.0%, 90.0%) score at
-   or above the one derived surface-target cell (80.5%), not below it. Weak evidence (1-4 tasks
-   per cell, confounded with per-task variation) — see §5's table — but notable enough that the 2
-   still-unrun new-scene cells matter for actually testing this.
+4. **Split 4a is complete (all 6 cells) and confirms the landmark-attraction hypothesis is wrong,
+   not just under-tested.** Target-family-pooled SR: landmark 88.35%, surface 84.25%, region 92.0%
+   — landmark-target is *not* lower than surface-target, and region-target scores highest of all
+   three. The 2 new-scene cells ((surface,landmark)=88.0%, (region,surface)=92.0%) landed close to
+   their family's existing cells rather than overturning the pattern — see §5.1.
 5. **The negation clause wasn't the source of the damage.** Bare mention of the distractor's
    location, with no "not the one…" clause, is just as bad (-51.6 pts) as mentioning + negating it
    (-47.2 pts) — `positive_contrast` (32.4%) even scores slightly *below* `negative_contrast`
@@ -524,6 +603,24 @@ states verified, contact sheets checked (§7), no rollouts yet. `grounding/targe
    confusable distractor — it doesn't compound narrowly on the hard cases, it spreads damage to the
    whole suite. Strongest evidence in the project that this checkpoint's failures are fundamentally
    about prompt grounding, not scene design.
+10. **The single largest effect in the whole project: rephrasing the target's cue type — with the
+    distractor never mentioned — costs 50 to 67 pts.** Split 4b held the scene, distractor, and the
+    referenced fact's truth completely fixed, and varied only whether the target was described via
+    its native relation-family wording or an alternate one (region-zone or a disclosed-approximate
+    landmark phrasing). `target_cue_region` (8 tasks): 84.0%→17.0% (−67.0 pts). `target_cue_landmark`
+    (4 surface-family tasks): 80.5%→30.5% (−50.0 pts). This *exceeds* finding 1's negative-contrast
+    damage (−47.2 pts) despite never introducing a second referent — see §5.2.
+11. **Findings 1-9 already showed language dominates scene; finding 10 shows it's not really about
+    "a second referent" at all — it's template matching on exact phrasing.** Region-cue damage is
+    statistically indistinguishable between landmark-family targets (−67.5 pts) and surface-family
+    targets (−66.5 pts) — ruling out relation-type difficulty as the mechanism. And landmark-cue
+    phrasing (present in 4/10 training tasks' native language) hurts less than region-cue phrasing
+    (present in none) on the identical 4 tasks (−50.0 vs. −66.5 pts). Combined with finding 9 (a
+    disambiguating prompt spreads damage to unaffected tasks rather than fixing the hard ones), the
+    project's overall picture is now: this checkpoint's "grounding" is narrow surface-pattern
+    matching against the exact phrasing templates seen at fine-tuning time — not scene-relation
+    reasoning (4a, ≤8 pt spread) and not really referent-counting either (a single bowl, truthfully
+    described in unfamiliar words, is nearly as damaging as describing two).
 
 ## 7. Render / contact-sheet check log
 
@@ -547,7 +644,7 @@ embedded inline in each condition's section above (§3-4).
 `libero_spatial` (baseline) and `libero_spatial_3bowl`/`libero_spatial_3bowl_open`
 (`center_fixed_legacy`/`drawer_open`) predate this render-before-run practice being tracked here;
 no issues have surfaced in their data, but no dedicated check is logged. The two grounding suites
-above are now checked and ready to run — see Split 4a's row in the status table.
+above were checked here before running — both have since been run, see §5.1.
 
 Note on method: for these two single-task suites, plain pixel-diffing the new render against the
 original `libero_spatial` task's render (t5 for surface_landmark, t2 for region_surface) was tried
