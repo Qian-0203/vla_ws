@@ -63,6 +63,16 @@ if expected and actual < expected * 0.95:
 PY
 fi
 
+# WORKSPACE_ROOT is bind-mounted to /workspace (not an identity mount, unlike
+# SERVER_ROOT below) -- so a CHECKPOINT that lives inside the workspace must be
+# translated to its /workspace-relative path before being handed to the
+# container; a CHECKPOINT under SERVER_ROOT is already identity-mounted and
+# needs no translation.
+CONTAINER_CHECKPOINT="${CHECKPOINT}"
+if [[ "${CHECKPOINT}" == "${WORKSPACE_ROOT}"/* ]]; then
+  CONTAINER_CHECKPOINT="/workspace${CHECKPOINT#"${WORKSPACE_ROOT}"}"
+fi
+
 DOCKER_TTY_ARGS=()
 [[ -t 0 && -t 1 ]] && DOCKER_TTY_ARGS=(-it)
 
@@ -117,7 +127,7 @@ run_shard() {
     "${IMAGE_NAME}" \
     python experiments/robot/libero/run_libero_eval.py \
     --model_family openvla \
-    --pretrained_checkpoint "${CHECKPOINT}" \
+    --pretrained_checkpoint "${CONTAINER_CHECKPOINT}" \
     --load_in_4bit "${LOAD_IN_4BIT}" \
     --load_in_8bit "${LOAD_IN_8BIT}" \
     --center_crop True \
