@@ -1028,5 +1028,47 @@ Updated structured output (same file, now with all 5 conditions):
 `openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl`. New images:
 `openvla/experiments/figures/probe_bowl_pointing/libero_spatial--default--t{0-9}.png` and
 `libero_spatial_3bowl_hardneg--hardneg_default--t{0-9}.png`. Code change: `bowl_pointing_common.py`,
-`probe_bowl_pointing.py`, `probe_bowl_pointing_qwen.py` (all uncommitted in the `openvla` fork as of
-this write-up).
+`probe_bowl_pointing.py`, `probe_bowl_pointing_qwen.py` (`openvla` commit `1b27db3`).
+
+### 8.4 Per-task render + marker table (2026-08-26)
+
+Every rendered scene actually fed to Qwen, with the Set-of-Mark markers baked in (see §8.2 for how
+they're now computed) and each condition's `target→answer` verdict, so the numbers in §8.1-8.3's
+tables can be checked against the actual stimulus per task instead of just the aggregate score.
+`target→answer` reads as the ground-truth marker number, then Qwen's parsed answer (✓ = correct).
+
+**2-bowl scenes (`libero_spatial`) — `default`, `negative_contrast`, `positive_contrast` show the
+identical image per task (render is cached per suite/task_id); only the instruction differs:**
+
+| id | task | scene (markers baked in) | `default` | `negative_contrast` | `positive_contrast` |
+|--:|---|---|---|---|---|
+| 0 | between the plate and the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t0.png) | 1→2 ✗ | 1→2 ✗ | 1→2 ✗ |
+| 1 | next to the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t1.png) | 2→2 ✓ | 2→2 ✓ | 2→2 ✓ |
+| 2 | from table center | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t2.png) | 1→1 ✓ | 1→1 ✓ | 1→1 ✓ |
+| 3 | on the cookie box | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t3.png) | 2→2 ✓ | 2→2 ✓ | 2→2 ✓ |
+| 4 | in the top drawer of the wooden cabinet | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t4.png) | 1→2 ✗ | 1→1 ✓ | 1→1 ✓ |
+| 5 | on the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t5.png) | 1→2 ✗ | 1→1 ✓ | 1→1 ✓ |
+| 6 | next to the cookie box | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t6.png) | 1→1 ✓ | 1→1 ✓ | 1→1 ✓ |
+| 7 | on the stove | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t7.png) | 1→1 ✓ | 1→1 ✓ | 1→1 ✓ |
+| 8 | next to the plate | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t8.png) | 2→1 ✗ | 2→1 ✗ | 2→1 ✗ |
+| 9 | on the wooden cabinet | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t9.png) | 1→2 ✗ | 1→2 ✗ | 1→2 ✗ |
+
+**3-bowl scenes (`libero_spatial_3bowl_hardneg`) — `hardneg_default` and `hardneg` show the identical
+image per task; only the instruction differs:**
+
+| id | task | scene (markers baked in) | `hardneg_default` | `hardneg` |
+|--:|---|---|---|---|
+| 0 | between the plate and the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t0.png) | 1→2 ✗ | 1→2 ✗ |
+| 1 | next to the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t1.png) | 3→2 ✗ | 3→1 ✗ |
+| 2 | from table center | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t2.png) | 2→3 ✗ | 2→3 ✗ |
+| 3 | on the cookie box | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t3.png) | 2→2 ✓ | 2→2 ✓ |
+| 4 | in the top drawer of the wooden cabinet | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t4.png) | 2→2 ✓ | 2→2 ✓ |
+| 5 | on the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t5.png) | 3→2 ✗ | 3→3 ✓ |
+| 6 | next to the cookie box | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t6.png) | 2→2 ✓ | 2→2 ✓ |
+| 7 | on the stove | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t7.png) | 2→2 ✓ | 2→2 ✓ |
+| 8 | next to the plate | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t8.png) | 2→2 ✓ | 2→2 ✓ |
+| 9 | on the wooden cabinet | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t9.png) | 3→3 ✓ | 3→3 ✓ |
+
+Marker color key: **1** = red, **2** = green, **3** = blue (which bowl gets which number is shuffled
+per task; color always maps to the same digit). Source images:
+`openvla/experiments/figures/probe_bowl_pointing/` (`openvla` commit `1b27db3`).
