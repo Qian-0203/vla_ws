@@ -48,6 +48,7 @@ Applies to every condition below unless a section says otherwise.
 | 2. Distractor Placement | 3/4 conditions implemented (`path` not authored) | 4/4 implemented conditions run (`irrelevant`, `semantic`, `landmark`, `landmark_with_hardneg_prompt`; the old `irrelevant` data survives relabeled as `center_fixed_legacy`); only unauthored `path` remains |
 | 3. Scene Complexity | Implemented | Run (both conditions) |
 | 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe | ✅ fully run — 6/6 cells (4a), 2/2 conditions (4b) |
+| VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
 
 ---
 
@@ -168,6 +169,28 @@ Computed `Distractor-type Drop = SR(spatial/default) − SR(condition)`:
 | `semantic` | −0.8 pts | Negative — no measurable cost from a distractor at an unrelated named landmark |
 | `landmark` | +3.4 pts | The one real-cost result — concentrated almost entirely in two tasks |
 | `landmark_with_hardneg_prompt` | +42.8 pts (vs. baseline); +39.4 pts vs. `landmark` on the identical scene | Adding a disambiguating prompt to the `landmark` scene does not rescue the affected tasks and wrecks the rest of the suite |
+
+### Per-task render table: `default` vs. `irrelevant` vs. `semantic` vs. `hardneg`
+
+One row per task id, one column per Split 2 condition (episode-0 init state, same render used for
+each condition's numeric verify below in §7; 140x140 thumbnails cropped from the individual
+`t{id}_init.png` renders under `LIBERO/scratch_render/<suite>/`, copied to
+`openvla/experiments/figures/per_task_render/` since the scratch dir gets overwritten each pass).
+`default` = `libero_spatial` (2 bowls); the other three are `libero_spatial_3bowl_{neutral,semantic,hardneg}`
+(3 bowls, distractor placement per condition — see settings above).
+
+| id | target | `default` | `irrelevant` | `semantic` | `hardneg` |
+|--:|---|---|---|---|---|
+| 0 | between the plate and the ramekin | ![](openvla/experiments/figures/per_task_render/default_t0.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t0.png) | ![](openvla/experiments/figures/per_task_render/semantic_t0.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t0.png) |
+| 1 | next to the ramekin | ![](openvla/experiments/figures/per_task_render/default_t1.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t1.png) | ![](openvla/experiments/figures/per_task_render/semantic_t1.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t1.png) |
+| 2 | table center | ![](openvla/experiments/figures/per_task_render/default_t2.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t2.png) | ![](openvla/experiments/figures/per_task_render/semantic_t2.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t2.png) |
+| 3 | on the cookie box | ![](openvla/experiments/figures/per_task_render/default_t3.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t3.png) | ![](openvla/experiments/figures/per_task_render/semantic_t3.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t3.png) |
+| 4 | in the top drawer of the wooden cabinet | ![](openvla/experiments/figures/per_task_render/default_t4.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t4.png) | ![](openvla/experiments/figures/per_task_render/semantic_t4.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t4.png) |
+| 5 | on the ramekin | ![](openvla/experiments/figures/per_task_render/default_t5.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t5.png) | ![](openvla/experiments/figures/per_task_render/semantic_t5.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t5.png) |
+| 6 | next to the cookie box | ![](openvla/experiments/figures/per_task_render/default_t6.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t6.png) | ![](openvla/experiments/figures/per_task_render/semantic_t6.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t6.png) |
+| 7 | on the stove | ![](openvla/experiments/figures/per_task_render/default_t7.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t7.png) | ![](openvla/experiments/figures/per_task_render/semantic_t7.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t7.png) |
+| 8 | next to the plate | ![](openvla/experiments/figures/per_task_render/default_t8.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t8.png) | ![](openvla/experiments/figures/per_task_render/semantic_t8.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t8.png) |
+| 9 | on the wooden cabinet | ![](openvla/experiments/figures/per_task_render/default_t9.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t9.png) | ![](openvla/experiments/figures/per_task_render/semantic_t9.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t9.png) |
 
 **Split's implemented conditions are fully run; only the unauthored `path` condition remains.**
 
@@ -621,6 +644,68 @@ Results: `results/libero_spatial--target_cue_region--shard{0,1}of2.jsonl`,
     matching against the exact phrasing templates seen at fine-tuning time — not scene-relation
     reasoning (4a, ≤8 pt spread) and not really referent-counting either (a single bowl, truthfully
     described in unfamiliar words, is nearly as damaging as describing two).
+12. **Findings 1-11 diagnose failure patterns from success-rate deltas alone, and that turns out to
+    be the only tool available.** A direct attempt to separate grounding from action decoding — ask
+    the checkpoint, via VQA, which bowl it thinks the target is instead of asking it to act — hit a
+    structural dead end confirmed 3 independent ways (see §8): both the fine-tuned checkpoint and the
+    unmodified base `openvla-7b` unconditionally emit action-bin tokens after the eval prompt
+    template regardless of what's asked (even a content-free control question), and a
+    generation-free restricted-logit comparison showed no ranking change across real vs. unrelated
+    vs. mismatched instructions for the same image. This is a consequence of OpenVLA's action-only
+    continued-pretraining recipe, not something specific to distractor-mention phrasing — but it
+    means every interpretation above (11 in particular: "template matching, not real grounding")
+    rests on outcome-level evidence and cannot currently be corroborated by directly interrogating
+    the model's internal grounding.
+13. **The §8 dead end's deferred alternative was pursued (§8.1) and didn't rescue the interpretation
+    either way.** A genuinely separate general-purpose VLM (`Qwen2-VL-7B-Instruct`, never trained on
+    OpenVLA's action-only template) shown the identical numbered-bowl images/instructions scored
+    40-60% against 33-50% chance baselines across all 3 conditions — not convincingly above chance —
+    and its raw answers show a numeric/positional bias (zero "1" answers across all 10 `hardneg`
+    queries; a 7/10 skew toward "2" on `positive_contrast`) rather than instruction-tracking, even
+    though the same model *does* change its answer on 5/10 tasks when only the prompt (not the image)
+    differs between `negative_contrast` and `positive_contrast`. So this project's probe rendering
+    itself may be too weak a stimulus to cleanly separate "is this language ambiguous" from "is this
+    model's grounding broken" — finding 12's caveat (findings 1-11 rest on outcome-level evidence
+    alone) still stands, now for a different reason: the direct-interrogation approach hit a second,
+    independent dead end even switching model families.
+14. **Finding 13 was itself a rendering artifact — the probe's marker placement had a real bug, and
+    fixing it flipped the §8.1 conclusion.** User-driven inspection of the probe images found the
+    markers were both too large (occluding the target bowl) and, for at least one bowl per scene,
+    projected up to ~46px off the bowl's true rendered position (confirmed against MuJoCo's own
+    segmentation render as ground truth — see §8.2). After fixing marker placement (segmentation-based
+    centroid instead of a hand-projected 3D→2D transform) and shrinking the markers so they no longer
+    cover the bowl, re-running the identical Qwen2-VL battery scored 70% on all 3 conditions — clearly
+    above chance, versus 40-60% (not convincingly above chance) before the fix. The `negative_contrast`
+    /`positive_contrast` phrasing-sensitivity result in finding 13 also reversed: the two conditions
+    now agree on 10/10 tasks (previously 5/10 disagreed), meaning that "phrasing sensitivity" was very
+    likely the model reacting to noisy markers, not real wording sensitivity. Net effect: §8.1's
+    "language may be ambiguous even to a capable VLM" alternative is weaker than it looked — a capable
+    VLM resolves the referring expression fine once the stimulus itself isn't broken — but this still
+    doesn't corroborate findings 1-11 about OpenVLA specifically (finding 12's dead end for that model
+    family is untouched by this fix).
+15. **Adding a `default` (no-distractor-mention) baseline to the corrected bowl-pointing probe (§8.3)
+    shows distractor-mention phrasing is not inherently harder to ground — for Qwen it's easier.**
+    `default` (LIBERO's own target-only task language, distractor never mentioned) scored 5/10 (50%,
+    exactly chance) on `libero_spatial`'s 2-bowl scenes, versus 7/10 (70%) for both
+    `negative_contrast` and `positive_contrast` on the identical images — the two distractor-mention
+    phrasings each correctly resolve 2 tasks (both target=bowl "1") that the target-only phrasing gets
+    wrong. So the distractor mention itself is, if anything, a disambiguating cue for a capable VLM,
+    not a source of difficulty. This narrows the "maybe the phrasing is just inherently harder to
+    ground" reading of findings 1/5/9/10 further than finding 14 already did — it's specifically
+    OpenVLA's behavior under that phrasing that's unexplained by the language itself being hard,
+    since a different, capable model finds the *same* phrasing easier than no phrasing at all.
+16. **The same no-mention-vs-mention comparison holds at 3 bowls, but the gap shrinks and the scene
+    itself clears chance easily either way.** `hardneg_default` (3-bowl scene, distractor family never
+    mentioned) scored 6/10 (60%, comfortably above the 33% chance floor) versus `hardneg`'s 7/10
+    (70%) — the two conditions disagree on exactly 1 of 10 tasks (task id 5, where the mention flips a
+    wrong guess to right), a much smaller mention-effect than the 2-bowl comparison's 2/10 (finding
+    15). Task id 0 is the single hardest case across the entire 5-condition, 50-query battery — wrong
+    regardless of scene or phrasing — while task id 2 is wrong only in the two 3-bowl conditions,
+    isolating the extra distractor bowl (not wording) as that task's specific difficulty. Combined with
+    finding 15: a capable VLM's accuracy on this referring expression is barely dented by adding a
+    third bowl (60% vs. 50%, no-mention baselines) and is never *hurt* by naming the distractor family,
+    in either scene — a further data point against reading OpenVLA's findings 1-11 collapse as evidence
+    that the language or clutter itself is intrinsically hard to ground.
 
 ## 7. Render / contact-sheet check log
 
@@ -632,6 +717,17 @@ rendered (`LIBERO/scripts/compare_two_suites_init.py libero_spatial <suite> <out
 `openvla/experiments/figures/` for permanent reference (the raw per-suite contact sheets under
 `LIBERO/scratch_render/` are scratch and get overwritten each pass). The figures themselves are
 embedded inline in each condition's section above (§3-4).
+
+**2026-08-26 render-settling fix.** `render_suite_contact_sheet.py` rendered immediately after
+`set_init_state()` with no settle steps, so some per-task renders (including cells in §3's per-task
+render table) showed bowls still mid-fall/floating from their sampled init height instead of resting
+on the surface — `compare_two_suites_init.py` never had this problem since it already stepped a
+dummy action first. Both scripts now settle for 10 steps with the same no-op action
+`run_libero_eval.py` uses via `cfg.num_steps_wait`, so every render reflects what the real eval
+actually sees. Regenerated: the 4 suites feeding §3's per-task render table (`libero_spatial`,
+`libero_spatial_3bowl_neutral`, `libero_spatial_3bowl_semantic`, `libero_spatial_3bowl_hardneg`) and
+their thumbnails; not regenerated (unaffected — already had a settle step, unchanged appearance at
+10 vs. the prior 12 steps): the five `compare_*_grid.png` figures embedded in §3-4.
 
 | Suite | Numeric verify (`verify_suite_init_states.py`) | Visual eyeball | Result |
 |---|---|---|---|
@@ -654,3 +750,283 @@ fraction of a 256x256 frame, so a large diff bounding box doesn't distinguish "o
 and comparing against the BDDL region catalog is unambiguous and is the more reliable check for a
 single-object scene change — recommended over pixel-diffing for any future single-task gap-fill
 suite in this project.
+
+## 8. VLM Bowl-Pointing Probe — grounding-vs-action-decoding diagnostic (2026-08-25)
+
+**Question.** Every distractor-mention condition (`negative_contrast`, `positive_contrast`,
+`landmark_with_hardneg_prompt`) collapses this checkpoint's task success rate, but end-to-end
+success can't say *why*: is vision-language grounding itself broken once a second referent is
+mentioned, or is grounding fine and only the action-decoding head falls apart on out-of-distribution
+phrasing? This probe tried to isolate the two by showing the model the same scene with each black
+bowl overlaid with a random number (Set-of-Mark style) and asking it, in free text, which numbered
+bowl matches the (unmodified) failing instruction — swapping "output an action" for "output a
+number" while holding scene and language fixed. Ground truth: every task's BDDL goal predicate names
+`akita_black_bowl_1` as the target, invariant across all scene variants used here.
+
+**Method.** New standalone script `openvla/experiments/robot/libero/probe_bowl_pointing.py` (not a
+benchmark split — it's a VQA probe, not an action rollout, so it isn't wired into
+`eval_registry.py`). For a given task: render the exact episode-0 init state the real eval would see
+(same settle-step count/dummy action as `run_libero_eval.py`), project each bowl's true 3D position
+into the rendered frame via robosuite `camera_utils`, overlay a shuffled marker number per bowl, then
+call the checkpoint's `.generate()` directly (bypassing `predict_action()`'s action-token-only
+decoding) with the condition's real instruction text reformatted as "which numbered bowl...".
+
+**Result: the probe is not viable on this model family — confirmed three ways, smoke-tested on 2
+tasks before committing to a full run.**
+
+1. **Free-text generation on the fine-tuned checkpoint always returns action-bin tokens, regardless
+   of the question.** Both a real bowl-pointing query and a content-free control ("What is 2+2?")
+   decoded to garbage text (e.g. `'論˚塔▓貴军忠'`). Inspecting the raw token ids showed they fall in
+   `[31744, 31999]` — exactly the tail-of-vocabulary range (`vocab_size=32000`) this checkpoint
+   reserves for its 256 action bins. The model isn't answering badly; it isn't answering at all —
+   it unconditionally emits action tokens after the `"...Out:"` + empty-token position no matter
+   what precedes it.
+2. **The base, pre-LIBERO-finetune `openvla/openvla-7b` does the same thing.** Downloaded fresh and
+   ran the identical free-text check — same action-bin-range token ids for both the real and control
+   prompts. This rules out "this project's LoRA fine-tune broke it": OpenVLA is continue-pretrained
+   from Prismatic-VLM exclusively on the template `"In: What action should the robot take to
+   {instruction}?\nOut:"` → action tokens across all of Open X-Embodiment, which appears to collapse
+   the model's conditional distribution at that template's completion point onto the action-token
+   subspace for *any* input. This is structural to the OpenVLA checkpoint family under this prompt
+   template, not a symptom of the distractor-mention failures being investigated.
+3. **A restricted-logit comparison (bypassing generation entirely) found no language-conditioned
+   signal either.** Single forward pass per query, comparing raw next-token logits for just the
+   candidate digit tokens ("1"/"2"/"3", ids 29896/29906/29941) instead of letting the model generate
+   freely. Tested per image against three prompt variants: the real matching instruction, an
+   unrelated question, and the *other* task's mismatched instruction. The ranking among the three
+   candidates was **identical across all three prompt variants for a given image** (e.g. target-1
+   image → `['3','2','1']` every time; target-2 image → `['3','1','2']` every time) — the ranking
+   tracks only *which image*, never *what was asked*. Whatever tiny logit gap exists here isn't
+   responsive to language at all, so it can't be read as a grounding signal.
+
+**Conclusion.** OpenVLA (base or LIBERO-finetuned) has no text-output channel that's causally
+responsive to language input at the point this diagnostic needs to query it — a consequence of its
+action-only continued-pretraining recipe, not something specific to this project's distractor-mention
+conditions. Grounding cannot be separated from action decoding via a VQA-style probe on this model
+family; end-to-end task success remains the only measurable signal for this checkpoint. Given the
+dead end was confirmed on 3 independent angles (2 checkpoints x free-text, plus restricted-logit), the
+full 30-query battery (all 3 conditions x 10 tasks) was not run — it would only reproduce the same
+negative result at 15x the cost. The script itself (`probe_bowl_pointing.py`) is left in place and
+functions correctly end-to-end (rendering, 3D→pixel projection, marker overlay, structured
+JSONL/figure output all verified working) — it would be directly reusable if a future checkpoint
+without this action-token collapse becomes available to test, or repurposed for the "genuinely
+separate general-purpose VLM" alternative noted below.
+
+Two smoke-test example images (annotated, as fed to the model, with different target numbers to
+confirm the marker-shuffle logic): `openvla/experiments/figures/probe_bowl_pointing/`.
+
+**Open alternative (not pursued, deferred pending decision).** A genuinely separate general-purpose
+VLM — one never trained on OpenVLA's action-only template — could still be shown the same
+numbered-bowl images and instructions to test whether the referring expression is resolvable *in
+principle*. This answers a different question than originally posed (not "does this checkpoint's
+grounding survive independently of decoding" but "is the language itself unambiguous to a capable
+VLM") and requires standing up a new model dependency — deferred rather than pursued opportunistically.
+
+### 8.1 Qwen2-VL-7B-Instruct run (2026-08-25) — the alternative above, pursued
+
+**Superseded by §8.2 (2026-08-26).** The rendering used for every image in this section had a
+marker-placement bug — see §8.2 for the fix and a corrected re-run. Left in place as the historical
+record of what was actually run and concluded at the time; do not use the accuracy numbers below as
+current.
+
+**Setup.** `openvla/experiments/robot/libero/probe_bowl_pointing_qwen.py` (new, uncommitted in the
+`openvla` fork) reuses `bowl_pointing_common.py`'s identical render/annotate/score pipeline —
+same numbered-bowl images, same instructions, same ground truth — but queries
+`Qwen/Qwen2-VL-7B-Instruct` via ordinary free-text `.generate()` instead of the OpenVLA checkpoint.
+Needed `transformers==4.51.3` + `qwen-vl-utils` installed ephemerally over the eval image's pinned
+`4.40.1` (an open-ended `>=4.49` pulls today's `5.15.1` instead, which removed
+`AutoModelForVision2Seq` and broke an unrelated import `bowl_pointing_common.py` pulls in
+transitively through `libero_utils.py` → `robot_utils.py` → `openvla_utils.py`, despite never
+calling into OpenVLA code). Full battery: 3 conditions x 10 tasks = 30 queries, no parse failures.
+
+**Result: not resolvable in principle either — Qwen's answers track a numeric/positional bias, not the instruction.**
+
+| Condition | Scene | Accuracy | Chance level |
+|---|---|---|---|
+| `negative_contrast` | `libero_spatial` (2 bowls) | 6/10 (60%) | 50% |
+| `positive_contrast` | `libero_spatial` (2 bowls) | 4/10 (40%) | 50% |
+| `hardneg` | `libero_spatial_3bowl_hardneg` (3 bowls) | 6/10 (60%) | 33% |
+
+None of these clear chance convincingly, and the raw answer distributions explain why:
+
+- **`hardneg`: Qwen answered "1" zero times across all 10 queries**, regardless of where the target
+  actually was (target was bowl "1" on task 0, which it got wrong) — parsed answers were six "2"s and
+  four "3"s only. A pure numeric/positional preference, not target-tracking.
+- **`positive_contrast`: 7/10 answers were "2"**, vs. an even 5/5 split for `negative_contrast` on the
+  *same 10 images* (render is cached per `(suite, task_id)`, so `negative_contrast` and
+  `positive_contrast` show Qwen the identical picture per task — only the instruction wording
+  differs). So the model **is** sensitive to the prompt (5/10 tasks flip answer between the two
+  conditions on an unchanged image) — it's just not sensitive in a way that tracks correctness.
+
+**Conclusion.** The bowl-pointing referring expression is not cleanly resolvable even by a capable,
+independently-trained general-purpose VLM under this rendering (small overhead markers on a
+256x256 clip, single frame, no interaction) — so the OpenVLA failure pattern documented in
+findings 1, 5, 9, 10 (finding 12) cannot be presumed to reflect *unambiguous* language that OpenVLA
+alone fails to ground. This doesn't rescue OpenVLA's action-space failures (Qwen isn't asked to act,
+and OpenVLA's action-only decoding collapse in §8 is a separate, model-family-specific problem) — it
+narrows what §8's dead end was blocking: even with a working text channel, this probe's rendering
+may be too weak a stimulus (marker size/contrast, single static frame, no zoom) to isolate language
+grounding cleanly, independent of which model answers it. A follow-up would need to strengthen the
+stimulus (larger/higher-contrast markers, multiple viewpoints) before concluding anything about
+grounding difficulty from accuracy numbers alone.
+
+Annotated images (all 30, overwriting the two pre-existing OpenVLA smoke-test images at the same
+filenames — harmless, since the annotation only depends on scene geometry, not which model is being
+probed): `openvla/experiments/figures/probe_bowl_pointing/`. Structured output:
+`openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl` (gitignored,
+local only).
+
+### 8.2 Marker-placement bug found and fixed — Qwen re-run (2026-08-26)
+
+**Trigger.** User inspection of the §8.1 gallery flagged two problems by eye: the filled marker
+circles (radius 15px on a 224px image) were large enough to fully occlude the target bowl, and some
+markers looked like they weren't centered on their bowl at all. The initial hypothesis was that
+`num_steps_wait=10` doesn't give bowls (which spawn slightly above the table and fall) enough time
+to settle before the frame used for marker projection is captured.
+
+**That specific hypothesis was ruled out.** Re-rendering `libero_spatial` task 0 with
+`num_steps_wait` swept from 0 to 120 and logging each bowl's z-height every step showed physics
+fully stable by step 5 (z stops changing entirely); the marker position computed at step 10 is
+pixel-identical to step 120. Settle timing was not the mechanism.
+
+**But a real, independent bug was confirmed anyway.** `render_and_annotate()` (in
+`bowl_pointing_common.py`) computed marker pixel positions by hand-projecting each bowl's 3D
+`sim.data.body_xpos` through `robosuite.utils.camera_utils.project_points_from_world_to_camera()`.
+Cross-checking that projection against MuJoCo's own segmentation render (`sim.render(...,
+segmentation=True)` — which pixels the renderer itself assigned to each body's geoms, so it can't be
+wrong about where an object actually drew) at task 0, step 120:
+
+| Object | Hand-projected pixel (224-space) | Segmentation ground truth | Error |
+|---|---|---|---|
+| `akita_black_bowl_2` | (33, 106) | (31, 114) | ~9 px |
+| `plate_1` | — | — | ~3 px |
+| **`akita_black_bowl_1`** | **(57, 84)** | **(56, 130)** | **~46 px (~20% of the frame)** |
+
+`akita_black_bowl_1`'s hand-projected marker landed squarely on bare table — querying the
+segmentation mask at that exact pixel returned body `"table"`, not the bowl — while the true bowl
+sat 46px away. Single-point vs. batched projection gave identical (wrong) output, ruling out a
+batching bug; `body_xpos`, `geom_xpos`, and `qpos` for the two bowls were internally consistent with
+each other (same asset, same quaternion convention, both matched their own `qpos`); the flip
+convention was verified by applying the identical `[::-1, ::-1]` transform to both the image and the
+segmentation mask before comparing. The discrepancy is isolated to
+`project_points_from_world_to_camera()`'s output for this specific 3D point vs. this camera
+transform — root mechanism not identified, but not needed, since ground truth from segmentation is
+trustworthy by construction (same draw call as the RGB frame).
+
+**Fix (`bowl_pointing_common.py`, uncommitted in the `openvla` fork as of this write-up).** Replaced
+the hand-projection with `_bowl_pixel_centroid()`: reads back each bowl's segmentation mask
+directly and uses its pixel centroid as the marker position, sidestepping
+`project_points_from_world_to_camera()` entirely. Also fixed the occlusion problem: markers changed
+from filled `radius=15` circles to `radius=6` outline dots with a crosshair, with the number label
+offset above-right of the dot (white-haloed for legibility) instead of drawn inside a filled shape
+covering the bowl.
+
+**Qwen2-VL-7B-Instruct re-run, full battery (3 conditions x 10 tasks), identical model/prompts/scoring, only the images changed:**
+
+| Condition | Before fix (§8.1) | After fix | Chance level |
+|---|---|---|---|
+| `negative_contrast` | 6/10 (60%) | **7/10 (70%)** | 50% |
+| `positive_contrast` | 4/10 (40%) | **7/10 (70%)** | 50% |
+| `hardneg` | 6/10 (60%) | **7/10 (70%)** | 33% |
+
+All three conditions now clear their chance baseline clearly, where before none did convincingly.
+`positive_contrast` shows the largest correction (40% → 70%) — it was previously *below* chance.
+
+**A second finding changed along with the headline number.** Before the fix, `negative_contrast` and
+`positive_contrast` (identical images, only instruction wording differs) disagreed on 5/10 tasks —
+read at the time as "Qwen is prompt-sensitive but not in a way that tracks correctness" (§8.1). After
+the fix, **the two conditions agree on all 10/10 tasks** (identical target, identical parsed answer,
+identical correctness per task id). With clean markers, Qwen's answer is invariant to which of the
+two phrasings it's given — the earlier phrasing-sensitivity finding was very likely an artifact of
+the model reacting to noisy/ambiguous marker placement, not a genuine wording effect. Similarly, the
+old "Qwen never answered '1' across all 10 `hardneg` queries" finding (read as a pure
+numeric/positional bias) softens: post-fix it answers "1" once (task 1, still incorrect there, but no
+longer a hard zero) — consistent with the fix removing a source of noise rather than a source of
+genuine task difficulty.
+
+**Revised conclusion.** With accurate, non-occluding markers, the bowl-pointing referring expression
+IS resolvable well above chance by a capable general-purpose VLM. §8.1's "not resolvable in
+principle" conclusion was itself a probe-rendering artifact, not evidence about the language. This
+reopens (but does not resolve) the question §8.1 was trying to close: findings 1-11's outcome-level
+interpretation (finding 12's caveat) still cannot be corroborated by directly interrogating OpenVLA's
+internal grounding (§8's action-token-collapse dead end is untouched by this fix — it's a separate,
+model-family-specific problem), but the *"maybe the language itself is just ambiguous"* alternative
+raised by §8.1 is now weaker than it looked: a capable VLM resolves it fine (70%) once the stimulus
+itself isn't broken.
+
+Corrected images (same filenames, overwritten in place):
+`openvla/experiments/figures/probe_bowl_pointing/`. Re-run structured output (same path/filename as
+§8.1, overwritten): `openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl`
+(gitignored, local only). Code fix: `openvla/experiments/robot/libero/bowl_pointing_common.py`
+(uncommitted in the `openvla` fork as of this write-up — commit separately there per repo
+convention).
+
+### 8.3 `default` (no-distractor-mention) baselines added, 2-bowl and 3-bowl (2026-08-26)
+
+**Motivation.** §8.1/§8.2 only ever asked Qwen to resolve the referring expression under
+distractor-mention phrasing (`negative_contrast`, `positive_contrast`, `hardneg` — every instruction
+either negates or names the distractor). Missing: how does Qwen do on the *same* 2-bowl scenes under
+LIBERO's own native task language, which describes only the target and never mentions the distractor
+at all (this is Split 1's `default` condition, `eval_registry.CONDITIONS["default"] = None` — "use
+the task's own language"). This is the natural comparison point for the distractor-mention
+conditions, so it was added to the probe.
+
+**Method.** Added `"default": ("libero_spatial", None)` and, after a follow-up request to extend the
+same comparison to the 3-bowl scene, `"hardneg_default": ("libero_spatial_3bowl_hardneg", None)` to
+`bowl_pointing_common.CONDITION_SUITES`. `render_and_annotate()` now also returns LIBERO's native
+`task.language` string (previously discarded); when a condition's instruction dict is `None`, both
+probe scripts use that string instead of a custom phrasing — same convention
+`eval_registry.CONDITIONS` already uses for real evals (confirmed `task.language` is target-only and
+identical in form across both suites — the 3-bowl scene's extra distractor doesn't change LIBERO's own
+description of the task). Re-ran the full battery (now 5 conditions x 10 tasks = 50 queries) in one
+invocation so all five conditions' results live in the same run/file.
+
+**Result: both `default` baselines score lower than their distractor-mention counterpart.**
+
+| Condition | Scene | Accuracy | Chance level |
+|---|---|---|---|
+| `default` (no distractor mention) | `libero_spatial` (2 bowls) | **5/10 (50%)** | 50% |
+| `negative_contrast` | `libero_spatial` (2 bowls) | 7/10 (70%) | 50% |
+| `positive_contrast` | `libero_spatial` (2 bowls) | 7/10 (70%) | 50% |
+| `hardneg_default` (no distractor mention) | `libero_spatial_3bowl_hardneg` (3 bowls) | **6/10 (60%)** | 33% |
+| `hardneg` | `libero_spatial_3bowl_hardneg` (3 bowls) | 7/10 (70%) | 33% |
+
+`negative_contrast` and `positive_contrast` remain in 10/10 agreement with each other (see §8.2).
+`default` disagrees with both on exactly 2 of the 10 tasks (task ids 4 and 5, both target=bowl "1"):
+given only the target's own location ("pick up the black bowl inside the top drawer..." / "...on top
+of the ramekin...") Qwen picks the wrong bowl on both, but once the instruction also states where the
+*other* bowl is (either condition), it gets both right. All other 8 tasks are identical across all
+three 2-bowl conditions regardless of phrasing.
+
+The 3-bowl pair shows the same direction but a much smaller gap: `hardneg_default` differs from
+`hardneg` on exactly **one** task (task id 5, target=bowl "3", "on top of the ramekin") — mentioning
+the distractor family flips that single task from wrong (guesses the numerically-common "2") to
+right; every other task agrees between the two conditions. Task id 0 ("between the plate and the
+ramekin") is the single hardest case in the whole battery — the only task wrong in **all 5**
+conditions across both scenes, regardless of phrasing; task id 2 ("at the center of the table") is
+wrong in both 3-bowl conditions but correct in all three 2-bowl conditions, so the extra distractor
+bowl (not the phrasing) looks specifically responsible for that one. Both 3-bowl conditions clear the
+33% chance baseline comfortably even without any distractor mention, unlike the 2-bowl case where
+`default` lands exactly on chance.
+
+**Reading.** For this scene/model, naming the distractor family — whether negated
+(`negative_contrast`), stated positively (`positive_contrast`), or as a closer 3-bowl hard-negative
+(`hardneg`) — is not the source of difficulty findings 1/5/9/10 attribute to it for OpenVLA; if
+anything, for Qwen it's a mildly *disambiguating* cue in both scenes (worth 2/10 tasks at 2 bowls,
+1/10 at 3 bowls) rather than a source of confusion. The 3-bowl scene being resolvable well above
+chance even with zero distractor mention (`hardneg_default`, 60% vs. 33% chance) also weakens a
+"more distractors = harder to ground for any model" reading — the extra bowl doesn't come close to
+erasing Qwen's signal the way it erases OpenVLA's task success (findings 2, 7-8). This sharpens
+finding 14's point further: the OpenVLA distractor-mention collapse documented in findings 1-11
+cannot be explained by "the distractor mention itself makes the scene harder to ground" in any
+general sense — a capable VLM grounds the same mentions at least as accurately as no mention at all,
+in both the 2-bowl and 3-bowl scenes. That still doesn't prove OpenVLA's action-decoding head reacts
+the same way (§8's dead end for that model family stands untouched), but it further narrows what's
+left of the "maybe the phrasing/clutter is just inherently harder" reading of findings 1-11.
+
+Updated structured output (same file, now with all 5 conditions):
+`openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl`. New images:
+`openvla/experiments/figures/probe_bowl_pointing/libero_spatial--default--t{0-9}.png` and
+`libero_spatial_3bowl_hardneg--hardneg_default--t{0-9}.png`. Code change: `bowl_pointing_common.py`,
+`probe_bowl_pointing.py`, `probe_bowl_pointing_qwen.py` (all uncommitted in the `openvla` fork as of
+this write-up).

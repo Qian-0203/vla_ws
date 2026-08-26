@@ -134,6 +134,167 @@ results/libero_spatial--target_cue_landmark--shard{0,1}of2.jsonl
 
 ---
 
+## 2026-08-25 — VLM bowl-pointing probe (diagnostic, not a `run_eval.sh --split` launch)
+
+- **Hardware:** 1x RTX PRO 6000 Blackwell (GPUs 0-1 of the 4-GPU server), `openvla-libero:blackwell`.
+- **Checkpoint(s):** `baseline_lora_libero_spatial_4gpu_b24_run004` (this project's fine-tuned
+  checkpoint) and, for comparison, the unmodified base `openvla/openvla-7b` downloaded fresh from HF
+  Hub for this test (~15GB, not previously cached in this workspace).
+- **What ran:** new standalone script `openvla/experiments/robot/libero/probe_bowl_pointing.py` —
+  a VQA-style probe (numbered-bowl-marker image, ask the model in free text which number is the
+  target) meant to separate vision-language grounding from action decoding on the distractor-mention
+  conditions (`negative_contrast`, `positive_contrast`, `landmark_with_hardneg_prompt`). Not wired
+  into `eval_registry.py`/`SPLITS` — it doesn't produce action rollouts.
+- **Outcome:** dead end, confirmed 3 ways (full detail + exact numbers in
+  `benchmark_split_result.md` §8): (1) the fine-tuned checkpoint's free-text generation always
+  returns action-bin-range tokens regardless of the question, even for a content-free control
+  ("What is 2+2?"); (2) the base `openvla-7b` does the same, ruling out this project's fine-tuning as
+  the cause — it's structural to OpenVLA's action-only training recipe; (3) a restricted-logit
+  comparison (bypassing generation) found the ranking among candidate answer tokens depends only on
+  the image, never on the instruction text, across real/unrelated/mismatched prompts. Only 2 tasks
+  were smoke-tested before this was established; the planned full 30-query battery (3 conditions x 10
+  tasks) was deliberately not run since it would only reproduce the same negative result.
+- **Artifacts:** 2 example annotated images (smoke test) at
+  `openvla/experiments/figures/probe_bowl_pointing/`; structured smoke-test output at
+  `openvla/experiments/logs/probe_bowl_pointing_smoketest/probe_bowl_pointing.jsonl` (gitignored,
+  local only).
+
+**Status:** closed — see `benchmark_split_result.md` §8 for the full write-up and cross-experiment
+finding 12 for how this bears on findings 1-11's interpretation.
+
+---
+
+## 2026-08-25 — Qwen2-VL-7B-Instruct bowl-pointing probe (the §8 "open alternative", not a `run_eval.sh --split` launch)
+
+- **Hardware:** 1x RTX PRO 6000 Blackwell (GPU 0 of the 4-GPU server, `g4-flex-20260824`),
+  `openvla-libero:blackwell` image with `transformers==4.51.3` + `qwen-vl-utils` installed
+  ephemerally via `pip install --user` inside the container (the image's pinned `transformers==4.40.1`
+  predates Qwen2-VL support; the script's own docstring suggestion of an open-ended `>=4.49` pulls
+  today's `5.15.1` instead and breaks an unrelated import — `openvla_utils.py`'s
+  `AutoModelForVision2Seq`, removed in transformers 5.x — that `bowl_pointing_common.py` transitively
+  imports through `libero_utils.py`/`robot_utils.py` despite never calling into it; pinning to
+  `4.51.3` avoids both problems).
+- **Model:** `Qwen/Qwen2-VL-7B-Instruct` (already cached locally, ~16GB, no OpenVLA weights
+  involved) — a genuinely separate general-purpose VLM never trained on OpenVLA's action-only
+  template, per the alternative noted at the end of §8.
+- **What ran:** `openvla/experiments/robot/libero/probe_bowl_pointing_qwen.py` (new, uncommitted in
+  the `openvla` fork), the full battery this time: all 3 conditions x 10 tasks = 30 queries. Smoke-
+  tested on 1 query first.
+- **Outcome:** full detail in `benchmark_split_result.md` §8.1. Headline: `negative_contrast` 60%,
+  `positive_contrast` 40%, `hardneg` 60% — none convincingly above chance (50% for the 2-bowl
+  conditions, 33% for 3-bowl `hardneg`), and the raw answers show a numeric-position bias (Qwen never
+  answered "1" across all 10 `hardneg` queries; 7/10 `positive_contrast` answers were "2") rather than
+  language-tracking behavior. Answers to the two 2-bowl conditions (identical images per task, since
+  `bowl_pointing_common.py` caches renders by `(suite, task_id)` — only the prompt differs) differ on
+  5/10 tasks between `negative_contrast` and `positive_contrast`, showing the model IS phrasing-
+  sensitive, just not in a way that improves accuracy.
+- **Artifacts:** 30 annotated images (all conditions/tasks, overwriting the 2 pre-existing OpenVLA
+  smoke-test images at the same paths — same filename scheme, both scripts share `fig_dir`) at
+  `openvla/experiments/figures/probe_bowl_pointing/`; structured full-battery output at
+  `openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl` (gitignored,
+  local only).
+
+**Status:** closed — see `benchmark_split_result.md` §8.1 for the full write-up and cross-experiment
+finding 13.
+
+---
+
+## 2026-08-26 — Bowl-pointing probe marker fix + Qwen2-VL re-run (not a `run_eval.sh --split` launch)
+
+- **Trigger:** user inspection of the §8.1 image gallery flagged the markers as too large (occluding
+  the bowl) and possibly misaligned. Settle-timing was tested as the hypothesis (`num_steps_wait`
+  swept 0-120 on `libero_spatial` task 0) and ruled out — physics fully settles by step 5. A real,
+  independent bug was found instead: `bowl_pointing_common.py`'s hand-projection of each bowl's 3D
+  position (`robosuite.utils.camera_utils.project_points_from_world_to_camera`) placed
+  `akita_black_bowl_1`'s marker ~46px off (on bare table, ~20% of the 224px frame) on `libero_spatial`
+  task 0, confirmed against MuJoCo's own segmentation render as an independent ground truth. Root
+  mechanism in the projection math wasn't identified; fix instead reads the segmentation mask's own
+  pixel centroid per bowl, sidestepping the buggy function entirely. Markers also shrunk from filled
+  `radius=15` circles to `radius=6` outline dots so they no longer cover the bowl.
+- **Hardware:** 1x RTX PRO 6000 Blackwell (GPU 1 of the 4-GPU server, `g4-flex-20260824`),
+  `openvla-libero:blackwell` image, same ephemeral `transformers==4.51.3` + `qwen-vl-utils` install as
+  the 2026-08-25 Qwen run.
+- **What ran:** `probe_bowl_pointing_qwen.py`, full battery (3 conditions x 10 tasks = 30 queries),
+  identical model/prompts/scoring to the 2026-08-25 run — only the rendered images changed (fixed
+  `bowl_pointing_common.py`, uncommitted in the `openvla` fork). Smoke-tested on task 0 first.
+- **Outcome:** full detail in `benchmark_split_result.md` §8.2. Headline: all 3 conditions now score
+  70% (was 60% / 40% / 60%) — clearly above chance (50%/50%/33%) where none convincingly cleared it
+  before. `negative_contrast` and `positive_contrast` (identical images, wording differs) now agree on
+  10/10 tasks (was 5/10) — the earlier "phrasing sensitivity" finding was very likely noise from bad
+  markers, not a real wording effect.
+- **Artifacts:** same paths as the 2026-08-25 Qwen run, overwritten in place:
+  `openvla/experiments/figures/probe_bowl_pointing/` (30 images) and
+  `openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl` (gitignored,
+  local only). Code fix: `openvla/experiments/robot/libero/bowl_pointing_common.py` (uncommitted in
+  the `openvla` fork as of this entry).
+
+**Status:** closed — see `benchmark_split_result.md` §8.2 for the full write-up and cross-experiment
+finding 14.
+
+---
+
+## 2026-08-26 — Bowl-pointing probe: `default` (no-distractor-mention) baseline added
+
+- **Trigger:** user asked to add the `default` (no-distractor-mention) instruction as a comparison
+  point alongside `negative_contrast`/`positive_contrast`/`hardneg` in the (now-fixed, see the
+  2026-08-26 marker-fix entry above) bowl-pointing probe.
+- **Code change:** `bowl_pointing_common.CONDITION_SUITES` gained `"default": ("libero_spatial",
+  None)`; `render_and_annotate()` now also returns LIBERO's native `task.language` string so a
+  `None` instruction dict (the existing `eval_registry.CONDITIONS` convention for "use the task's
+  own language") resolves correctly in both probe scripts.
+- **Hardware:** 1x RTX PRO 6000 Blackwell (GPU 1 of 4, `g4-flex-20260824`), same ephemeral
+  `transformers==4.51.3` + `qwen-vl-utils` install as the prior two Qwen runs.
+- **What ran:** `probe_bowl_pointing_qwen.py`, full battery, now 4 conditions x 10 tasks = 40 queries
+  in one invocation (`default,negative_contrast,positive_contrast,hardneg`) so all four conditions'
+  results land in the same run/file.
+- **Outcome:** full detail in `benchmark_split_result.md` §8.3. Headline: `default` scores 5/10 (50%,
+  exactly chance) — lower than both `negative_contrast` and `positive_contrast` (7/10, 70% each) on
+  the identical images. The two distractor-mention phrasings each correctly resolve 2 tasks (task ids
+  4 and 5, both target=bowl "1") that the target-only phrasing gets wrong, and are otherwise identical
+  to each other and to `default` on every other task. So for this scene/model, distractor-mention
+  phrasing is a disambiguating cue, not a difficulty source — see cross-experiment finding 15.
+- **Artifacts:** same paths as the prior two Qwen runs, overwritten/extended in place:
+  `openvla/experiments/figures/probe_bowl_pointing/` (+10 new `--default--` images) and
+  `openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl` (gitignored,
+  local only, now 40 lines). Code: `bowl_pointing_common.py`, `probe_bowl_pointing.py`,
+  `probe_bowl_pointing_qwen.py` (all uncommitted in the `openvla` fork as of this entry).
+
+**Status:** closed — see `benchmark_split_result.md` §8.3 for the full write-up and cross-experiment
+finding 15.
+
+---
+
+## 2026-08-26 — Bowl-pointing probe: `hardneg_default` (3-bowl, no-distractor-mention) baseline added
+
+- **Trigger:** user asked to extend the just-added `default` no-mention comparison (see the prior
+  2026-08-26 entry) to the 3-bowl `hardneg` scene too.
+- **Code change:** `bowl_pointing_common.CONDITION_SUITES` gained `"hardneg_default":
+  ("libero_spatial_3bowl_hardneg", None)` — same 3-bowl scene as `hardneg`, LIBERO's own native
+  (target-only) task language. Confirmed via smoke test that `task.language` is identical in form
+  across the 2-bowl and 3-bowl suites (the extra distractor bowl doesn't change LIBERO's own
+  description).
+- **Hardware:** 1x RTX PRO 6000 Blackwell (GPU 1 of 4, `g4-flex-20260824`), same ephemeral
+  `transformers==4.51.3` + `qwen-vl-utils` install as the prior Qwen runs.
+- **What ran:** `probe_bowl_pointing_qwen.py`, full battery, now 5 conditions x 10 tasks = 50 queries
+  in one invocation (`default,negative_contrast,positive_contrast,hardneg,hardneg_default`).
+- **Outcome:** full detail in `benchmark_split_result.md` §8.3 (extended) and cross-experiment
+  finding 16. Headline: `hardneg_default` scores 6/10 (60%, comfortably above the 33% chance floor) —
+  lower than `hardneg`'s 7/10 (70%) but a much smaller gap than the 2-bowl `default` vs.
+  `negative_contrast`/`positive_contrast` comparison (50% vs. 70%). The two 3-bowl conditions
+  disagree on exactly 1 of 10 tasks (task id 5). Task id 0 is wrong in all 5 conditions across both
+  scenes — the single hardest case in the whole battery; task id 2 is wrong only in the two 3-bowl
+  conditions, isolating the extra bowl (not phrasing) as that task's specific difficulty.
+- **Artifacts:** same paths as prior Qwen runs, extended in place:
+  `openvla/experiments/figures/probe_bowl_pointing/` (+10 new `--hardneg_default--` images) and
+  `openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl` (gitignored,
+  local only, now 50 lines). Code: `bowl_pointing_common.py`, `probe_bowl_pointing.py`,
+  `probe_bowl_pointing_qwen.py` (all uncommitted in the `openvla` fork as of this entry).
+
+**Status:** closed — see `benchmark_split_result.md` §8.3 for the full write-up and cross-experiment
+finding 16.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 _(none — Split 4's `path` distractor (Split 2) remains the only open item, see below)_
