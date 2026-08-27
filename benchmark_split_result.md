@@ -150,7 +150,9 @@ Results: `results/libero_spatial--positive_contrast--shard{0..3}of4.jsonl`.
 condition keeps the ordinary (target-only) prompt and adds a **third** `akita_black_bowl` at a
 different kind of location relative to the target. Coordinate catalog and per-task placement table
 for every condition live in `benchmark_split_plan.md` §Split 2 — this section covers rendered
-outcome, results, and analysis per condition.
+outcome, results, and analysis per condition. For the same numbers reorganized **by task** instead —
+placement + render + instruction + SR side by side for `default`/`irrelevant`/`semantic`/`landmark`,
+one table per task — see `split2_distractor_comparison.md`.
 
 | Condition | Status | Overall SR | Rollouts |
 |---|---|--:|--:|
@@ -557,6 +559,39 @@ pts), not the collapse the raw number suggests.
 **Split fully run** — both 4a's two missing cells and 4b (redesigned as a target cue-type probe)
 completed 2026-08-20. See `eval_log.md` for the launch batch.
 
+### 5.0 — What this split is testing, in plain language
+
+Every task in this suite is "pick up the black bowl \<somewhere\> and place it on the plate." The
+"\<somewhere\>" is always describable in one of three ways, depending on what's physically next to
+the bowl in that task's scene:
+
+| Relation family | What it means | Example (task id) |
+|---|---|---|
+| **landmark** | bowl sits *beside* another named object | "next to the ramekin" (task 1), "next to the cookie box" (task 6), "next to the plate" (task 8), "between the plate and the ramekin" (task 0) |
+| **surface** | bowl sits *on top of* another named object | "on the cookie box" (task 3), "on the ramekin" (task 5), "on the stove" (task 7), "on the wooden cabinet" (task 9) |
+| **region** | bowl sits in an open area with nothing nearby to name | "table center" (task 2) |
+
+Split 4 asks the same underlying question two different ways:
+
+- **4a asks it from the *scene* side:** does it matter, physically, whether the target bowl and the
+  (unmentioned) distractor bowl each happen to be a landmark-type, surface-type, or region-type
+  placement? The prompt text stays the standard "pick up the black bowl \<location\>" the whole
+  time — only where the bowls actually sit in the scene changes.
+- **4b asks it from the *prompt* side:** for a target bowl that is physically sitting in one place
+  (say, resting on the cookie box), does it matter whether the instruction *describes* that same
+  spot with surface-style words ("on the cookie box"), landmark-style words ("next to the cookie
+  box"), or region-style words ("near the center of the table")? Nothing about the scene moves —
+  only the sentence changes, and it's checked to still be a true description of where the bowl is.
+
+**Bottom line (read the full analysis in §5.1/§5.2 for the numbers):** the scene-side manipulation
+(4a) barely matters — success rates stay within about 8 points of each other no matter which
+relation family the target or distractor happens to be. The prompt-side manipulation (4b) is the
+single biggest effect measured anywhere in this project, 50–67 points of success lost by rewording
+a completely true, completely unambiguous sentence about a bowl whose position never changed and
+whose distractor is never mentioned. Put together, this says the checkpoint isn't reasoning about
+*where things are* — it's pattern-matching the specific sentence template it saw during fine-tuning,
+and breaks badly the moment that template is swapped for an equally true one it wasn't trained on.
+
 ### 5.1 — 4a: Grounding-by-scene probe (complete, all 6 cells)
 
 4 of 6 cells reuse rollouts already collected under `spatial/default` (Split 1) — no new GPU run
@@ -602,6 +637,21 @@ Full design (truthfulness tiers, which tasks get which rephrasing and why) is in
 
 **Result: this is the single largest effect measured anywhere in this project so far, and it comes
 from a manipulation that never mentions a second bowl at all.**
+
+**Concretely, what changed.** Task 5's bowl physically rests on top of the ramekin, and nothing
+about the scene or robot's view differs between these three runs — only the sentence:
+
+| Condition | Instruction given to the policy |
+|---|---|
+| `spatial/default` (native, "surface" phrasing) | "pick up the black bowl on the ramekin and place it on the plate" |
+| `target_cue_landmark` | "pick up the black bowl next to the ramekin and place it on the plate" |
+| `target_cue_region` | "pick up the black bowl at the back-left of the table and place it on the plate" |
+
+All three sentences are true descriptions of the exact same bowl in the exact same spot. Success
+on this one task went 94% → 10% → 28% across those three sentences respectively — see the
+per-task table below for every task's exact wording pair (full instruction dicts:
+`LIBERO_SPATIAL_TARGET_CUE_REGION_INSTRUCTIONS` / `LIBERO_SPATIAL_TARGET_CUE_LANDMARK_INSTRUCTIONS`
+in `openvla/experiments/robot/libero/instructions.py`).
 
 | Condition | Tasks | Overall SR | Rollouts |
 |---|---|--:|--:|
