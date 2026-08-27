@@ -392,7 +392,12 @@ results/libero_spatial_3bowl_semantic2--default--shard{0..3}of4.jsonl
 
 ## Still queued (registry-ready, not yet launched)
 
-(none — Split 2's implemented conditions are all run; only `path` remains open)
+- `grounding/target_cue_proximity_novel` (Split 4c, new 2026-08-27) — same 4 surface-family tasks
+  (3, 5, 7, 9) and scene as `target_cue_landmark`, rephrases the target with a proximity synonym
+  ("close to X") never used in any native `libero_spatial` prompt, isolating whether
+  `target_cue_landmark`'s ~50pt drop tracks relation-type change or exact-template familiarity. See
+  `benchmark_split_plan.md` Split 4's 4c section. Launch: `... run_eval.sh --split
+  grounding/target_cue_proximity_novel --task_ids 3 5 7 9` (200 rollouts).
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.

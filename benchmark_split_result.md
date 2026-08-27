@@ -47,7 +47,7 @@ Applies to every condition below unless a section says otherwise.
 | 1. Prompt Sensitivity | 3/3 conditions implemented | 3/3 run (`default`, `negative_contrast`, `positive_contrast`) |
 | 2. Distractor Placement | 3/4 conditions implemented (`path` not authored) | All implemented conditions run. `irrelevant` and `semantic` each redefined a second time (see §3) — current suites (`libero_spatial_3bowl_front` 85.2%, `libero_spatial_3bowl_semantic2` 85.2%, both 500/500) now run; prior data survives relabeled `irrelevant_v1_legacy` (88.8%) / `semantic_v1_legacy` (84.8%); original fixed-coordinate data survives as `center_fixed_legacy`. Only unauthored `path` remains beyond that |
 | 3. Scene Complexity | Implemented | Run (both conditions) |
-| 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe | ✅ fully run — 6/6 cells (4a), 2/2 conditions (4b) |
+| 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b fully run (6/6 cells, 2/2 conditions); 4c: `default`/`target_cue_landmark` legs reused from 4b, `target_cue_proximity_novel` registry-ready, **not yet run** |
 | VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
 
 ---
@@ -600,6 +600,33 @@ Results: `results/libero_spatial--target_cue_region--shard{0,1}of2.jsonl`,
 `results/libero_spatial--target_cue_landmark--shard{0,1}of2.jsonl`,
 `results/libero_spatial_grounding_surface_landmark--default--shard0of2.jsonl`,
 `results/libero_spatial_grounding_region_surface--default--shard0of2.jsonl`.
+
+### 5.3 — 4c: Familiar vs. Novel Proximity-Cue Probe (designed, registry-ready, **not yet run**)
+
+**Open question left by 4b.** `target_cue_landmark`'s ~50pt drop rephrases a surface-family target
+("on the ramekin") using "next to X" — which happens to be the *exact* template tasks 0/1/6/8 already
+use natively. That leaves the cause ambiguous: is the damage from the relation-type change itself
+(surface → proximity), or from the sentence simply not matching any template seen at fine-tuning
+time, with "next to X" only looking special because it happens to coincide with one? 4c holds
+relation type fixed at "proximity" and swaps only the wording — "next to X" (familiar, reused
+verbatim from tasks 0/1/6/8) vs. "close to X" (a proximity synonym that appears in none of the 10
+native `libero_spatial` prompts) — on the same 4 surface-family tasks (3, 5, 7, 9), same scene, same
+distractor-never-mentioned protocol as 4b.
+
+| Label | Condition id | Example (task 5) | Status |
+|---|---|---|---|
+| surface_native | `default` (reused) | "on the ramekin" | ✅ already run — 80.5% pooled over tasks 3/5/7/9 (see §5.2 table above) |
+| proximity_familiar | `target_cue_landmark` (reused) | "next to the ramekin" | ✅ already run — 30.5% pooled |
+| proximity_novel | `target_cue_proximity_novel` (**new**) | "close to the ramekin" | registry-ready, **not yet run** |
+
+Only `proximity_novel` needs a new GPU run (200 rollouts: 50/task x tasks 3, 5, 7, 9). Full design,
+per-task phrasing table, and metrics (`Novel-cue Drop`, `Familiarity Gap`) are in
+`benchmark_split_plan.md` Split 4's 4c section. Launch once ready:
+```
+... run_eval.sh --split grounding/target_cue_proximity_novel --task_ids 3 5 7 9
+```
+This section will be filled in with the result table and analysis once that run completes — tracked
+in `eval_log.md`'s "Still queued" list in the meantime.
 
 ---
 

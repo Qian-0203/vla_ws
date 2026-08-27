@@ -354,6 +354,68 @@ check the region-zone directional wording against a render (see §9), (ii) merge
 (iii) launch via `run_eval.sh --split grounding/target_cue_region --task_ids 0 1 3 5 6 7 8 9` and
 the analogous command for `grounding/target_cue_landmark`.
 
+**4c. Familiar vs. Novel Proximity-Cue Probe.** 4b's `target_cue_landmark` condition found a ~50pt
+drop from rephrasing a surface-family target ("on the ramekin") as its landmark-cue analogue ("next
+to the ramekin") — but that analogue happens to reuse "next to X," the *exact* phrasing template
+tasks 0/1/6/8 already use natively (just with a different `X`). That leaves the drop's cause
+ambiguous between two readings: (a) the policy is damaged by the relation-type change itself
+(surface -> proximity semantics), or (b) it's damaged by the sentence not matching any template it
+was fine-tuned on, and "next to X" only looks like a special case because it happens to coincide
+with a template used elsewhere. 4c disentangles these by holding relation type fixed at "proximity"
+and varying only whether the wording is a familiar (in-distribution) or novel (never-seen) template.
+
+| Field | Description |
+|---|---|
+| Goal | Whether `target_cue_landmark`'s drop tracks the relation-type change (surface->proximity) or the specific lexical template ("next to X") matching training data |
+| Hypothesis | If a novel proximity synonym drops *about as much* as the familiar one, the damage is relation-type-driven; if it drops *substantially more*, exact template familiarity — not relation type — is doing most of the work (the more likely outcome given 4b's broader "templated pattern matching" finding) |
+| Changed variable | wording familiarity only (familiar "next to X" vs. novel "close to X"), relation type (proximity) and truthfulness (disclosed-approximate) held fixed |
+| Controlled variables | scene, init states, target, distractor (never mentioned), checkpoint, seed — identical to `spatial/default` and `target_cue_landmark` |
+| Conditions | 3-way comparison per task, reusing 2 of 3 legs from already-collected data |
+| Tasks | same 4 surface-family tasks as 4b's landmark cue: 3, 5, 7, 9 |
+| Trials | 50/task/condition, seed 7 (only `proximity_novel` needs a new run — 200 rollouts) |
+| Metrics | see below |
+
+| Label | Condition id | Example (task 5) | Cue type | Truthfulness | Familiarity | Status |
+|---|---|---|---|---|---|---|
+| surface_native | `default` (reused, `spatial/default`) | "on the ramekin" | surface | exact | native — this *is* the fine-tuning-time phrasing | ✅ already run (94% on task 5; 80.5% pooled over 3/5/7/9, see `benchmark_split_result.md` §5.2) |
+| proximity_familiar | `target_cue_landmark` (reused) | "next to the ramekin" | landmark/proximity | approximate (disclosed) | familiar — "next to X" is tasks 0/1/6/8's native template, just with a different `X` | ✅ already run (10% on task 5; 30.5% pooled, see §5.2) |
+| proximity_novel | `target_cue_proximity_novel` (**new**) | "close to the ramekin" | landmark/proximity | approximate (disclosed) | novel — "close to X" appears in none of the 10 native `libero_spatial` prompts | implemented, not yet run |
+
+Full per-task phrasing (all 4 tasks, same truthfulness disclosure as 4b's landmark cue — the bowl is
+co-located with, not literally beside, the named object):
+
+| id | native (surface_native) | proximity_familiar | proximity_novel |
+|--:|---|---|---|
+| 3 | on the cookie box | next to the cookie box | close to the cookie box |
+| 5 | on the ramekin | next to the ramekin | close to the ramekin |
+| 7 | on the stove | next to the stove | close to the stove |
+| 9 | on the wooden cabinet | next to the wooden cabinet | close to the wooden cabinet |
+
+**Metrics:**
+
+```
+Novel-cue Drop     = SR(default, 4 tasks) - SR(target_cue_proximity_novel)
+Familiar-cue Drop  = SR(default, 4 tasks) - SR(target_cue_landmark)          [already computed, 50.0 pts]
+Familiarity Gap    = SR(target_cue_landmark) - SR(target_cue_proximity_novel)
+```
+
+A `Familiarity Gap` near 0 supports the relation-type reading; a `Familiarity Gap` clearly outside
+the ~±7pt single-condition noise band (§5) supports the template-familiarity reading.
+
+**Registry: implemented, not yet run.** `LIBERO_SPATIAL_TARGET_CUE_PROXIMITY_NOVEL_INSTRUCTIONS` in
+`openvla/experiments/robot/libero/instructions.py` and the `target_cue_proximity_novel` entries in
+`eval_registry.CONDITIONS`/`SPLITS` (split id `grounding/target_cue_proximity_novel`) are on
+`openvla`'s `main` branch (not yet pushed to a feature branch — small enough to land directly).
+Verified: `python3 -m py_compile` on both files, plus a runtime check that
+`CONDITIONS['target_cue_proximity_novel']` resolves to a dict of exactly 4 task names matching the
+table above and `resolve_split('grounding/target_cue_proximity_novel')` returns
+`('libero_spatial', 'libero_spatial', 'target_cue_proximity_novel')`. Must be run with
+`--task_ids 3 5 7 9` (same constraint as `target_cue_landmark` — `run_libero_eval.py` asserts
+`task.name in instruction_map` and does not skip missing tasks). Launch command:
+```
+... run_eval.sh --split grounding/target_cue_proximity_novel --task_ids 3 5 7 9
+```
+
 **Deprioritized stretch option — the original 3x3 target x distractor mention matrix.** Kept as an
 explicitly optional follow-on, not part of 4b's core design: a full truthful 3x3 would need a
 purpose-built pilot scene (e.g. relocating `cookies_1` adjacent to `ramekin_region` so a single
