@@ -157,92 +157,60 @@ one table per task — see `split2_distractor_comparison.md`.
 | Condition | Status | Overall SR | Rollouts |
 |---|---|--:|--:|
 | `irrelevant` (current, `libero_spatial_3bowl_front`) | ✅ run | 85.2% | 500/500 |
-| `irrelevant_v1_legacy` (`libero_spatial_3bowl_neutral`) | ✅ run | 88.8% | 444/500 |
-| `center_fixed_legacy` (retired definition) | ✅ run | 80.2% | 401/500 |
 | `semantic` (current, `libero_spatial_3bowl_semantic2`) | ✅ run | 85.2% | 500/500 |
-| `semantic_v1_legacy` (`libero_spatial_3bowl_semantic`) | ✅ run | 84.8% | 424/500 |
 | `landmark` | ✅ run | 80.6% | 403/500 |
 | `landmark_with_hardneg_prompt` (Split 1×2 combo) | ✅ run | 41.2% | 412/500 |
 | `path` | ⬜ not authored | — | — |
+
+Retired condition definitions (`irrelevant_v1_legacy`, `semantic_v1_legacy`, `center_fixed_legacy`)
+were run and superseded by the current `irrelevant`/`semantic` above; their numbers are preserved in
+git history and `eval_log.md`, not repeated here.
 
 Computed `Distractor-type Drop = SR(spatial/default) − SR(condition)`:
 
 | Condition | Drop | Interpretation |
 |---|--:|---|
 | `irrelevant` (current) | −1.2 pts | Negative — costs nothing; scores *above* baseline. Task 6 the one soft spot (−14 pts on that task alone), no other task collapses |
-| `irrelevant_v1_legacy` | −4.8 pts | Negative — costs nothing; scores *above* baseline, no task collapse. Superseded by the current `irrelevant` above |
-| `semantic` (current) | −1.2 pts | Negative — no measurable cost. 9/10 tasks identical to `semantic_v1_legacy`; task 4 (the one task that moved closer to an in-band landmark) ticked up +4 pts on that task |
-| `semantic_v1_legacy` | −0.8 pts | Negative — no measurable cost from a distractor at an unrelated named landmark. Superseded by the current `semantic` above |
+| `semantic` (current) | −1.2 pts | Negative — no measurable cost; no task collapses (weakest: task 1 at 72%) |
 | `landmark` | +3.4 pts | The one real-cost result — concentrated almost entirely in two tasks |
 | `landmark_with_hardneg_prompt` | +42.8 pts (vs. baseline); +39.4 pts vs. `landmark` on the identical scene | Adding a disambiguating prompt to the `landmark` scene does not rescue the affected tasks and wrecks the rest of the suite |
 
 ### Per-task render table: `default` vs. `irrelevant` vs. `semantic` vs. `hardneg`
 
-One row per task id, one column per Split 2 condition (episode-0 init state, same render used for
-each condition's numeric verify below in §7; 140x140 thumbnails cropped from the individual
-`t{id}_init.png` renders under `LIBERO/scratch_render/<suite>/`, copied to
-`openvla/experiments/figures/per_task_render/` since the scratch dir gets overwritten each pass).
-`default` = `libero_spatial` (2 bowls); the other three are `libero_spatial_3bowl_{neutral,semantic,hardneg}`
-(3 bowls, distractor placement per condition — see settings above).
+One row per task id, one column per Split 2 condition (episode-0 init state, post physics-settle —
+see §7 — so no floating bowls). `default` = `libero_spatial` (2 bowls); `irrelevant`/`semantic` are
+the **current** suites (`libero_spatial_3bowl_front`/`libero_spatial_3bowl_semantic2`, 140x140
+resized — not center-cropped — from the raw 256x256 render, since a center crop cuts off
+`irrelevant`'s 3rd bowl at the table's front edge); `hardneg` (`landmark`'s scene) is
+`libero_spatial_3bowl_hardneg`, unchanged since first authored. All copied to
+`openvla/experiments/figures/per_task_render/` since the source `LIBERO/scratch_render/<suite>/`
+dirs are scratch and can be overwritten by a future pass.
 
 | id | target | `default` | `irrelevant` | `semantic` | `hardneg` |
 |--:|---|---|---|---|---|
-| 0 | between the plate and the ramekin | ![](openvla/experiments/figures/per_task_render/default_t0.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t0.png) | ![](openvla/experiments/figures/per_task_render/semantic_t0.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t0.png) |
-| 1 | next to the ramekin | ![](openvla/experiments/figures/per_task_render/default_t1.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t1.png) | ![](openvla/experiments/figures/per_task_render/semantic_t1.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t1.png) |
-| 2 | table center | ![](openvla/experiments/figures/per_task_render/default_t2.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t2.png) | ![](openvla/experiments/figures/per_task_render/semantic_t2.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t2.png) |
-| 3 | on the cookie box | ![](openvla/experiments/figures/per_task_render/default_t3.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t3.png) | ![](openvla/experiments/figures/per_task_render/semantic_t3.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t3.png) |
-| 4 | in the top drawer of the wooden cabinet | ![](openvla/experiments/figures/per_task_render/default_t4.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t4.png) | ![](openvla/experiments/figures/per_task_render/semantic_t4.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t4.png) |
-| 5 | on the ramekin | ![](openvla/experiments/figures/per_task_render/default_t5.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t5.png) | ![](openvla/experiments/figures/per_task_render/semantic_t5.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t5.png) |
-| 6 | next to the cookie box | ![](openvla/experiments/figures/per_task_render/default_t6.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t6.png) | ![](openvla/experiments/figures/per_task_render/semantic_t6.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t6.png) |
-| 7 | on the stove | ![](openvla/experiments/figures/per_task_render/default_t7.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t7.png) | ![](openvla/experiments/figures/per_task_render/semantic_t7.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t7.png) |
-| 8 | next to the plate | ![](openvla/experiments/figures/per_task_render/default_t8.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t8.png) | ![](openvla/experiments/figures/per_task_render/semantic_t8.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t8.png) |
-| 9 | on the wooden cabinet | ![](openvla/experiments/figures/per_task_render/default_t9.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_t9.png) | ![](openvla/experiments/figures/per_task_render/semantic_t9.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t9.png) |
+| 0 | between the plate and the ramekin | ![](openvla/experiments/figures/per_task_render/default_t0.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t0.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t0.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t0.png) |
+| 1 | next to the ramekin | ![](openvla/experiments/figures/per_task_render/default_t1.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t1.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t1.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t1.png) |
+| 2 | table center | ![](openvla/experiments/figures/per_task_render/default_t2.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t2.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t2.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t2.png) |
+| 3 | on the cookie box | ![](openvla/experiments/figures/per_task_render/default_t3.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t3.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t3.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t3.png) |
+| 4 | in the top drawer of the wooden cabinet | ![](openvla/experiments/figures/per_task_render/default_t4.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t4.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t4.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t4.png) |
+| 5 | on the ramekin | ![](openvla/experiments/figures/per_task_render/default_t5.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t5.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t5.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t5.png) |
+| 6 | next to the cookie box | ![](openvla/experiments/figures/per_task_render/default_t6.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t6.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t6.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t6.png) |
+| 7 | on the stove | ![](openvla/experiments/figures/per_task_render/default_t7.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t7.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t7.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t7.png) |
+| 8 | next to the plate | ![](openvla/experiments/figures/per_task_render/default_t8.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t8.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t8.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t8.png) |
+| 9 | on the wooden cabinet | ![](openvla/experiments/figures/per_task_render/default_t9.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t9.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t9.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t9.png) |
 
 **Split's implemented conditions are fully run; only the unauthored `path` condition remains.**
 
-### Setting: `center_fixed_legacy` (retired)
-
-**Question.** Keep the default prompt, add a second distractor bowl at a single fixed absolute
-coordinate (`table_center`/`table_front`) reused across all 10 tasks. Retired after this run revealed
-a path-proximity confound (see analysis below); kept only as a labeled historical result.
-
-- Distractor placement: single fixed coordinate, not per-task — see `benchmark_split_plan.md` §Split 2
-  "Design confound found, then fixed" for the exact geometry.
-- Scene: `libero_spatial_3bowl`. State vector grows 92→105 dims (extra free body). Verified across all
-  500 states: worst bowl-to-bowl distance 0.122 m (bowl ⌀ ≈ 0.115 m) — no overlaps, valid heights.
-
-| id | target | 2-bowl (`default`) | 3-bowl (`center_fixed_legacy`) | Δ |
-|--:|---|--:|--:|--:|
-| 0 | between the plate and the ramekin | 92% | 76% | −16 |
-| 1 | next to the ramekin | 84% | 90% | +6 |
-| 2 | table center | 92% | 94% | +2 |
-| 3 | on the cookie box | 84% | 86% | +2 |
-| 4 | in the top drawer | 76% | 84% | +8 |
-| 5 | on the ramekin | 94% | 84% | −10 |
-| 6 | next to the cookie box | 90% | 44% | **−46** |
-| 7 | on the stove | 72% | 82% | +10 |
-| 8 | next to the plate | 84% | 88% | +4 |
-| 9 | on the wooden cabinet | 72% | 74% | +2 |
-
-**Render compare** (left = 2 bowls `libero_spatial`, right = 3 bowls `libero_spatial_3bowl`; rows =
-task ids 0–9, each panel the real episode-0 state restored via `set_init_state`):
-
-![2-bowl vs 3-bowl init states](openvla/experiments/figures/compare_2v3bowl_grid.png)
-
-**Analysis.** Overall success is **robust** to one extra distractor (−3.8 pts) — but the loss is
-**concentrated**: task 6 (*next to the cookie box*) collapses 90%→44% because the fixed-coordinate
-bowl lands between the cookie box and the plate, only slightly farther from the cookie box than the
-target. Rough perpendicular-distance estimate: `table_center` (−0.075, 0.0) sits ~0.18 m off the
-straight line from `next_to_box_region` to `plate_region` — comparable to the ~0.115 m bowl diameter
-plus gripper clearance. This became the empirical motivation for the `irrelevant` redefinition below.
-
 ### Setting: `irrelevant` (current)
 
-**Question.** Same as below, but redefined a second time: bowl_3 now sits at the literal front edge
-of the table (`table_front`) in every task instead of a per-task "least-crowded named region" pick —
-that pick reused `next_to_ramekin_region` (another task's real target landmark) for 5/10 tasks, which
-undercut the goal of a placement carrying no relational meaning at all. Four tasks (1, 3, 5, 6) fall
-back to `table_center` where `table_front` overlaps an existing bowl.
+**Question.** Split 2's control: a 3rd bowl placed somewhere not tied to any relational language,
+to isolate whether an extra bowl's mere *presence* costs anything, independent of where it sits.
+Redefined twice (see `benchmark_split_plan.md` §Split 2 for the full history) — this current
+definition places bowl_3 at the literal front edge of the table (`table_front`) in every task,
+instead of a per-task "least-crowded named region" pick that the first redefinition used, which
+reused `next_to_ramekin_region` (another task's real target landmark) for 5/10 tasks and undercut
+the goal of a placement carrying no relational meaning at all. Four tasks (1, 3, 5, 6) fall back to
+`table_center` where `table_front` overlaps an existing bowl.
 
 **2026-08-27 offset fine-tune.** Both anchor coordinates were nudged another 5cm apart, within the
 `libero_spatial_3bowl_front` suite only (not the shared catalog default): `table_front` +0.05m further
@@ -286,49 +254,15 @@ is a real property of those tasks' scenes, not placement-specific noise.
 
 Results: `results/libero_spatial_3bowl_front--default--shard{0..3}of4.jsonl`.
 
-### Setting: `irrelevant_v1_legacy` (first redefinition, retired)
-
-**Question.** Split 2's control: a 3rd bowl placed somewhere not tied to any relational language,
-per-task chosen for maximum clearance from both the reach path and the 2nd bowl — replacing
-`center_fixed_legacy`'s single fixed coordinate. Superseded by the current `irrelevant` above; kept
-so this section's numbers stay attributable.
-
-- Suite: `libero_spatial_3bowl_neutral`. Per-task region assignment and the redefinition rationale are
-  in `benchmark_split_plan.md` §Split 2.
-- Render check: `verify_suite_init_states.py` → `PASS`, worst separation 0.122 m; contact sheet
-  eyeballed — 3 distinct bowls per task, no overlaps.
-
-| id | target | Default (2-bowl) | Irrelevant (3-bowl) | Δ |
-|--:|---|--:|--:|--:|
-| 0 | between the plate and the ramekin | 92% | 86% | −6 |
-| 1 | next to the ramekin | 84% | 90% | +6 |
-| 2 | table center | 92% | 96% | +4 |
-| 3 | on the cookie box | 84% | 90% | +6 |
-| 4 | in the top drawer | 76% | 96% | **+20** |
-| 5 | on the ramekin | 94% | 96% | +2 |
-| 6 | next to the cookie box | 90% | 94% | +4 |
-| 7 | on the stove | 72% | 88% | **+16** |
-| 8 | next to the plate | 84% | 84% | 0 |
-| 9 | on the wooden cabinet | 72% | 68% | −4 |
-
-**Render compare** (left = `libero_spatial`, right = `libero_spatial_3bowl_neutral`; rows = task ids
-0–9):
-
-![2-bowl vs irrelevant](openvla/experiments/figures/compare_2v3bowl_neutral_grid.png)
-
-**Analysis.** Unlike `center_fixed_legacy` (−3.8 pts, one task collapsing), the redefined neutral
-placement doesn't cost anything at all — it scores *above* baseline (+4.8 pts, ~3 pooled SE, so
-plausibly a real if modest effect rather than pure noise) with no single-task collapse. Tasks 4 and 7
-gain the most (+20, +16); not investigated further at the rollout-video level.
-
-Results: `results/libero_spatial_3bowl_neutral--default--shard{0..3}of4.jsonl`.
-
 ### Setting: `semantic` (current)
 
-**Question.** Same as below, but redefined a second time: task 4's (in the top drawer) bowl_3 moved
-from `next_to_plate_region` (~0.58m from the target — outside the 0.33-0.50m band the other 9 tasks
-land in, so it behaved more like a neutral placement than a genuine semantic distractor) to
-`between_plate_ramekin_region` (~0.48m, task 0's real target landmark). All 9 other tasks unchanged.
+**Question.** Places the 3rd bowl at a **named landmark that is not the target's own** — testing
+whether sitting at *any* nameable relational spot pulls the policy, even when that landmark doesn't
+match the prompt. Redefined once (see `benchmark_split_plan.md` §Split 2 for the full history): task
+4's (in the top drawer) bowl_3 moved from `next_to_plate_region` (~0.58m from the target — outside
+the 0.33-0.50m band the other 9 tasks land in, so it behaved more like a neutral placement than a
+genuine semantic distractor) to `between_plate_ramekin_region` (~0.48m, task 0's real target
+landmark). All 9 other tasks unchanged.
 
 - Suite: `libero_spatial_3bowl_semantic2`. Redefinition rationale in `benchmark_split_plan.md`
   §Split 2 ("Second redefinition").
@@ -360,48 +294,6 @@ task at n=50. Task 1 (next to the ramekin, 72%) remains this condition's weakest
 
 Results: `results/libero_spatial_3bowl_semantic2--default--shard{0..3}of4.jsonl`.
 
-### Setting: `semantic_v1_legacy` (retired)
-
-**Question.** Places the 3rd bowl at a **named landmark that is not the target's own** — testing
-whether sitting at *any* nameable relational spot pulls the policy, even when that landmark doesn't
-match the prompt. Superseded by the current `semantic` above; kept so this section's numbers stay
-attributable.
-
-- Suite: `libero_spatial_3bowl_semantic`. Per-task landmark assignment in
-  `benchmark_split_plan.md` §Split 2.
-- Render check: BDDL + init states authored and verified this pass; contact sheet eyeballed — 3
-  distinct bowls per task, no overlaps/clipping, drawer open only for task 4 (expected — task 4's
-  target lives inside the drawer).
-
-| id | target | 3rd bowl's landmark | Success | n |
-|--:|---|---|--:|--:|
-| 0 | between the plate and the ramekin | next to the cookie box | 86% | 50 |
-| 1 | next to the ramekin | next to the plate | 72% | 50 |
-| 2 | table center | next to the ramekin | 96% | 50 |
-| 3 | on the cookie box | next to the ramekin | 90% | 50 |
-| 4 | in the top drawer | next to the plate | 88% | 50 |
-| 5 | on the ramekin | next to the plate | 86% | 50 |
-| 6 | next to the cookie box | next to the ramekin | 94% | 50 |
-| 7 | on the stove | next to the box | 88% | 50 |
-| 8 | next to the plate | next to the box | 80% | 50 |
-| 9 | on the wooden cabinet | next to the ramekin | 68% | 50 |
-
-**Render compare** (left = `libero_spatial`, right = `libero_spatial_3bowl_semantic`; rows = task ids
-0–9):
-
-![2-bowl vs semantic](openvla/experiments/figures/compare_2v3bowl_semantic_grid.png)
-
-**Analysis.** A semantic-but-irrelevant distractor barely moves overall success (+0.8 pts — well
-under the ~±3.3 pt pooled SE). The two weakest tasks, 1 (72%) and 9 (68%), are still comfortably above
-the collapse range seen for prompt-side manipulations, so even the softest spots here look like
-ordinary scene-to-scene noise. Contrasted with the prompt-side conditions in Split 1 (−51.6 pts for a
-bare-mention prompt) and `center_fixed_legacy` (extra bowl at a neutral spot: −3.8 pts), this is the
-strongest evidence yet that failures are driven by **what the prompt says**, not by **what's sitting
-on the table** — a distractor's presence and rough position barely register unless language draws
-attention to it.
-
-Results: `results/libero_spatial_3bowl_semantic--default--shard{0..3}of4.jsonl`.
-
 ### Setting: `landmark`
 
 **Question.** Split 2's hardest confusability test: the 3rd bowl sits near the target's **own**
@@ -428,11 +320,6 @@ real bowl. A genuine look-alike for "the bowl near X," unlike `semantic` (differ
 | 7 | on the stove | 72% | 86% | +14 |
 | 8 | next to the plate | 84% | 84% | 0 |
 | 9 | on the wooden cabinet | 72% | 54% | **−18** |
-
-**Render compare** (left = `libero_spatial`, right = `libero_spatial_3bowl_hardneg`; rows = task ids
-0–9 — same scene also backs `landmark_with_hardneg_prompt` below, only the prompt differs):
-
-![2-bowl vs landmark](openvla/experiments/figures/compare_2v3bowl_hardneg_grid.png)
 
 **Analysis.** The overall drop (−3.4 pts) looks mild — comparable to `center_fixed_legacy`'s plain
 extra distractor (−3.8 pts) — but that headline number hides a **concentrated, task-specific effect**:
