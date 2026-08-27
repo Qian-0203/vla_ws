@@ -295,9 +295,59 @@ finding 16.
 
 ---
 
+## 2026-08-26 — Split 2 second redefinition: `irrelevant` and `semantic` scene authoring (not a `run_eval.sh --split` launch)
+
+Scene/registry authoring only, at the user's request — no GPU eval launched. `irrelevant`'s bowl_3
+was redefined a second time (new suite `libero_spatial_3bowl_front`: bowl_3 always at the table's
+front edge, `table_center` fallback for 2 tasks) and `semantic`'s task 4 was redefined (new suite
+`libero_spatial_3bowl_semantic2`: bowl_3 moved from `next_to_plate_region` to
+`between_plate_ramekin_region`, closer to the drawer and inside the same distance band as the other
+9 tasks). Full rationale and per-task coordinates: `benchmark_split_plan.md` §Split 2 ("Second
+redefinition"). Prior definitions kept as `irrelevant_v1_legacy` / `semantic_v1_legacy` in the
+registry so their 88.8%/84.8% numbers stay attributable — see `benchmark_split_result.md` §3, §7.
+
+- **Hardware:** laptop/local (this machine), `openvla-libero:blackwell` image, CPU/EGL rendering only
+  (no CUDA compute needed for scene generation/verification — see CLAUDE.md "Known pitfalls").
+- Generated init states (`LIBERO/scripts/gen_suite_init_states.py`) and verified
+  (`verify_suite_init_states.py`) for both new suites. First pass failed for both (real physical
+  overlaps caught by the verifier, not just estimated from region-center distances — see
+  `benchmark_split_result.md` §7 for the exact numbers); fixed and re-verified PASS, worst
+  separation 0.122m for both.
+- Both new suites are registry-ready (`spatial_3bowl/irrelevant`, `spatial_3bowl/semantic`) but
+  **not yet run** — see "Still queued" below.
+
+## 2026-08-27 — Contact-sheet render fix + `irrelevant` offset fine-tune (not a `run_eval.sh --split` launch)
+
+Scene-authoring/tooling only, at the user's request — no GPU eval launched.
+
+- **Render-settling fix, applied retroactively.** The 2026-08-26 entry above's contact sheets for
+  `libero_spatial_3bowl_front`/`libero_spatial_3bowl_semantic2` had been captured via
+  `gen_suite_init_states.py`'s own inline preview (no physics-settle step before capture), so some
+  bowls showed mid-fall/floating instead of resting on the table — the same class of bug
+  `render_suite_contact_sheet.py` was already fixed for one day earlier (see that script), but these
+  two suites were authored the same day and missed the fix. Re-rendered both with
+  `render_suite_contact_sheet.py` (read-only over the already-verified `.pruned_init` files, init
+  states unchanged); both now show every bowl resting flat with a contact shadow. Detail:
+  `benchmark_split_result.md` §7.
+- **`irrelevant` offset fine-tune.** `table_front`/`table_center` pulled another 0.05m apart, within
+  `libero_spatial_3bowl_front` only: `table_front` → (0.24,−0.01)–(0.26,0.01) for the 6 non-fallback
+  tasks; `table_center` fallback → (−0.15,−0.01)–(−0.10,0.01) for the 4 fallback tasks (1, 3, 5, 6;
+  task 2's own `table_center` bowl_1 target untouched). Stays ≈0.29m clear of `stove_region` either
+  way. Regenerated, re-verified PASS (worst sep 0.122m, task 4, unrelated to bowl_3; every other task
+  improved to 0.148–0.301m), re-rendered and eyeballed. Full rationale:
+  `benchmark_split_plan.md` §Split 2 ("Offset fine-tune").
+- **Correction to the 2026-08-26 entry above:** it says "`table_center` fallback for 2 tasks" — the
+  actual count is 4 (tasks 1, 3, 5, 6; tasks 3 and 5 were caught in a second verify pass after that
+  entry was written). Left as-is per this file's append-only convention; correct count is in
+  `benchmark_split_plan.md`/`benchmark_split_result.md`.
+- `spatial_3bowl/irrelevant` (suite `libero_spatial_3bowl_front`) is still **not yet run** — see
+  "Still queued" below. `spatial_3bowl/semantic` (suite `libero_spatial_3bowl_semantic2`) unaffected
+  by the offset fine-tune (`irrelevant`-only change), also still not yet run.
+
 ## Still queued (registry-ready, not yet launched)
 
-_(none — Split 4's `path` distractor (Split 2) remains the only open item, see below)_
+- `spatial_3bowl/irrelevant` (suite `libero_spatial_3bowl_front`) — 500 rollouts, seed 7, 50/task.
+- `spatial_3bowl/semantic` (suite `libero_spatial_3bowl_semantic2`) — 500 rollouts, seed 7, 50/task.
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.
@@ -316,8 +366,10 @@ distractor.
   | `libero_spatial` | 2 bowls (stock) |
   | `libero_spatial_3bowl` | +1 bowl (`center_fixed_legacy`) |
   | `libero_spatial_3bowl_open` | +1 bowl, top drawer open |
-  | `libero_spatial_3bowl_neutral` | +1 bowl, redefined `irrelevant` |
-  | `libero_spatial_3bowl_semantic` | +1 bowl, `semantic` |
+  | `libero_spatial_3bowl_neutral` | +1 bowl, `irrelevant_v1_legacy` (retired) |
+  | `libero_spatial_3bowl_front` | +1 bowl, current `irrelevant` |
+  | `libero_spatial_3bowl_semantic` | +1 bowl, `semantic_v1_legacy` (retired) |
+  | `libero_spatial_3bowl_semantic2` | +1 bowl, current `semantic` |
   | `libero_spatial_3bowl_hardneg` | +1 bowl, `landmark` / `landmark_with_hardneg_prompt` |
   | `libero_spatial_grounding_surface_landmark` | 2 bowls, distractor moved to a landmark region |
   | `libero_spatial_grounding_region_surface` | 2 bowls, distractor moved to a surface region |

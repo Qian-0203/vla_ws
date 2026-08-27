@@ -45,7 +45,7 @@ Applies to every condition below unless a section says otherwise.
 | Split | Registry status | Data status |
 |---|---|---|
 | 1. Prompt Sensitivity | 3/3 conditions implemented | 3/3 run (`default`, `negative_contrast`, `positive_contrast`) |
-| 2. Distractor Placement | 3/4 conditions implemented (`path` not authored) | 4/4 implemented conditions run (`irrelevant`, `semantic`, `landmark`, `landmark_with_hardneg_prompt`; the old `irrelevant` data survives relabeled as `center_fixed_legacy`); only unauthored `path` remains |
+| 2. Distractor Placement | 3/4 conditions implemented (`path` not authored) | `landmark`, `landmark_with_hardneg_prompt` run. `irrelevant` and `semantic` each redefined a second time (see §3) — new suites (`libero_spatial_3bowl_front`, `libero_spatial_3bowl_semantic2`) **not yet run**; prior data survives relabeled `irrelevant_v1_legacy` (88.8%) / `semantic_v1_legacy` (84.8%); original fixed-coordinate data survives as `center_fixed_legacy`. Only unauthored `path` remains beyond that |
 | 3. Scene Complexity | Implemented | Run (both conditions) |
 | 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe | ✅ fully run — 6/6 cells (4a), 2/2 conditions (4b) |
 | VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
@@ -154,9 +154,11 @@ outcome, results, and analysis per condition.
 
 | Condition | Status | Overall SR | Rollouts |
 |---|---|--:|--:|
-| `irrelevant` (redefined) | ✅ run | 88.8% | 444/500 |
+| `irrelevant` (current, `libero_spatial_3bowl_front`) | ⬜ not yet run | — | — |
+| `irrelevant_v1_legacy` (`libero_spatial_3bowl_neutral`) | ✅ run | 88.8% | 444/500 |
 | `center_fixed_legacy` (retired definition) | ✅ run | 80.2% | 401/500 |
-| `semantic` | ✅ run | 84.8% | 424/500 |
+| `semantic` (current, `libero_spatial_3bowl_semantic2`) | ⬜ not yet run | — | — |
+| `semantic_v1_legacy` (`libero_spatial_3bowl_semantic`) | ✅ run | 84.8% | 424/500 |
 | `landmark` | ✅ run | 80.6% | 403/500 |
 | `landmark_with_hardneg_prompt` (Split 1×2 combo) | ✅ run | 41.2% | 412/500 |
 | `path` | ⬜ not authored | — | — |
@@ -165,8 +167,8 @@ Computed `Distractor-type Drop = SR(spatial/default) − SR(condition)`:
 
 | Condition | Drop | Interpretation |
 |---|--:|---|
-| `irrelevant` | −4.8 pts | Negative — costs nothing; scores *above* baseline, no task collapse |
-| `semantic` | −0.8 pts | Negative — no measurable cost from a distractor at an unrelated named landmark |
+| `irrelevant_v1_legacy` | −4.8 pts | Negative — costs nothing; scores *above* baseline, no task collapse. Superseded by the current `irrelevant` (`libero_spatial_3bowl_front`, not yet run) |
+| `semantic_v1_legacy` | −0.8 pts | Negative — no measurable cost from a distractor at an unrelated named landmark. Superseded by the current `semantic` (`libero_spatial_3bowl_semantic2`, not yet run) |
 | `landmark` | +3.4 pts | The one real-cost result — concentrated almost entirely in two tasks |
 | `landmark_with_hardneg_prompt` | +42.8 pts (vs. baseline); +39.4 pts vs. `landmark` on the identical scene | Adding a disambiguating prompt to the `landmark` scene does not rescue the affected tasks and wrecks the rest of the suite |
 
@@ -230,11 +232,38 @@ target. Rough perpendicular-distance estimate: `table_center` (−0.075, 0.0) si
 straight line from `next_to_box_region` to `plate_region` — comparable to the ~0.115 m bowl diameter
 plus gripper clearance. This became the empirical motivation for the `irrelevant` redefinition below.
 
-### Setting: `irrelevant` (redefined)
+### Setting: `irrelevant` (current, not yet run)
+
+**Question.** Same as below, but redefined a second time: bowl_3 now sits at the literal front edge
+of the table (`table_front`) in every task instead of a per-task "least-crowded named region" pick —
+that pick reused `next_to_ramekin_region` (another task's real target landmark) for 5/10 tasks, which
+undercut the goal of a placement carrying no relational meaning at all. Four tasks (1, 3, 5, 6) fall
+back to `table_center` where `table_front` overlaps an existing bowl.
+
+**2026-08-27 offset fine-tune.** Both anchor coordinates were nudged another 5cm apart, within the
+`libero_spatial_3bowl_front` suite only (not the shared catalog default): `table_front` +0.05m further
+toward the front edge (x: 0.19–0.21 → 0.24–0.26), used in the 6 non-fallback task files; `table_center`
+0.05m further back (x: −0.10––0.05 → −0.15––0.10), used only in the 4 fallback task files (1, 3, 5,
+6) — task 2's own `table_center` bowl_1 target (its "from table center" semantic anchor) was left
+untouched since it's not part of this bowl_3 placement. The `table_center` fallback stays ≈0.29m from
+`stove_region` (−0.42,−0.15)–(−0.40,−0.13) either way — moving it back doesn't approach the stove.
+
+- Suite: `libero_spatial_3bowl_front`. Full per-task region table and the redefinition rationale are
+  in `benchmark_split_plan.md` §Split 2 ("Second redefinition").
+- Render check: `verify_suite_init_states.py` → `PASS`, worst separation 0.122 m (task 4, unrelated
+  to bowl_3 — same persistent bowl_1/bowl_2 constraint present in every 3-bowl suite); every other
+  task's separation improved with the wider offsets (0.148–0.301 m, vs. 0.122–0.276 m before the
+  fine-tune). Contact sheet re-rendered and eyeballed — 3 distinct bowls per task, no
+  overlaps/clipping, all resting flat; bowl_3 visibly farther toward the front edge (front tasks) or
+  farther back (fallback tasks) than the pre-fine-tune render.
+- **Not yet run** — no results file exists yet. See `eval_log.md`'s queued list.
+
+### Setting: `irrelevant_v1_legacy` (first redefinition, retired)
 
 **Question.** Split 2's control: a 3rd bowl placed somewhere not tied to any relational language,
 per-task chosen for maximum clearance from both the reach path and the 2nd bowl — replacing
-`center_fixed_legacy`'s single fixed coordinate.
+`center_fixed_legacy`'s single fixed coordinate. Superseded by the current `irrelevant` above; kept
+so this section's numbers stay attributable.
 
 - Suite: `libero_spatial_3bowl_neutral`. Per-task region assignment and the redefinition rationale are
   in `benchmark_split_plan.md` §Split 2.
@@ -266,11 +295,26 @@ gain the most (+20, +16); not investigated further at the rollout-video level.
 
 Results: `results/libero_spatial_3bowl_neutral--default--shard{0..3}of4.jsonl`.
 
-### Setting: `semantic`
+### Setting: `semantic` (current, not yet run)
+
+**Question.** Same as below, but redefined a second time: task 4's (in the top drawer) bowl_3 moved
+from `next_to_plate_region` (~0.58m from the target — outside the 0.33-0.50m band the other 9 tasks
+land in, so it behaved more like a neutral placement than a genuine semantic distractor) to
+`between_plate_ramekin_region` (~0.48m, task 0's real target landmark). All 9 other tasks unchanged.
+
+- Suite: `libero_spatial_3bowl_semantic2`. Redefinition rationale in `benchmark_split_plan.md`
+  §Split 2 ("Second redefinition").
+- Render check: `verify_suite_init_states.py` → `PASS`, worst separation 0.122 m (task 4;
+  `next_to_box_region` was tried first and failed at 0.063 m — the open drawer's footprint collides
+  with it); contact sheet eyeballed — 3 distinct bowls per task, no overlaps/clipping.
+- **Not yet run** — no results file exists yet. See `eval_log.md`'s queued list.
+
+### Setting: `semantic_v1_legacy` (retired)
 
 **Question.** Places the 3rd bowl at a **named landmark that is not the target's own** — testing
 whether sitting at *any* nameable relational spot pulls the policy, even when that landmark doesn't
-match the prompt.
+match the prompt. Superseded by the current `semantic` above; kept so this section's numbers stay
+attributable.
 
 - Suite: `libero_spatial_3bowl_semantic`. Per-task landmark assignment in
   `benchmark_split_plan.md` §Split 2.
@@ -598,9 +642,14 @@ Results: `results/libero_spatial--target_cue_region--shard{0,1}of2.jsonl`,
    (36.8%). The policy has no practice grounding a second referent at all; negation specifically
    isn't the issue.
 6. **Split 2's first real result cut against its own hypothesis.** A distractor placed at an
-   unrelated named landmark (`semantic`) costs ~0 pts (84.8% vs. 84.0% baseline) — well inside
-   noise. Combined with finding 5, the pattern was that failures track *what the prompt says*, not
-   *what's on the table*.
+   unrelated named landmark (`semantic`, now `semantic_v1_legacy` — see below) costs ~0 pts (84.8%
+   vs. 84.0% baseline) — well inside noise. Combined with finding 5, the pattern was that failures
+   track *what the prompt says*, not *what's on the table*. **Caveat added 2026-08-26:**
+   `semantic_v1_legacy`'s task 4 sat ~0.58m from the target — outside the 0.33-0.50m band the other
+   9 tasks land in, so it likely behaved like a neutral placement rather than a genuine semantic
+   distractor for that one task. The redefined `semantic` (`libero_spatial_3bowl_semantic2`) fixes
+   this but has not been run yet, so findings 6 and 8 below should be read as provisional pending
+   that re-run.
 7. **The harder version of the test — `landmark` — does show a real effect, but a concentrated
    one.** A distractor near the target's *own* landmark costs -3.4 pts overall (80.6% vs. 84.0%),
    similar in size to finding 2's plain extra bowl. But like finding 2, that headline number hides
@@ -609,10 +658,12 @@ Results: `results/libero_spatial--target_cue_region--shard{0,1}of2.jsonl`,
    but a distractor placed to be a genuine near-miss for the target's own landmark can badly hurt
    specific tasks — proximity-to-own-landmark is the one scene manipulation so far with a real,
    attributable (if concentrated) cost.
-8. **Split 2's three-way distractor-position comparison is complete, and the pattern holds.**
-   `irrelevant` (+4.8 pts) and `semantic` (+0.8 pts) both cost nothing — if anything they trend
-   positive with no task collapsing. Only `landmark` (-3.4 pts, concentrated in 2 tasks) shows a
-   real effect. Combined with findings 5-6, the picture across this entire project so far: failures
+8. **Split 2's three-way distractor-position comparison is complete, and the pattern holds** (using
+   `irrelevant_v1_legacy`/`semantic_v1_legacy` — the current `irrelevant`/`semantic` redefinitions
+   have not been run yet, see finding 6's caveat). `irrelevant_v1_legacy` (+4.8 pts) and
+   `semantic_v1_legacy` (+0.8 pts) both cost nothing — if anything they trend positive with no task
+   collapsing. Only `landmark` (-3.4 pts, concentrated in 2 tasks) shows a real effect. Combined
+   with findings 5-6, the picture across this entire project so far: failures
    come from **language that references a second location** (catastrophic, -47 to -52 pts) or from
    **a distractor that's a genuine look-alike for the target's own described location**
    (task-concentrated, tens of pts on the affected tasks) — not from scene clutter, extra-object
@@ -729,10 +780,22 @@ actually sees. Regenerated: the 4 suites feeding §3's per-task render table (`l
 their thumbnails; not regenerated (unaffected — already had a settle step, unchanged appearance at
 10 vs. the prior 12 steps): the five `compare_*_grid.png` figures embedded in §3-4.
 
+**2026-08-27 follow-up.** `libero_spatial_3bowl_front`/`libero_spatial_3bowl_semantic2` missed the
+2026-08-26 pass above (authored the same day, but their contact sheets had been captured via
+`gen_suite_init_states.py`'s own inline preview, which has no settle step at all — same root cause,
+different script). Caught when the `libero_spatial_3bowl_front` grid was eyeballed again and a bowl
+was visibly still falling in one panel. Re-rendered both with `render_suite_contact_sheet.py`
+(read-only over the already-generated/verified `.pruned_init` files, so `verify_suite_init_states.py`'s
+PASS results below are unaffected — this only redid the preview image, not the init states); both
+now show every bowl resting flat with contact shadows.
+
 | Suite | Numeric verify (`verify_suite_init_states.py`) | Visual eyeball | Result |
 |---|---|---|---|
-| `libero_spatial_3bowl_neutral` (`irrelevant`) | PASS, worst sep 0.122m | ✅ | 3 distinct bowls per task, no overlaps |
-| `libero_spatial_3bowl_semantic` (`semantic`) | verified | ✅ | 3 distinct bowls per task, no overlaps/clipping, drawer open only on task 4 (expected — task 4's target lives in the drawer) |
+| `libero_spatial_3bowl_neutral` (`irrelevant_v1_legacy`) | PASS, worst sep 0.122m | ✅ | 3 distinct bowls per task, no overlaps |
+| `libero_spatial_3bowl_semantic` (`semantic_v1_legacy`) | verified | ✅ | 3 distinct bowls per task, no overlaps/clipping, drawer open only on task 4 (expected — task 4's target lives in the drawer) |
+| `libero_spatial_3bowl_front` (`irrelevant`, current, 2026-08-26) | First pass FAIL (`table_front` alone) — worst sep 0.107m, tasks 3 & 5 overlap. Fixed by falling back tasks 1, 3, 5, 6 to `table_center`; re-verify PASS, worst sep 0.122m | ✅ (re-eyeballed 2026-08-27 after the settle-timing fix above) | 3 distinct bowls per task, no overlaps/clipping, every bowl resting flat with a contact shadow (first-pass grid had one still mid-fall); 3rd bowl visibly isolated near the table's front edge in every panel |
+| `libero_spatial_3bowl_front` offset fine-tune (2026-08-27) | `table_front` +5cm front / `table_center` fallback +5cm back (still ≈0.29m from `stove_region`); re-verify PASS, worst sep 0.122m (task 4, unchanged, unrelated to bowl_3), all other tasks 0.148–0.301m (up from 0.122–0.276m) | ✅ | Bowl_3 visibly farther toward the front edge in the 6 front tasks, farther back (away from the cluster) in the 4 fallback tasks; still resting flat, no overlaps/clipping |
+| `libero_spatial_3bowl_semantic2` (`semantic`, current, 2026-08-26) | First pass FAIL (task 4 at `next_to_box_region`) — worst sep 0.063m, open drawer's 3D footprint collides. Fixed by moving task 4 to `between_plate_ramekin_region`; re-verify PASS, worst sep 0.122m | ✅ (re-eyeballed 2026-08-27 after the settle-timing fix above) | 3 distinct bowls per task, no overlaps/clipping, every bowl resting flat with a contact shadow; task 4's 3rd bowl visibly near the plate/ramekin cluster instead of the far corner |
 | `libero_spatial_3bowl_hardneg` (`landmark` / `landmark_with_hardneg_prompt`, same scene) | PASS but narrow — min sep 0.121m vs. 0.12m threshold, task 3 tightest | ✅ | 3 distinct bowls per task; task 3's close pair confirmed as two separate bowls, not merged |
 | `libero_spatial_grounding_surface_landmark` (`grounding/surface_landmark`) | PASS, sep 0.393m | ✅ | Single task (`on_the_ramekin`). Cross-checked exact xyz against the BDDL, not just pixels: target `akita_black_bowl_1` = (-0.210, 0.192, z=1.080) — inside `ramekin_region` (-0.21,0.19)-(-0.19,0.21), elevated (on top of the ramekin, as intended). Distractor `akita_black_bowl_2` = (0.116, -0.067, z=0.970) — inside `next_to_box_region` (0.12,-0.08)-(0.14,-0.06) (0.004m outside on x, negligible), flat on the table (not elevated) — confirms it moved off `cookies_1` (was elevated/surface in the original task 5) to a landmark placement, as designed. No overlap/clipping. |
 | `libero_spatial_grounding_region_surface` (`grounding/region_surface`) | PASS, sep 0.210m | ✅ | Single task (`from_table_center`). Target `akita_black_bowl_1` = (-0.075, 0.003, z=0.970) — inside `table_center` (-0.10,-0.01)-(-0.05,0.01), flat on table (region cue, as intended). Distractor `akita_black_bowl_2` = (-0.263, -0.137, z=1.010) — y matches `stove_region`'s -0.14 almost exactly, x offset from the stove's base anchor (-0.41) is consistent with `flat_stove_1_cook_region` being the stove's own top surface (same region used by tasks 6/9's distractors elsewhere in the suite), elevated (on top of the stove) — confirms surface placement, moved off `next_to_plate_region` (landmark in the original task 2). No overlap/clipping. |

@@ -27,7 +27,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | Split | Probes | Registry status |
 |---|---|---|
 | 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented |
-| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` redefined to fix a path-proximity confound (see Split 2 below) |
+| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` and `semantic` each redefined a second time (see Split 2 below) -- new suites not yet run |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
 | 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`), not yet run |
 
@@ -69,16 +69,20 @@ Registry: `spatial/default`, `spatial/positive_contrast`, `spatial/negative_cont
 | Hypothesis | Distractors near the target's own landmark ("landmark") hurt more than neutral ("irrelevant") or other-landmark ("semantic") placement |
 | Changed variable | Position of a 3rd `akita_black_bowl` distractor |
 | Controlled variables | Target bowl position, 2nd (original) distractor, prompt = `default` (except the combo condition below), checkpoint, seed |
-| Conditions | `irrelevant` (per-task region, off the reach path, distance-matched to `semantic`/`landmark`) · `semantic` (named landmark different from target's) · `landmark` (near target's OWN landmark, farther away — "hard negative") · `path` (between target and plate) — **not yet authored, see §9** |
+| Conditions | `irrelevant` (fixed at the table's front edge, off the reach path, farthest of the three) · `semantic` (named landmark different from target's) · `landmark` (near target's OWN landmark, farther away — "hard negative") · `path` (between target and plate) — **not yet authored, see §9** |
 | Tasks | All 10 tasks, scene = corresponding `libero_spatial_3bowl*` suite |
 | Trials | 50/task/condition, seed 7 |
 | Metrics | `Distractor-type Drop = SR(spatial/default) - SR(condition)`, plus per-task deltas |
 | Output | `EVAL-libero_spatial_3bowl*-openvla-*.txt` + matching `results/*.jsonl` |
 
-Registry: `spatial_3bowl/irrelevant` (suite `libero_spatial_3bowl_neutral`, redefined — see below),
+Registry: `spatial_3bowl/irrelevant` (suite `libero_spatial_3bowl_front`, current definition — see
+below), `spatial_3bowl/irrelevant_v1_legacy` (suite `libero_spatial_3bowl_neutral`, the first
+redefinition, kept only so `benchmark_split_result.md`'s 88.8% number stays attributable),
 `spatial_3bowl/center_fixed_legacy` (suite `libero_spatial_3bowl`, the retired single-fixed-
 coordinate definition, kept only so `benchmark_split_result.md`'s original Exp 2 number stays attributable),
-`spatial_3bowl/semantic` (suite `libero_spatial_3bowl_semantic`), `spatial_3bowl/landmark` (suite
+`spatial_3bowl/semantic` (suite `libero_spatial_3bowl_semantic2`, current definition — see below),
+`spatial_3bowl/semantic_v1_legacy` (suite `libero_spatial_3bowl_semantic`, kept only so
+`benchmark_split_result.md`'s 84.8% number stays attributable), `spatial_3bowl/landmark` (suite
 `libero_spatial_3bowl_hardneg`). All reuse `unnorm_key=libero_spatial` since the checkpoint was
 trained on the 2-bowl scene. `spatial_3bowl/landmark_with_hardneg_prompt` additionally swaps in the
 `hardneg` prompt condition on the same scene, combining Split 1 x Split 2.
@@ -109,32 +113,51 @@ origin; shared region catalog, identical across suites unless noted):
 | `between_plate_ramekin_region` | (−0.06,0.19)–(−0.04,0.21) |
 | `ramekin_region` | (−0.21,0.19)–(−0.19,0.21) |
 | `next_to_ramekin_region` | (−0.19,0.31)–(−0.17,0.33) |
-| `table_center` | (−0.10,−0.01)–(−0.05,0.01) |
-| `table_front` | (0.19,−0.01)–(0.21,0.01) |
+| `table_center` | (−0.10,−0.01)–(−0.05,0.01)\* |
+| `table_front` | (0.19,−0.01)–(0.21,0.01)\* |
 | `cabinet_region` | (0.02,−0.28)–(0.04,−0.26) |
 | `stove_region` | (−0.42,−0.15)–(−0.40,−0.13) |
+
+\* These two are the catalog *default*, still exact in `irrelevant_v1_legacy`,
+`center_fixed_legacy`, and task 2's own `table_center` bowl_1 target everywhere. Inside
+`libero_spatial_3bowl_front` specifically (current `irrelevant`), the 2026-08-27 offset fine-tune
+moved both 0.05m further apart for bowl_3's placement only: `table_front` → (0.24,−0.01)–(0.26,0.01)
+in the 6 non-fallback task files, `table_center` → (−0.15,−0.01)–(−0.10,0.01) in the 4 fallback task
+files (1, 3, 5, 6) — see the redefinition notes below.
 
 Per-task 3-bowl placement (bowl_1 = target, bowl_2 = original distractor, bowl_3 = 3rd bowl).
 Object-relative placements (`cookies_1`, `wooden_cabinet_1_top_side`, `flat_stove_1_cook_region`,
 `glazed_rim_porcelain_ramekin_1`, task 4's `In wooden_cabinet_1_top_region`) have no `main_table`
 coordinate in the BDDL, so they're listed by object name, not fabricated numbers. bowl_1/bowl_2
-are identical across all four bowl_3 columns below (only bowl_3 differs):
+are identical across all bowl_3 columns below (only bowl_3 differs). Current (`v2`) columns are
+what `spatial_3bowl/irrelevant` and `spatial_3bowl/semantic` resolve to today; `v1`/legacy columns
+are retired definitions kept only so their old result numbers stay attributable — see the
+redefinition notes below the table:
 
-| id | target | bowl_1 | bowl_2 | bowl_3 `irrelevant` (redefined) | bowl_3 `center_fixed_legacy` | bowl_3 `semantic` | bowl_3 `landmark` (`hardneg_region`, per-task) |
-|--:|---|---|---|---|---|---|---|
-| 0 | between plate & ramekin | `between_plate_ramekin_region` | `next_to_ramekin_region` | `next_to_box_region` | `table_center` | `next_to_box_region` | (−0.070,0.040)–(−0.050,0.060) |
-| 1 | next to ramekin | `next_to_ramekin_region` | `next_to_box_region` | `table_center` | `table_center` | `next_to_plate_region` | (−0.210,0.040)–(−0.190,0.060) |
-| 2 | table center | `table_center` | `next_to_plate_region` | `next_to_ramekin_region` | `table_front`* | `next_to_ramekin_region` | (−0.290,0.010)–(−0.270,0.030) |
-| 3 | on cookie box | `cookies_1` (obj) | `wooden_cabinet_1_top_side` (obj) | `next_to_ramekin_region` | `table_center` | `next_to_ramekin_region` | (0.180,−0.070)–(0.200,−0.050) |
-| 4 | in top drawer | `In wooden_cabinet_1_top_region` (obj) | `wooden_cabinet_1_top_side` (obj) | `next_to_ramekin_region` | `table_center` | `next_to_plate_region` | (−0.060,−0.070)–(−0.040,−0.050) |
-| 5 | on ramekin | `glazed_rim_porcelain_ramekin_1` (obj) | `cookies_1` (obj) | `table_center` | `table_center` | `next_to_plate_region` | (−0.210,0.040)–(−0.190,0.060) |
-| 6 | next to cookie box | `next_to_box_region` | `flat_stove_1_cook_region` (obj) | `next_to_ramekin_region` | `table_center` | `next_to_ramekin_region` | (−0.030,−0.120)–(−0.010,−0.100) |
-| 7 | on stove | `flat_stove_1_cook_region` (obj) | `wooden_cabinet_1_top_side` (obj) | `next_to_box_region` | `table_center` | `next_to_box_region` | (−0.310,−0.010)–(−0.290,0.010) |
-| 8 | next to plate | `next_to_plate_region` | `next_to_ramekin_region` | `table_front` | `table_center` | `next_to_box_region` | (0.190,0.080)–(0.210,0.100) |
-| 9 | on wooden cabinet | `wooden_cabinet_1_top_side` (obj) | `flat_stove_1_cook_region` (obj) | `next_to_ramekin_region` | `table_center` | `next_to_ramekin_region` | (−0.010,−0.060)–(0.010,−0.040) |
+| id | target | bowl_1 | bowl_2 | bowl_3 `irrelevant` (v2, current) | bowl_3 `irrelevant_v1_legacy` | bowl_3 `center_fixed_legacy` | bowl_3 `semantic` (v2, current) | bowl_3 `semantic_v1_legacy` | bowl_3 `landmark` (`hardneg_region`, per-task) |
+|--:|---|---|---|---|---|---|---|---|---|
+| 0 | between plate & ramekin | `between_plate_ramekin_region` | `next_to_ramekin_region` | `table_front` | `next_to_box_region` | `table_center` | `next_to_box_region` | `next_to_box_region` | (−0.070,0.040)–(−0.050,0.060) |
+| 1 | next to ramekin | `next_to_ramekin_region` | `next_to_box_region` | `table_center`* | `table_center` | `table_center` | `next_to_plate_region` | `next_to_plate_region` | (−0.210,0.040)–(−0.190,0.060) |
+| 2 | table center | `table_center` | `next_to_plate_region` | `table_front` | `next_to_ramekin_region` | `table_front`** | `next_to_ramekin_region` | `next_to_ramekin_region` | (−0.290,0.010)–(−0.270,0.030) |
+| 3 | on cookie box | `cookies_1` (obj) | `wooden_cabinet_1_top_side` (obj) | `table_center`*** | `next_to_ramekin_region` | `table_center` | `next_to_ramekin_region` | `next_to_ramekin_region` | (0.180,−0.070)–(0.200,−0.050) |
+| 4 | in top drawer | `In wooden_cabinet_1_top_region` (obj) | `wooden_cabinet_1_top_side` (obj) | `table_front` | `next_to_ramekin_region` | `table_center` | `between_plate_ramekin_region`**** | `next_to_plate_region` | (−0.060,−0.070)–(−0.040,−0.050) |
+| 5 | on ramekin | `glazed_rim_porcelain_ramekin_1` (obj) | `cookies_1` (obj) | `table_center`*** | `table_center` | `table_center` | `next_to_plate_region` | `next_to_plate_region` | (−0.210,0.040)–(−0.190,0.060) |
+| 6 | next to cookie box | `next_to_box_region` | `flat_stove_1_cook_region` (obj) | `table_center`* | `next_to_ramekin_region` | `table_center` | `next_to_ramekin_region` | `next_to_ramekin_region` | (−0.030,−0.120)–(−0.010,−0.100) |
+| 7 | on stove | `flat_stove_1_cook_region` (obj) | `wooden_cabinet_1_top_side` (obj) | `table_front` | `next_to_box_region` | `table_center` | `next_to_box_region` | `next_to_box_region` | (−0.310,−0.010)–(−0.290,0.010) |
+| 8 | next to plate | `next_to_plate_region` | `next_to_ramekin_region` | `table_front` | `table_front` | `table_center` | `next_to_box_region` | `next_to_box_region` | (0.190,0.080)–(0.210,0.100) |
+| 9 | on wooden cabinet | `wooden_cabinet_1_top_side` (obj) | `flat_stove_1_cook_region` (obj) | `table_front` | `next_to_ramekin_region` | `table_center` | `next_to_ramekin_region` | `next_to_ramekin_region` | (−0.010,−0.060)–(0.010,−0.040) |
 
-\* Task 2's `center_fixed_legacy` bowl_3 uses `table_front` instead of `table_center` only because
+\* Tasks 1 and 6's `irrelevant` (v2) fall back to `table_center` because their own bowl_1/bowl_2
+already sit within ~0.10m of `table_front` there (verified overlap, see below).
+\*\* Task 2's `center_fixed_legacy` bowl_3 uses `table_front` instead of `table_center` only because
 bowl_1 already occupies `table_center` there.
+\*\*\* Tasks 3 and 5's `irrelevant` (v2) also fall back to `table_center` for the same reason (their
+`cookies_1`/box-region objects sit close enough to `table_front` to overlap; caught by
+`verify_suite_init_states.py`, worst sep 0.107m < the 0.12m threshold before the fallback).
+\*\*\*\* Task 4's `semantic` (v2) could not use `next_to_box_region` like the other tasks that share
+its landmark identity — the open drawer's 3D footprint (`z` up to 1.232) collides with it (min sep
+0.063m). `between_plate_ramekin_region` (task 0's real target landmark) is the closest verified-safe
+alternative.
 
 **Design confound found, then fixed.** `center_fixed_legacy`'s bowl_3 sits at the *same fixed
 absolute coordinate* in 9 of 10 tasks, regardless of the target's location — it is not "neutral"
@@ -162,6 +185,36 @@ ordering (`landmark` closest → `semantic` mid → `irrelevant` farthest) is in
 bowl_3 gets a bespoke `hardneg_region` per task and never shared this flaw. `center_fixed_legacy`
 is kept in the registry only as a retired label so `benchmark_split_result.md`'s original Exp 2 number stays
 attributable — it is **not** reused as the current `irrelevant` definition.
+
+**Second redefinition (current).** Reusing `next_to_ramekin_region` for half the tasks left
+`irrelevant` (v1) sitting at *another task's real target landmark* — not ideal for a condition
+meant to carry no relational meaning at all. `irrelevant` was redefined again (new suite
+`libero_spatial_3bowl_front`, registry condition unchanged, v1 kept as `irrelevant_v1_legacy`):
+bowl_3 now sits at the single, literal front edge of the table (`table_front`) in every task,
+falling back to `table_center` only where verification found a real overlap (tasks 1, 3, 5, 6 —
+each has a bowl already within ~0.10-0.13m of `table_front`). Verified via
+`verify_suite_init_states.py` — passes, worst separation 0.122m, matching v1's own worst case.
+
+The same review flagged `semantic`'s task 4 (in the top drawer) as an outlier: its bowl_3 sat at
+`next_to_plate_region`, ~0.58m from the drawer — outside the 0.33–0.50m band the other 9 tasks
+land in, so it functioned more like a neutral placement than a genuine semantic distractor.
+`semantic` was redefined (new suite `libero_spatial_3bowl_semantic2`, v1 kept as
+`semantic_v1_legacy`): only task 4 changed, to `between_plate_ramekin_region` (~0.48m from the
+drawer — task 0's real target landmark, and the closest verified-safe named landmark once
+`next_to_box_region` turned out to physically collide with the open drawer, see the table
+footnote above). All 9 other tasks are untouched.
+
+**Offset fine-tune (2026-08-27).** `irrelevant`'s two anchor coordinates were pulled another 0.05m
+apart — `table_front` moved to the actual front edge (x 0.19–0.21 → 0.24–0.26, the 6 non-fallback
+tasks), `table_center`'s fallback moved further back (x −0.10––0.05 → −0.15––0.10, the 4 fallback
+tasks 1/3/5/6 only — task 2's own `table_center` bowl_1 target is untouched). `stove_region` sits at
+x −0.42––0.40, y −0.15––0.13; the fallback's new position stays ≈0.29m from it either way, well
+clear. Re-verified via `verify_suite_init_states.py` — still PASS, worst separation 0.122m (task 4,
+unrelated to bowl_3), every other task's separation improved (0.148–0.301m, up from 0.122–0.276m).
+Contact sheet re-rendered and eyeballed: bowl_3 visibly farther front (front tasks) / farther back
+(fallback tasks), still resting flat, no overlaps.
+
+Neither new suite has a real eval run yet — see `eval_log.md`'s queued list.
 
 ### Split 3 — Scene Complexity Probe
 
