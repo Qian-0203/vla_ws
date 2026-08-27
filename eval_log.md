@@ -344,10 +344,55 @@ Scene-authoring/tooling only, at the user's request — no GPU eval launched.
   "Still queued" below. `spatial_3bowl/semantic` (suite `libero_spatial_3bowl_semantic2`) unaffected
   by the offset fine-tune (`irrelevant`-only change), also still not yet run.
 
+## 2026-08-27 — Split 2 redefinitions run: `irrelevant` (`libero_spatial_3bowl_front`) + `semantic` (`libero_spatial_3bowl_semantic2`)
+
+- **Hardware:** 4× RTX PRO 6000 Blackwell (`g4-flex-20260824`), `openvla-libero:blackwell` (sdpa).
+  Note: this shell had a stray `IMAGE_NAME=common-cu129-ubuntu-2204-nvidia-580-stage` exported
+  (unrelated to this project, not set by anything in this repo), which silently overrode
+  `config/server.env`'s `IMAGE_NAME` per `run_eval.sh`'s own documented precedence (exported vars
+  beat the machine-config file) and made the first launch attempt fail outright (image not found,
+  all 4 shards failed in seconds). Fixed by passing `IMAGE_NAME=openvla-libero:blackwell` explicitly
+  on the launch command line.
+- **Checkpoint/seed:** unchanged from the baseline batch, seed 7, 50 trials/task, 10 tasks/condition
+  (500 rollouts), sharded 4-way.
+- **Bug found and fixed mid-run:** `spatial_3bowl/irrelevant`'s first launch livelocked — all 4
+  shards spun at ~99% CPU with zero GPU utilization and zero rollout progress for over an hour
+  (stalled at 121/500), spamming a benign-looking `MjRenderContextOffscreen` cleanup exception
+  thousands of times. Root cause: `LIBERO/libero/libero/envs/env_wrapper.py`'s `ControlEnv.reset()`
+  had an *unbounded* `while not success: try: env.reset() except RandomizationError: pass` retry
+  loop — a persistent `RandomizationError` (robosuite's placement-sampler exception) retries forever
+  with no bound, each attempt constructing and immediately tearing down a render context (the source
+  of the cleanup-exception spam). This is a pre-existing bug in the LIBERO fork, not specific to the
+  new suites' scene geometry (confirmed: `gen_suite_init_states.py`/`verify_suite_init_states.py` had
+  already exercised `env.reset()` 50/50 times per task on both new suites with zero failures). It
+  plausibly explains why every past full-suite batch in this log undershot 500 (444/500, 424/500,
+  403/500, 412/500, 162/500) without ever crashing loudly enough to investigate. Fixed by bounding
+  the retry to 50 attempts before re-raising (commit in the `LIBERO` fork) so a persistent failure
+  now surfaces as a clear crash instead of an invisible livelock. Killed the 4 hung containers
+  (`docker stop`), applied the fix (bind-mounted, no image rebuild needed), and relaunched
+  `spatial_3bowl/irrelevant` with `--resume True` — continued cleanly from the 121 already-recorded
+  rollouts to 500/500 with no further hangs. `spatial_3bowl/semantic` launched fresh afterward,
+  completed 500/500 with no hangs either.
+
+| # | Split/condition | Suite | Headline SR | Rollouts |
+|--:|---|---|--:|--:|
+| 1 | `spatial_3bowl/irrelevant` (current, 2nd redefinition + offset fine-tune) | `libero_spatial_3bowl_front` | 85.2% | 500/500 |
+| 2 | `spatial_3bowl/semantic` (current, 2nd redefinition) | `libero_spatial_3bowl_semantic2` | 85.2% | 500/500 |
+
+**Results files:**
+```
+results/libero_spatial_3bowl_front--default--shard{0..3}of4.jsonl
+results/libero_spatial_3bowl_semantic2--default--shard{0..3}of4.jsonl
+```
+
+**Status:** complete. Full per-task tables, Δ vs. baseline, and analysis in
+`benchmark_split_result.md` §3.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
-- `spatial_3bowl/irrelevant` (suite `libero_spatial_3bowl_front`) — 500 rollouts, seed 7, 50/task.
-- `spatial_3bowl/semantic` (suite `libero_spatial_3bowl_semantic2`) — 500 rollouts, seed 7, 50/task.
+(none — Split 2's implemented conditions are all run; only `path` remains open)
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.

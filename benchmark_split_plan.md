@@ -27,7 +27,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | Split | Probes | Registry status |
 |---|---|---|
 | 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented |
-| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` and `semantic` each redefined a second time (see Split 2 below) -- new suites not yet run |
+| 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` and `semantic` each redefined a second time (see Split 2 below) -- both current suites run 2026-08-27, 85.2% each |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
 | 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`), not yet run |
 
@@ -214,7 +214,11 @@ unrelated to bowl_3), every other task's separation improved (0.148–0.301m, up
 Contact sheet re-rendered and eyeballed: bowl_3 visibly farther front (front tasks) / farther back
 (fallback tasks), still resting flat, no overlaps.
 
-Neither new suite has a real eval run yet — see `eval_log.md`'s queued list.
+Both suites now have a real eval run (2026-08-27, 500/500 rollouts each, 85.2% overall for both) —
+see `eval_log.md` and `benchmark_split_result.md` §3 for results and analysis. That launch also
+surfaced and fixed a pre-existing unbounded-retry livelock bug in the LIBERO fork's
+`env_wrapper.py::ControlEnv.reset()` (see `eval_log.md`'s 2026-08-27 entry) — plausibly the cause of
+every earlier full-suite batch in this project undershooting its nominal 500 rollouts.
 
 ### Split 3 — Scene Complexity Probe
 
