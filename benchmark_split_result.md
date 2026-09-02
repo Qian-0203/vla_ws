@@ -1345,3 +1345,52 @@ Artifacts: `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t5--2
 `openvla/rollouts/2026_09_02/` (filenames embed condition + success). Code:
 `openvla/experiments/robot/libero/probe_bowl_attraction.py` (new, uncommitted in the `openvla` fork as
 of this write-up).
+
+### 8.6 Synthesis — why the distractor-mention collapse shows up in the VLA but not the VLM (2026-09-02)
+
+**Original question.** The premise that opened this line of investigation (§8): a standalone VLM
+given the same distractor-mention referring expression can resolve it well above chance, while this
+project's OpenVLA checkpoint's task success collapses under the identical phrasing. Why the split by
+model type?
+
+**What's ruled out.** It is not that the language is ambiguous and only OpenVLA fails to parse it
+(§8.1-8.3, findings 13-16 — once the probe's marker-placement bug was fixed, Qwen2-VL resolves
+`negative_contrast`/`positive_contrast`/`hardneg` at 70%, and scores distractor-mention phrasing as
+mildly *easier* to ground than LIBERO's own target-only language, not harder, in both the 2-bowl and
+3-bowl scenes). And "the distractor pulls OpenVLA's arm toward the wrong object" is not the dominant
+mechanism either (§8.5, finding 17 — confident misdirection toward the named distractor happened in
+only 3/10 `negative_contrast` episodes; the majority failure mode, 60-80% of failing episodes across
+both tested conditions, was the arm never coming within grasping range of *either* bowl).
+
+**Best-supported hypothesis, not a confirmed causal claim.** §8.5's instrumented rollouts are the
+only place in the project that reads OpenVLA's own behavior directly rather than inferring mechanism
+from success-rate deltas, and they point toward *template-mismatch action collapse*: once the prompt
+deviates from the fine-tuning template, the action decoder stops committing to any target at all,
+independent of whether the added language is itself resolvable by a model built to answer it. A
+model with no action-decoding head (Qwen) never exhibits this failure mode because it's never asked
+to act; a model whose only output is action tokens, fine-tuned on one narrow template per task
+(finding 18's "template *binding*, not template *matching*"), collapses on phrasing a VLM finds easy.
+
+This reading rests on real but limited evidence, and three specific gaps remain before it can be
+called confirmed:
+
+1. **Sample size.** §8.5 covers one task (task 5) and two conditions, 10 episodes each — not yet
+   swept across the other 9 tasks or the other conditions (`positive_contrast`, `target_cue_region`,
+   `hardneg`, the Split 2/3 scene variants). Could be task-5-specific.
+2. **No length/complexity control.** `negative_contrast` adds a whole extra clause ("...not the one
+   on top of..."). Nothing in §8.5 separates "deviates from the fine-tuning template" from "prompt is
+   simply longer" — both predict the same "arm never commits" symptom. A same-length,
+   template-adjacent paraphrase condition would be needed to isolate this.
+3. **No mechanistic localization.** §8.5 shows *what the arm does*, not *where in the network* it
+   goes wrong — the vision encoder, the language projector, or the action-token head could each
+   independently produce "never commits to a target." "Action decoder mismatch" is the natural
+   reading given OpenVLA's architecture (action tokens are the only output this model produces,
+   §8's dead end), but nothing run so far actually opens up the model to confirm the failure
+   originates at that stage specifically, rather than upstream in the shared vision-language backbone.
+
+**Net.** The VLA/VLM split is well explained at the outcome level (findings 12-17) and has one piece
+of direct behavioral evidence (§8.5) pointing at a specific mechanism, but that mechanism is the
+best-supported guess given what's been tested, not something demonstrated with a controlled causal
+test. A stronger test would sweep §8.5's probe across more tasks/conditions and add a length-matched
+control condition before treating "template-mismatch action collapse, not distractor confusion" as
+settled.
