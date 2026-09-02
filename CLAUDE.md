@@ -154,6 +154,17 @@ Any flag not consumed by `run_eval.sh` (`--split`, `--resume`, ...) forwards str
   may hold downloaded weights.
 - Both `openvla/` and `LIBERO/` are gitignored from this repo *by design* — don't try to `git add`
   them here; `cd` in and commit there.
+- **A fresh GPU server can be missing MuJoCo's EGL rendering libs even though `nvidia-smi` works
+  fine.** Cloud images (e.g. GCP's `nvidia-driver-*-server` package) ship a compute-only driver
+  with no `libEGL_nvidia.so.0`/GLX libs — MuJoCo then fails with `RuntimeError: The
+  MUJOCO_EGL_DEVICE_ID environment variable must be an integer between 0 and -1, got 0` (zero EGL
+  devices enumerable). Fix: `sudo apt-get install libnvidia-gl-<version>-server` matching the
+  installed driver version (check with `nvidia-smi --query-gpu=driver_version --format=csv`), then
+  `sudo nvidia-ctk cdi generate --output=/var/run/cdi/nvidia.yaml` to refresh the CDI spec — no
+  Docker daemon restart needed, dockerd re-reads CDI specs per container. `run_eval.sh`'s own
+  `10_nvidia_egl.json` mount is unrelated to this and doesn't need to change; it only wires up the
+  vendor ICD *json*, not the underlying `.so`, so it's a no-op until the library package above is
+  installed.
 
 ## Coding & import conventions
 
