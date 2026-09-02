@@ -390,14 +390,82 @@ results/libero_spatial_3bowl_semantic2--default--shard{0..3}of4.jsonl
 
 ---
 
-## Still queued (registry-ready, not yet launched)
+## 2026-09-02 — Bowl-attraction probe: instrumented action rollouts (diagnostic, not a `run_eval.sh --split` launch)
 
-- `grounding/target_cue_proximity_novel` (Split 4c, new 2026-08-27) — same 4 surface-family tasks
-  (3, 5, 7, 9) and scene as `target_cue_landmark`, rephrases the target with a proximity synonym
-  ("close to X") never used in any native `libero_spatial` prompt, isolating whether
-  `target_cue_landmark`'s ~50pt drop tracks relation-type change or exact-template familiarity. See
-  `benchmark_split_plan.md` Split 4's 4c section. Launch: `... run_eval.sh --split
-  grounding/target_cue_proximity_novel --task_ids 3 5 7 9` (200 rollouts).
+- **Trigger:** user asked why a separate VLM (Qwen2-VL, §8.2-8.3) can resolve the distractor-mention
+  referring expression well above chance while OpenVLA's actual task success collapses under the same
+  phrasing — wanted the mechanism identified and directly tested, not just inferred from success-rate
+  deltas.
+- **Hardware:** Berkeley server (`config/berkeley.env`, 4x RTX PRO 6000 Blackwell), `openvla-libero:blackwell`,
+  1 GPU (device 0).
+- **Pre-launch investigation.** A live smoke test first hit a hard `MUJOCO_EGL_DEVICE_ID` /
+  zero-EGL-devices error identical in shape to CLAUDE.md's documented "missing EGL libs" pitfall — but
+  the fix package (`libnvidia-gl-580-server`, matching this box's driver) was already installed, so
+  that wasn't it. Root-caused instead to a stray shell-exported `IMAGE_NAME=common-cu129-ubuntu-2204-nvidia-580-stage`
+  (same failure mode as this file's 2026-08-27 entry) silently overriding `config/berkeley.env`'s
+  default per `run_eval.sh`'s documented precedence (exported vars beat the machine-config file).
+  Fixed by passing `IMAGE_NAME=openvla-libero:blackwell` explicitly; a 1-task/1-trial smoke test then
+  ran clean end-to-end (`Success: True`) — the EGL rendering pipeline itself was never actually broken
+  on this box, only the image selection.
+- **What ran:** new standalone script `openvla/experiments/robot/libero/probe_bowl_attraction.py` —
+  instruments real action rollouts (not a VQA probe, unlike §8's dead end) with per-step
+  end-effector-to-bowl distance, to classify each episode by which bowl (if any) the arm actually
+  reached for. 3 conditions x 10 episodes = 30 rollouts on task 5 ("on the ramekin", `libero_spatial`):
+  `default`, `negative_contrast`, `target_cue_landmark`. Smoke-tested on 2 `default` episodes first.
+- **Operational hiccup.** Two earlier launch attempts that timed out at the harness level (before
+  switching to a proper background launch) left their `docker run --rm` containers running detached
+  rather than actually terminating, so 3 identical copies of the full battery briefly ran concurrently
+  on the same GPU. Caught via `docker ps`/`nvidia-smi`; the 2 orphans were stopped, keeping the
+  properly-tracked run. No data corruption resulted (each process's structured JSONL output is named
+  by its own start timestamp, so the 3 runs' records never intermixed) — only wasted GPU cycles during
+  the overlap window.
+- **Outcome:** full detail in `benchmark_split_result.md` §8.5 and cross-experiment finding 17.
+  Headline: under `default`, the arm reaches for the target bowl first in 10/10 episodes; under both
+  `negative_contrast` and `target_cue_landmark`, the dominant failure mode is the arm never coming
+  within grasping range of *either* bowl (60% and 80% of episodes) rather than confidently grasping the
+  distractor (30% and 0% respectively) — direct behavioral evidence for template-mismatch action
+  collapse over distractor-driven misdirection as the primary mechanism, corroborating Split 4b from a
+  new angle.
+- **Artifacts:** `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t5--2026_09_02-07_49_03.jsonl`
+  + `--summary.json` (gitignored, local only); 30 rollout videos under `openvla/rollouts/2026_09_02/`.
+  Code: `openvla/experiments/robot/libero/probe_bowl_attraction.py` (new, uncommitted in the `openvla`
+  fork as of this entry).
+
+**Status:** closed — see `benchmark_split_result.md` §8.5.
+
+---
+
+## 2026-09-02 — Split 4c: Familiar vs. Novel Proximity-Cue Probe
+
+- **Trigger:** resolves the open question 4b left behind (§4c of `benchmark_split_plan.md`) — whether
+  `target_cue_landmark`'s ~50pt drop tracks the relation-type change (surface→proximity) or the exact
+  lexical template ("next to X") matching a phrase used natively elsewhere in `libero_spatial`.
+- **Hardware:** Berkeley server (`config/berkeley.env`), `openvla-libero:blackwell`, 4 GPUs
+  (`GPUS=0,1,2,3`), round-robin-sharded.
+- **Launched:** `MACHINE_CONFIG=config/berkeley.env GPUS=0,1,2,3 bash docker/openvla_libero/run_eval.sh
+  --split grounding/target_cue_proximity_novel --task_ids 3 5 7 9`.
+- **Operational note.** Task ids 3,5,7,9 mod 4 shards land on only 2 of the 4 residue classes, so
+  shards 0 and 2 correctly received `[]` and exited immediately (0 episodes each, by design of
+  round-robin sharding, not a bug) while shards 1 and 3 each ran 2 tasks x 50 trials = 100 episodes.
+  A couple of earlier launch attempts hit a harness-level timeout before the run was properly
+  backgrounded — no stray containers this time (unlike the same day's bowl-attraction probe); the
+  kept run is the one reflected in the results below.
+- **Outcome:** 200/200 rollouts, all 4 tasks. Pooled SR 53.0% (task 3: 56%, task 5: 66%, task 7: 64%,
+  task 9: 26%) — see `benchmark_split_result.md` §5.3 and cross-experiment finding 18. Headline: the
+  novel phrasing ("close to X") drops *less* than the familiar one ("next to X" / `target_cue_landmark`,
+  30.5% pooled) — a −22.5pt Familiarity Gap in the opposite direction from the plan's predicted branch.
+  Reusing a phrase seen at fine-tuning time did not protect the policy here; it hurt more than a phrase
+  it had never seen at all.
+- **Artifacts:**
+  `openvla/experiments/logs/results/libero_spatial--target_cue_proximity_novel--shard{0,1,2,3}of4.jsonl`
+  (shards 0/2 empty by design) + matching `.meta.json`; rollout videos under
+  `openvla/rollouts/2026_09_02/`.
+
+**Status:** closed — see `benchmark_split_result.md` §5.3.
+
+---
+
+## Still queued (registry-ready, not yet launched)
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.

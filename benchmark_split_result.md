@@ -47,8 +47,9 @@ Applies to every condition below unless a section says otherwise.
 | 1. Prompt Sensitivity | 3/3 conditions implemented | 3/3 run (`default`, `negative_contrast`, `positive_contrast`) |
 | 2. Distractor Placement | 3/4 conditions implemented (`path` not authored) | All implemented conditions run. `irrelevant` and `semantic` each redefined a second time (see §3) — current suites (`libero_spatial_3bowl_front` 85.2%, `libero_spatial_3bowl_semantic2` 85.2%, both 500/500) now run; prior data survives relabeled `irrelevant_v1_legacy` (88.8%) / `semantic_v1_legacy` (84.8%); original fixed-coordinate data survives as `center_fixed_legacy`. Only unauthored `path` remains beyond that |
 | 3. Scene Complexity | Implemented | Run (both conditions) |
-| 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b fully run (6/6 cells, 2/2 conditions); 4c: `default`/`target_cue_landmark` legs reused from 4b, `target_cue_proximity_novel` registry-ready, **not yet run** |
+| 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b/4c fully run — 4c's `target_cue_proximity_novel` (53.0% pooled, tasks 3/5/7/9) came in *above* `target_cue_landmark` (30.5%), the opposite of the plan's predicted direction; full three-way synthesis in §5.4 |
 | VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
+| Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02, task 5, 3 conditions x 10 episodes. Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): under `negative_contrast`/`target_cue_landmark`, the dominant failure is the arm never coherently approaching *either* bowl (60%/80%) rather than confidently grasping the distractor (30%/0%) — template-mismatch action collapse, not distractor-pull, is the primary mechanism |
 
 ---
 
@@ -443,8 +444,9 @@ pts), not the collapse the raw number suggests.
 
 ## 5. Split 4 — Surface vs. Landmark Grounding Probe
 
-**Split fully run** — both 4a's two missing cells and 4b (redesigned as a target cue-type probe)
-completed 2026-08-20. See `eval_log.md` for the launch batch.
+**Split fully run** — 4a's two missing cells and 4b (redesigned as a target cue-type probe)
+completed 2026-08-20; 4c (familiar-vs-novel proximity-cue probe) completed 2026-09-02. See
+`eval_log.md` for both launch batches, and §5.4 for the combined three-way synthesis.
 
 ### 5.0 — What this split is testing, in plain language
 
@@ -470,14 +472,28 @@ Split 4 asks the same underlying question two different ways:
   box"), or region-style words ("near the center of the table")? Nothing about the scene moves —
   only the sentence changes, and it's checked to still be a true description of where the bowl is.
 
-**Bottom line (read the full analysis in §5.1/§5.2 for the numbers):** the scene-side manipulation
-(4a) barely matters — success rates stay within about 8 points of each other no matter which
-relation family the target or distractor happens to be. The prompt-side manipulation (4b) is the
-single biggest effect measured anywhere in this project, 50–67 points of success lost by rewording
-a completely true, completely unambiguous sentence about a bowl whose position never changed and
-whose distractor is never mentioned. Put together, this says the checkpoint isn't reasoning about
-*where things are* — it's pattern-matching the specific sentence template it saw during fine-tuning,
-and breaks badly the moment that template is swapped for an equally true one it wasn't trained on.
+A third question follows directly from 4b: when a rephrasing *does* happen to reuse a sentence
+pattern seen natively elsewhere in training (e.g. "next to X"), is it protected because it's
+*familiar*, or is that just a coincidence of which relation type it happens to express?
+
+- **4c asks it from the *wording-familiarity* side:** holding relation type fixed at "proximity"
+  (so 4a/4b's relation-family confound can't explain the answer either way), does describing the
+  same true fact with a phrase the checkpoint saw at fine-tuning time ("next to X") do any better
+  than an equally true, equally approximate phrase it never saw ("close to X")?
+
+**Bottom line (read the full analysis in §5.1/§5.2/§5.3, synthesized in §5.4, for the numbers):**
+the scene-side manipulation (4a) barely matters — success rates stay within about 8 points of each
+other no matter which relation family the target or distractor happens to be. The prompt-side
+manipulation (4b) is the single biggest effect measured anywhere in this project, 50–67 points of
+success lost by rewording a completely true, completely unambiguous sentence about a bowl whose
+position never changed and whose distractor is never mentioned. 4b's own results suggested a tidy
+explanation for part of that — "next to X" survives better than region-style phrasing because it's
+at least a *familiar* template — but 4c tested that explanation directly and it doesn't hold: the
+*novel* phrasing beat the *familiar* one by 22.5 points. Put together, this says the checkpoint
+isn't reasoning about *where things are*, and it isn't simply rewarding *any* sentence pattern seen
+during fine-tuning either — it's bound to specific phrase-to-scene associations from fine-tuning,
+and reusing a familiar phrase on the *wrong* scene can actively mislead it more than a phrase it
+has no prior for at all. See §5.4 for the full three-way synthesis.
 
 ### 5.1 — 4a: Grounding-by-scene probe (complete, all 6 cells)
 
@@ -588,20 +604,21 @@ Region-cue Drop, surface-family pool  {3,5,7,9}: 80.5% → 14.0%  = 66.5 pts
    phrasing appears natively in 4/10 training tasks), whereas region-style phrasing
    ("at the back-left of the table") never appears in any of the 10 original `libero_spatial`
    prompts in any form.
+   > **Superseded by 4c (§5.3).** This "familiarity is protective" reading was the natural
+   > hypothesis at the time, but it was never tested against a matched novel-wording control —
+   > point 3 here only compares "next to X" (familiar) against region-style phrasing (also novel,
+   > *and* a different relation type). 4c isolates wording familiarity alone and finds the
+   > opposite: a novel proximity phrase ("close to X") beats the familiar one by 22.5 pts. Point 3's
+   > numbers stand, but its explanation doesn't — see §5.4.
 
-Together with 4a's conclusion above, this reframes the whole split's headline finding: **the
-policy's apparent "grounding" is templated surface-pattern matching on the exact phrasing structure
-seen at fine-tuning time, not a semantic understanding of landmark/surface/region relations** — the
-scene's actual relation family barely matters (4a, ≤8 pt spread across all 6 cells) while the
-prompt's relation *wording* matters enormously (4b, 50-67 pt drops) even with the referenced fact
-held perfectly true and the distractor never mentioned.
+This finding's relationship to 4a and 4c is synthesized in full in §5.4, after 4c's results below.
 
 Results: `results/libero_spatial--target_cue_region--shard{0,1}of2.jsonl`,
 `results/libero_spatial--target_cue_landmark--shard{0,1}of2.jsonl`,
 `results/libero_spatial_grounding_surface_landmark--default--shard0of2.jsonl`,
 `results/libero_spatial_grounding_region_surface--default--shard0of2.jsonl`.
 
-### 5.3 — 4c: Familiar vs. Novel Proximity-Cue Probe (designed, registry-ready, **not yet run**)
+### 5.3 — 4c: Familiar vs. Novel Proximity-Cue Probe (complete)
 
 **Open question left by 4b.** `target_cue_landmark`'s ~50pt drop rephrases a surface-family target
 ("on the ramekin") using "next to X" — which happens to be the *exact* template tasks 0/1/6/8 already
@@ -617,16 +634,99 @@ distractor-never-mentioned protocol as 4b.
 |---|---|---|---|
 | surface_native | `default` (reused) | "on the ramekin" | ✅ already run — 80.5% pooled over tasks 3/5/7/9 (see §5.2 table above) |
 | proximity_familiar | `target_cue_landmark` (reused) | "next to the ramekin" | ✅ already run — 30.5% pooled |
-| proximity_novel | `target_cue_proximity_novel` (**new**) | "close to the ramekin" | registry-ready, **not yet run** |
+| proximity_novel | `target_cue_proximity_novel` (**new**) | "close to the ramekin" | ✅ run 2026-09-02 — 53.0% pooled |
 
-Only `proximity_novel` needs a new GPU run (200 rollouts: 50/task x tasks 3, 5, 7, 9). Full design,
-per-task phrasing table, and metrics (`Novel-cue Drop`, `Familiarity Gap`) are in
-`benchmark_split_plan.md` Split 4's 4c section. Launch once ready:
+Run 2026-09-02, Berkeley server (`config/berkeley.env`), 4 GPUs round-robin-sharded over
+`--task_ids 3 5 7 9` (task ids mod 4 put all episodes on shards 1 and 3; shards 0/2 correctly
+handled `[]` and exited immediately — not an error, just this task-id set's residue class).
+200/200 rollouts.
+
+| id | native ("on X") | proximity_familiar ("next to X") | proximity_novel ("close to X") |
+|--:|---|--:|--:|
+| 3 | cookie box | 84% → 52% | 84% → **56%** |
+| 5 | ramekin | 94% → 10% | 94% → **66%** |
+| 7 | stove | 72% → 44% | 72% → **64%** |
+| 9 | wooden cabinet | 72% → 16% | 72% → **26%** |
+| **Pooled** | | **80.5% → 30.5%** | **80.5% → 53.0%** |
+
 ```
-... run_eval.sh --split grounding/target_cue_proximity_novel --task_ids 3 5 7 9
+Novel-cue Drop     = SR(default, 4 tasks: 80.5%) − SR(target_cue_proximity_novel: 53.0%) = 27.5 pts
+Familiar-cue Drop  = SR(default, 4 tasks: 80.5%) − SR(target_cue_landmark: 30.5%)         = 50.0 pts
+Familiarity Gap    = SR(target_cue_landmark: 30.5%) − SR(target_cue_proximity_novel: 53.0%) = −22.5 pts
 ```
-This section will be filled in with the result table and analysis once that run completes — tracked
-in `eval_log.md`'s "Still queued" list in the meantime.
+
+**Analysis — the result inverts the plan's predicted direction.** The plan's dichotomy (§4c) was:
+Familiarity Gap ≈ 0 → relation-type-driven damage; Familiarity Gap clearly positive (novel drops
+*more*) → template-familiarity-driven damage, "the more likely outcome." What actually happened is
+a third case neither branch anticipated: the **novel** phrasing ("close to X") is clearly *less*
+damaging than the **familiar** one ("next to X") — a −22.5pt gap, well outside the ~±7pt noise
+band, in the opposite sign from the predicted branch. Task 5 shows the effect starkest (10% vs.
+66%, a 56pt swing on a single task from swapping one word). This rules out the naive
+template-familiarity story as stated (reusing a seen-at-finetuning-time phrase does *not* help
+here — it hurts, a lot) while also not supporting pure relation-type invariance (a 22.5pt gap is
+not noise). The more consistent reading, tying back to finding 17's action-collapse evidence: "next
+to X" is not just *a* familiar template, it is the template natively bound to tasks 0/1/6/8's
+specific scenes/targets — reusing it verbatim on a surface-family task's bowl may actively trigger
+those tasks' learned reach patterns (a wrong, specific prior) rather than merely failing to match
+any template (a generic, template-mismatch collapse). A phrase the model has *no* strong prior for
+at all ("close to X") apparently degrades more gracefully than one it has a strong, wrong prior
+for. This reframes template "familiarity" from a uniformly protective property to one that can be
+actively harmful when the familiar template is bound to the wrong scene.
+
+Results: `results/libero_spatial--target_cue_proximity_novel--shard{0,1,2,3}of4.jsonl` (shards 0/2
+empty by design).
+
+### 5.4 — Synthesis: 4a + 4b + 4c together (complete)
+
+All three legs of Split 4 are now run. Laid side by side, on the same 4 surface-family tasks
+(3, 5, 7, 9) where every leg overlaps:
+
+| Leg | What moved | Condition | Pooled SR | Δ from default (80.5%) |
+|---|---|---|--:|--:|
+| baseline | — | `default` ("on X") | 80.5% | — |
+| 4a | scene only (target/distractor relation family), prompt fixed | (surface,surface) cell | 80.5% | 0 pts (same data) |
+| 4b | prompt only, region wording | `target_cue_region` | 14.0% | −66.5 pts |
+| 4b | prompt only, landmark wording ("next to X", familiar) | `target_cue_landmark` | 30.5% | −50.0 pts |
+| 4c | prompt only, proximity wording ("close to X", novel) | `target_cue_proximity_novel` | 53.0% | −27.5 pts |
+
+Three results, read together, rule out every single-factor explanation tried so far:
+
+1. **It is not the scene's relation type.** 4a moved where the bowls physically sit (landmark vs.
+   surface vs. region placement) while keeping the prompt's phrasing standard, and success stayed
+   within ~8 points across all 6 (target, distractor) cells (§5.1). Whatever breaks the policy in
+   4b/4c is not triggered by scene geometry.
+2. **It is not "does the sentence match *some* fine-tuning-time template."** If it were, `next to X`
+   (verbatim from tasks 0/1/6/8) should score at or near `default`, and `close to X` (matching no
+   training sentence at all) should score at or below `target_cue_region` (also matching nothing).
+   Instead the ranking is default (80.5%) > novel (53.0%) > familiar (30.5%) > region (14.0%) —
+   novel phrasing *beats* familiar phrasing by 22.5 points, the opposite of what generic
+   template-matching predicts.
+3. **It is not pure relation-type sensitivity either.** 4c held relation type fixed at "proximity"
+   across both its legs, and still found a 22.5-point gap between them — a same-relation-type,
+   wording-only change with a large, non-noise effect.
+
+**What's left standing: template *binding*, not template *matching*.** The consistent story across
+4a + 4b + 4c + the bowl-attraction probe (§8.5, finding 17) is that the checkpoint doesn't parse
+"next to X" as a general proximity relation it can apply anywhere (that would predict 4a-style
+scene-invariance carrying over to 4b/4c, which it doesn't) and doesn't just check the sentence
+against a bag of seen templates (that would predict `target_cue_landmark` ≥ `target_cue_proximity_novel`,
+which is backwards). Instead, "next to X" appears to be a phrase *specifically bound* to the
+scenes/targets of tasks 0/1/6/8 during fine-tuning. Reusing it verbatim on a different task's bowl
+doesn't fail to match anything — it matches the *wrong* thing, pulling the action decoder toward
+those other tasks' learned reach behavior (finding 17's "confident wrong-target" mode). A phrase
+with no training-time association at all ("close to X") has nothing wrong to pull toward, and
+degrades more gracefully, closer to (though still well short of) `default`. Region phrasing
+("at the back-left of the table") is worst of all because it's both unfamiliar *and* structurally
+farthest from anything in the 10 native prompts (no object-relative phrasing at all).
+
+Net effect: the split's original question — "does this checkpoint's apparent grounding reflect real
+spatial/language understanding?" — gets a firmly negative answer, but a more specific one than 4b
+alone suggested. It's not merely brittle to unfamiliar phrasing; specific familiar phrases carry
+scene-specific baggage that can actively misdirect the policy on a task they weren't fine-tuned for,
+which is a more concerning failure mode for practical prompt engineering than simple
+out-of-distribution brittleness would be (a novel synonym is not a safe fallback in general — it
+happened to help here only because the *alternative* familiar phrase was specifically mis-bound, not
+because novelty itself is safe).
 
 ---
 
@@ -772,6 +872,35 @@ in `eval_log.md`'s "Still queued" list in the meantime.
     third bowl (60% vs. 50%, no-mention baselines) and is never *hurt* by naming the distractor family,
     in either scene — a further data point against reading OpenVLA's findings 1-11 collapse as evidence
     that the language or clutter itself is intrinsically hard to ground.
+17. **A first direct behavioral read on OpenVLA's own failure mode (not just outcome deltas) points to
+    template mismatch, not distractor-pull, as the dominant mechanism.** Findings 1-16 diagnose OpenVLA
+    purely from success/failure counts, since §8 showed its text channel can't be interrogated directly.
+    A new instrumented-rollout probe (§8.5) reads behavior instead of language: per-step end-effector-
+    to-bowl distance logged across real action rollouts on task 5 ("on the ramekin", the largest
+    single-task collapse: 94%→4% under `negative_contrast`, 94%→10% under `target_cue_landmark`). Under
+    `default` the arm reaches for the target first in 10/10 episodes (mean closest approach 5cm). Under
+    both `negative_contrast` and `target_cue_landmark`, the dominant failure mode is *neither* bowl
+    being coherently approached (60% and 80% of episodes respectively) — not the arm confidently
+    grasping the wrong bowl (30% under `negative_contrast`, 0% under `target_cue_landmark`, where
+    there's no linguistic reason to be pulled toward the untouched second bowl at all). The two
+    conditions' "neither" rates are close (60% vs 80%) despite one mentioning a second bowl and the
+    other never doing so, while a genuine minority distractor-pull effect (30%) shows up only in
+    `negative_contrast`. This is the first evidence in the project that speaks directly to mechanism
+    rather than just outcome: the checkpoint's action decoder mostly fails to lock onto a target at all
+    once the prompt deviates from its fine-tuning template, and only a minority of `negative_contrast`'s
+    damage looks like actual language-driven misdirection toward the named distractor.
+18. **"Familiar" phrasing can hurt more than novel phrasing when the familiar template is bound to
+    the wrong scene — familiarity alone doesn't explain 4b's landmark-cue drop.** Split 4c (§5.3) held
+    relation type fixed at "proximity" and varied only wording familiarity: `target_cue_landmark`
+    reuses "next to X" verbatim from tasks 0/1/6/8's native phrasing (30.5% pooled, tasks 3/5/7/9);
+    `target_cue_proximity_novel` uses "close to X," which appears in none of the 10 native prompts
+    (53.0% pooled, same tasks) — a 22.5pt gap in the *opposite* direction from the plan's predicted
+    "template familiarity is protective" branch (task 5 alone: 10% vs. 66%). Reusing a seen-at-
+    finetuning phrase does not generically help; it appears to actively bind the policy to the wrong
+    scene-specific behavior when that exact phrase is natively associated with different tasks/targets,
+    which fits finding 17's action-collapse mechanism better than a simple template-match/no-match
+    story: a phrase with no strong prior at all degrades more gracefully than one with a strong, wrong
+    prior. Full three-way synthesis with 4a and 4b in `benchmark_split_result.md` §5.4.
 
 ## 7. Render / contact-sheet check log
 
@@ -1150,3 +1279,69 @@ image per task; only the instruction differs:**
 Marker color key: **1** = red, **2** = green, **3** = blue (which bowl gets which number is shuffled
 per task; color always maps to the same digit). Source images:
 `openvla/experiments/figures/probe_bowl_pointing/` (`openvla` commit `1b27db3`).
+
+### 8.5 Bowl-attraction probe — instrumented action rollouts, not VQA (2026-09-02)
+
+**Question.** §8's dead end (finding 12) means OpenVLA's own "which bowl do you think is the target"
+can't be asked via free text or logits — its only language-responsive channel is the action output
+itself. This probe reads that channel directly: instrument real action rollouts with per-step
+end-effector-to-bowl distance, and classify each episode's failure by which bowl (if any) the gripper
+actually reached for first. Distinguishes two readings of findings 1-11: (a) language pulls the arm
+toward the wrong/distractor bowl (grounding-adjacent misdirection), vs. (b) the arm fails to lock onto
+either bowl once the prompt deviates from its fine-tuning template (template-mismatch action collapse,
+matching Split 4b's mechanism).
+
+**Method.** New standalone script `openvla/experiments/robot/libero/probe_bowl_attraction.py` (not
+wired into `eval_registry.py` — a diagnostic, not a benchmark split). Runs the real
+`get_action()`/environment-step loop used by `run_libero_eval.py` (same model, same image
+preprocessing, same seed/init-state protocol), and at every real step (post-`num_steps_wait`)
+additionally reads `env.env.sim.data.body_xpos` for each `akita_black_bowl_*` body and computes its
+Euclidean distance to `obs["robot0_eef_pos"]`. Per episode, records the running min distance to each
+bowl and the first step (if any) the gripper came within 8cm of each (~bowl radius + gripper
+clearance) — `first_bowl_approached` is whichever bowl that happened to first, `None` if neither ever
+did. Task 5 ("on the ramekin"), `libero_spatial` (2-bowl scene, distractor bowl 2 physically present
+and unchanged across all three conditions below), same seed-7 init states as the real eval (episode
+`i` here uses the identical init state as episode `i` in the real 50-trial runs). 10 episodes/condition.
+Smoke-tested on 2 `default` episodes first (both succeeded, target-first, ~5-7cm min distance — sane
+before committing to the full battery).
+
+**Result.**
+
+| Condition | Instruction (task 5) | Success | Target approached first | Distractor approached first | Neither approached |
+|---|---|--:|--:|--:|--:|
+| `default` | "on the ramekin" | 10/10 (100%) | 10/10 | 0/10 | 0/10 |
+| `negative_contrast` | "…on the ramekin, not the one on top of the cookie box…" | 0/10 (0%) | 1/10 | 3/10 | **6/10** |
+| `target_cue_landmark` | "next to the ramekin" (distractor never mentioned) | 0/10 (0%) | 2/10 | 0/10 | **8/10** |
+
+(Success/failure counts match the real 50-trial numbers for this task in direction and magnitude —
+`default` 94%, `negative_contrast` 4%, `target_cue_landmark` 10% — this is a 10-episode replay of the
+same seed/init-state protocol, not an independent re-measurement.)
+
+**Analysis.** Under `default` the arm reliably locks onto the target (10/10, mean closest approach
+5cm — real contact range). Under both failing conditions, the dominant failure mode is the arm never
+coming within grasping range of *either* bowl — 60% of `negative_contrast` episodes and 80% of
+`target_cue_landmark` episodes. Confident misdirection toward the named distractor does happen under
+`negative_contrast` (3/10) — a real, non-zero effect — but it's a minority of that condition's
+failures, not the majority mechanism. `target_cue_landmark` never mentions the second bowl at all
+(bowl 2 just sits there, same as under `default`, with zero linguistic reason to be relevant), and its
+distractor-first rate is correctly 0/10 — but its neither-rate (80%) is if anything *higher* than
+`negative_contrast`'s (60%), even though there's no distractor language to blame it on. This is the
+first result in the project that reads OpenVLA's own behavior directly rather than inferring mechanism
+from success-rate deltas alone (finding 12's caveat), and it points the same direction Split 4b already
+pointed from a different angle: prompt deviation from the fine-tuned template collapses the action
+decoder's ability to commit to *any* target, with distractor-directed misdirection present but
+secondary.
+
+**Operational note.** Two earlier launch attempts that timed out at the harness level (before switching
+to a proper background launch) left their containers running detached rather than actually terminating,
+so 3 identical copies of this battery briefly ran concurrently on the same GPU. Caught via
+`docker ps`/`nvidia-smi`; the 2 orphans were stopped, keeping the properly-tracked run. No data
+corruption resulted (each process's structured JSONL output is named by its own start timestamp, so the
+3 runs' records never intermixed) — only wasted GPU cycles during the overlap window. Full detail:
+`eval_log.md`'s 2026-09-02 entry.
+
+Artifacts: `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t5--2026_09_02-07_49_03.jsonl`
+(30 episode records) + matching `--summary.json`; 30 rollout videos under
+`openvla/rollouts/2026_09_02/` (filenames embed condition + success). Code:
+`openvla/experiments/robot/libero/probe_bowl_attraction.py` (new, uncommitted in the `openvla` fork as
+of this write-up).
