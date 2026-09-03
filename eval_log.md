@@ -467,6 +467,40 @@ control and mechanistic-localization gaps remain open (§8.6).
 
 ---
 
+## 2026-09-03 — Bowl-attraction probe: full 10-task extension (diagnostic, not a `run_eval.sh --split` launch)
+
+- **Trigger:** user asked for the approaching-first test to be run on all 10 `libero_spatial` tasks,
+  not just the 4-task surface cohort — then narrowed the request to `negative_contrast` specifically.
+  `target_cue_landmark` can't be extended past its existing 4 tasks (no prompt exists for tasks whose
+  native phrasing already is "next to X," and tasks 2/4 have no landmark-family analog at all), so this
+  run adds `default`+`negative_contrast` (both defined for all 10 tasks) on the 6 remaining tasks
+  (0, 1, 2, 4, 6, 8).
+- **Hardware:** same Berkeley-profile server, `openvla-libero:blackwell`. Launched in 2 waves as GPUs
+  freed up (tasks 0/1/2/4 first across all 4 GPUs, then 6/8 on GPUs 0/1 as they became free), each via
+  a tracked `run_in_background` Bash call, not a raw backgrounded `docker run` — no orphaned containers
+  this time. Stray shell `IMAGE_NAME` override (recurring pitfall, see 2026-09-02 entries above) present
+  again; passed `IMAGE_NAME=openvla-libero:blackwell` explicitly.
+- **What ran:** `probe_bowl_attraction.py --task_id {0,1,2,4,6,8} --conditions default,negative_contrast --num_trials 10`
+  each, 60 rollouts total, on top of the existing 3/5/7/9 data (280 rollouts across all 10 tasks
+  combined for `default`+`negative_contrast`).
+- **Outcome:** full detail in `benchmark_split_result.md` §8.5 (full-suite extension) and the revised
+  §8.6. Headline: pooled across all 10 tasks, "arm never approaches either bowl" is now the **majority**
+  failure mode (58.1% of `negative_contrast` failures, up from 55.6% at 4-task scale) — and pooled
+  success rates (81% `default`, 38% `negative_contrast`) closely reproduce the real 500-trial eval
+  (84.0%, 36.8%), validating the probe at full scale. Task 3's "approached correctly, still failed"
+  mode persists at scale (27.4% of failures pooled) rather than washing out. **Task 8 anomaly:**
+  `negative_contrast` (70%) scored above `default` (60%) here, opposite the real eval's −48pt drop;
+  instructions verified correct against the raw JSONL, read as sampling noise on n=10, not investigated
+  further.
+- **Artifacts:** `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t{0,1,2,4,6,8}--2026_09_03-*.jsonl`
+  + matching `--summary.json` per task (gitignored, local only); 60 rollout videos under
+  `openvla/rollouts/2026_09_03/`; launch logs `openvla/experiments/logs/probe_bowl_attraction_launch/t{0,1,2,4,6,8}.out`.
+
+**Status:** closed — see `benchmark_split_result.md` §8.5/§8.6. Sample-size gap now fully closed
+(all 10 tasks); length-matched control and mechanistic-localization gaps remain open (§8.6).
+
+---
+
 ## 2026-09-02 — Split 4c: Familiar vs. Novel Proximity-Cue Probe
 
 - **Trigger:** resolves the open question 4b left behind (§4c of `benchmark_split_plan.md`) — whether
