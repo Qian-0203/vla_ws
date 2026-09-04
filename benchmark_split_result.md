@@ -49,7 +49,7 @@ Applies to every condition below unless a section says otherwise.
 | 3. Scene Complexity | Implemented | Run (both conditions) |
 | 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b/4c fully run — 4c's `target_cue_proximity_novel` (53.0% pooled, tasks 3/5/7/9) came in *above* `target_cue_landmark` (30.5%), the opposite of the plan's predicted direction; full three-way synthesis in §5.4 |
 | VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
-| Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02/03, all 10 `libero_spatial` tasks for `default`+`negative_contrast` (280 rollouts total; `target_cue_landmark` on the 4-task surface cohort). Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): pooled at full scale, "arm never approaches either bowl" is the *majority* failure mode (58.1% of `negative_contrast` failures) — success rates closely match the real 500-trial eval (38% vs. 36.8%). Task 3 shows a second real mode (correct approach, still fails, ~27% of failures pooled) that persists at scale. See §8.6 for the synthesis and open gaps |
+| Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02/03/04, all 10 `libero_spatial` tasks for `default`+`negative_contrast` (280 rollouts); `target_cue_landmark` + `target_cue_proximity_novel` on the 4-task surface cohort (80 more). Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): pooled at full scale, "arm never approaches either bowl" is the *majority* failure mode (58.1% of `negative_contrast` failures) — success rates closely match the real 500/200-trial evals. `target_cue_proximity_novel` (no distractor, no misleading template) fails the same way as `target_cue_landmark` despite a much higher success rate — a second line of evidence against distractor-pull. Task 3 shows a persistent second mode (correct approach, still fails). See §8.6 for the synthesis and open gaps |
 
 ---
 
@@ -1280,7 +1280,7 @@ Marker color key: **1** = red, **2** = green, **3** = blue (which bowl gets whic
 per task; color always maps to the same digit). Source images:
 `openvla/experiments/figures/probe_bowl_pointing/` (`openvla` commit `1b27db3`).
 
-### 8.5 Bowl-attraction probe — instrumented action rollouts, not VQA (2026-09-02)
+### 8.5 Bowl-attraction probe — instrumented action rollouts, not VQA (2026-09-02, extended through 2026-09-04)
 
 **Question.** §8's dead end (finding 12) means OpenVLA's own "which bowl do you think is the target"
 can't be asked via free text or logits — its only language-responsive channel is the action output
@@ -1299,167 +1299,100 @@ additionally reads `env.env.sim.data.body_xpos` for each `akita_black_bowl_*` bo
 Euclidean distance to `obs["robot0_eef_pos"]`. Per episode, records the running min distance to each
 bowl and the first step (if any) the gripper came within 8cm of each (~bowl radius + gripper
 clearance) — `first_bowl_approached` is whichever bowl that happened to first, `None` if neither ever
-did. Task 5 ("on the ramekin"), `libero_spatial` (2-bowl scene, distractor bowl 2 physically present
-and unchanged across all three conditions below), same seed-7 init states as the real eval (episode
-`i` here uses the identical init state as episode `i` in the real 50-trial runs). 10 episodes/condition.
-Smoke-tested on 2 `default` episodes first (both succeeded, target-first, ~5-7cm min distance — sane
-before committing to the full battery).
+did. `libero_spatial` (2-bowl scene, distractor bowl 2 physically present and unchanged across every
+condition below), same seed-7 init states as the real eval (episode `i` here uses the identical init
+state as episode `i` in the real 50-trial runs). 10 episodes/condition/task throughout.
 
-**Result.**
+This ran across four rounds as the probe's scope grew (task 5 only → tasks 3/7/9 → all 10 tasks →
+`target_cue_proximity_novel` added) — see `eval_log.md`'s 2026-09-02/03/04 entries for the launch-by-
+launch history, smoke tests, and operational incidents (2 orphaned-container launches on 2026-09-02;
+a shared/mutated `transformers==5.16.1` in the host-mounted `.cache/home` broke the `openvla_utils.py`
+import for the `target_cue_proximity_novel` re-run on 2026-09-04, fixed with `PYTHONNOUSERSITE=1` to
+bypass the mutated user-site overlay without touching it — likely written by a concurrent Qwen-VL
+probe session sharing the same mounted `HOME`). All results below are pooled from that combined data;
+this section reports only the final consolidated numbers.
 
-| Condition | Instruction (task 5) | Success | Target approached first | Distractor approached first | Neither approached |
-|---|---|--:|--:|--:|--:|
-| `default` | "on the ramekin" | 10/10 (100%) | 10/10 | 0/10 | 0/10 |
-| `negative_contrast` | "…on the ramekin, not the one on top of the cookie box…" | 0/10 (0%) | 1/10 | 3/10 | **6/10** |
-| `target_cue_landmark` | "next to the ramekin" (distractor never mentioned) | 0/10 (0%) | 2/10 | 0/10 | **8/10** |
+**Result — all tasks, all conditions, one table.** `default` and `negative_contrast` are defined for
+all 10 `libero_spatial` tasks. `target_cue_landmark` (Split 4b's familiar "next to X" rephrasing) and
+`target_cue_proximity_novel` (Split 4c's novel "close to X" rephrasing) only exist for the 4
+surface-family tasks (3, 5, 7, 9) — rephrasing as landmark-style only makes sense for tasks whose
+native phrasing isn't already "next to X," and tasks 2/4 have no landmark-family analog at all.
 
-(Success/failure counts match the real 50-trial numbers for this task in direction and magnitude —
-`default` 94%, `negative_contrast` 4%, `target_cue_landmark` 10% — this is a 10-episode replay of the
-same seed/init-state protocol, not an independent re-measurement.)
+| Task | `default` | `negative_contrast` | `target_cue_landmark` | `target_cue_proximity_novel` |
+|--:|--:|--:|--:|--:|
+| 0 | 8/10 (80%) | 9/10 (90%) | — | — |
+| 1 | 7/10 (70%) | 4/10 (40%) | — | — |
+| 2 | 9/10 (90%) | 1/10 (10%) | — | — |
+| 3 | 9/10 (90%) | 4/10 (40%) | 5/10 (50%) | 7/10 (70%) |
+| 4 | 9/10 (90%) | 6/10 (60%) | — | — |
+| 5 | 10/10 (100%) | 0/10 (0%) | 0/10 (0%) | 5/10 (50%) |
+| 6 | 10/10 (100%) | 7/10 (70%) | — | — |
+| 7 | 8/10 (80%) | 0/10 (0%) | 2/10 (20%) | 5/10 (50%) |
+| 8 | 6/10 (60%) | **7/10 (70%)** | — | — |
+| 9 | 5/10 (50%) | 0/10 (0%) | 2/10 (20%) | 3/10 (30%) |
+| **Pooled** | **81/100 (81.0%)** | **38/100 (38.0%)** | **9/40 (22.5%)** | **20/40 (50.0%)** |
+| Real 500/500 or 200/200-trial SR (§1, §5.2, §5.3) | 84.0% | 36.8% | 30.5% | 53.0% |
 
-**Analysis.** Under `default` the arm reliably locks onto the target (10/10, mean closest approach
-5cm — real contact range). Under both failing conditions, the dominant failure mode is the arm never
-coming within grasping range of *either* bowl — 60% of `negative_contrast` episodes and 80% of
-`target_cue_landmark` episodes. Confident misdirection toward the named distractor does happen under
-`negative_contrast` (3/10) — a real, non-zero effect — but it's a minority of that condition's
-failures, not the majority mechanism. `target_cue_landmark` never mentions the second bowl at all
-(bowl 2 just sits there, same as under `default`, with zero linguistic reason to be relevant), and its
-distractor-first rate is correctly 0/10 — but its neither-rate (80%) is if anything *higher* than
-`negative_contrast`'s (60%), even though there's no distractor language to blame it on. This is the
-first result in the project that reads OpenVLA's own behavior directly rather than inferring mechanism
-from success-rate deltas alone (finding 12's caveat), and it points the same direction Split 4b already
-pointed from a different angle: prompt deviation from the fine-tuned template collapses the action
-decoder's ability to commit to *any* target, with distractor-directed misdirection present but
-secondary.
+Every pooled probe number closely reproduces the corresponding real, full-scale eval number — this
+10-episode-per-task probe is measuring the same thing the real eval measures, not just pointing the
+same direction. **Task 8 is a flagged outlier**: `negative_contrast` (70%) scored *above* `default`
+(60%) here, opposite the real eval's −48pt drop (84%→36%); instructions were spot-checked against the
+raw JSONL and are correct, read as sampling noise on n=10, not investigated further. Every other task
+tracks the real numbers' direction and rough magnitude.
 
-**Operational note.** Two earlier launch attempts that timed out at the harness level (before switching
-to a proper background launch) left their containers running detached rather than actually terminating,
-so 3 identical copies of this battery briefly ran concurrently on the same GPU. Caught via
-`docker ps`/`nvidia-smi`; the 2 orphans were stopped, keeping the properly-tracked run. No data
-corruption resulted (each process's structured JSONL output is named by its own start timestamp, so the
-3 runs' records never intermixed) — only wasted GPU cycles during the overlap window. Full detail:
-`eval_log.md`'s 2026-09-02 entry.
+**Result — failure-mode breakdown, matched 4-task cohort (tasks 3, 5, 7, 9 — the only tasks all 4
+conditions share), among failed episodes only:**
 
-Artifacts: `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t5--2026_09_02-07_49_03.jsonl`
-(30 episode records) + matching `--summary.json`; 30 rollout videos under
-`openvla/rollouts/2026_09_02/` (filenames embed condition + success). Code:
-`openvla/experiments/robot/libero/probe_bowl_attraction.py` (new, uncommitted in the `openvla` fork as
-of this write-up).
-
-**Extension to tasks 3, 7, 9 (2026-09-02, same day).** §8.6's first write-up flagged this result's
-biggest limitation as sample size — one task, two conditions. This closes that gap for the sample-size
-dimension specifically (not the length-matched-control or mechanistic-localization gaps, which remain
-open — see revised §8.6 below): the same probe, same protocol, run on the other three surface-family
-tasks Split 4b already used for `target_cue_landmark` (tasks 3, 7, 9 — task 5 already covered above).
-10 episodes/condition, 3 conditions, 3 tasks = 90 more rollouts. Smoke-tested on 2 `default` episodes
-on task 3 first (2/2 succeeded, target-first, sane).
-
-| Task | Condition | Success | Target first | Distractor first | Neither |
-|--:|---|--:|--:|--:|--:|
-| 3 | `default` | 9/10 (90%) | 10/10 | 0/10 | 0/10 |
-| 3 | `negative_contrast` | 4/10 (40%) | 8/10 | 0/10 | 2/10 |
-| 3 | `target_cue_landmark` | 5/10 (50%) | 10/10 | 0/10 | 0/10 |
-| 7 | `default` | 8/10 (80%) | 9/10 | 0/10 | 1/10 |
-| 7 | `negative_contrast` | 0/10 (0%) | 3/10 | 1/10 | 6/10 |
-| 7 | `target_cue_landmark` | 2/10 (20%) | 5/10 | 0/10 | 5/10 |
-| 9 | `default` | 5/10 (50%) | 8/10 | 0/10 | 2/10 |
-| 9 | `negative_contrast` | 0/10 (0%) | 2/10 | 2/10 | 6/10 |
-| 9 | `target_cue_landmark` | 2/10 (20%) | 4/10 | 0/10 | 6/10 |
-
-Direction/magnitude checks against the real 50-trial per-task numbers (§5.2/§1): task 3 (84%/52%/52%
-real vs. 90%/40%/50% here), task 7 (72%/4%/44% vs. 80%/0%/20%), task 9 (72%/8%/16% vs. 50%/0%/20%) —
-all track in the same direction, task 9's `default` running low (50% vs. 72%) is within n=10 sampling
-noise (a 2-episode swing).
-
-**Task 3 breaks the task-5 pattern.** Unlike tasks 5/7/9, task 3's target-approached-first rate stays
-high (80-100%) in *both* failing conditions, and its neither-rate is low (0-20%) — the arm reaches
-correctly for the target bowl and the task still fails. Raw approach/neither counts alone (the table
-above) don't distinguish this from tasks 5/7/9's pattern cleanly, since a success also counts as
-"target approached first" — the real signal is what happens **among failed episodes only**:
-
-| Condition (pooled, tasks 3+5+7+9, n=40) | Success | Failures | Among failures: target-first | distractor-first | neither |
+| Condition (n=40 each) | Success | Failures | Target-first (still failed) | Distractor-first | Neither |
 |---|--:|--:|--:|--:|--:|
-| `default` | 32/40 (80.0%) | 8 | 5 (62.5%) | 0 (0%) | 3 (37.5%) |
-| `negative_contrast` | 4/40 (10.0%) | 36 | 10 (27.8%) | 6 (16.7%) | **20 (55.6%)** |
-| `target_cue_landmark` | 9/40 (22.5%) | 31 | 12 (38.7%) | 0 (0%) | **19 (61.3%)** |
+| `default` | 80.0% | 8 | 5 (62.5%) | 0 (0%) | 3 (37.5%) |
+| `negative_contrast` | 10.0% | 36 | 10 (27.8%) | 6 (16.7%) | **20 (55.6%)** |
+| `target_cue_landmark` | 22.5% | 31 | 12 (38.7%) | 0 (0%) | **19 (61.3%)** |
+| `target_cue_proximity_novel` | 50.0% | 20 | 8 (40.0%) | 0 (0%) | **12 (60.0%)** |
 
-Per-task, among failures only: task 3's failures are *entirely* target-approached-first (4/4 and 5/5
-of `negative_contrast`/`target_cue_landmark`'s respective failures) or split with a couple
-never-approached (`negative_contrast`: 4 target-first, 2 neither, of 6 failures) — task 3 never shows
-the "arm never commits" pattern at all. Tasks 5, 7, 9 each show "neither" as their largest single
-category among failures (task 5: 6/10 and 8/10 of failures; task 7: 6/10 and 5/8; task 9: 6/10 and
-6/8) — consistent with each other and with the original task-5-only reading.
+**The novel-phrasing condition is the key new data point.** `target_cue_proximity_novel` never
+mentions a second bowl, exactly like `target_cue_landmark` — but where `target_cue_landmark` reuses
+"next to X," a phrase natively bound to *other* tasks (finding 18), `target_cue_proximity_novel` uses
+"close to X," a phrase the checkpoint saw at fine-tuning time for *no* task. Despite that, its
+failure-mode shape is nearly identical to `target_cue_landmark`'s (60.0% neither vs. 61.3%, 40.0%
+target-first-but-failed vs. 38.7%, 0% distractor-first in both — expected, since neither condition
+names a distractor). The two conditions differ enormously in *how often* they fail overall (50.0% vs.
+22.5% success — matching Split 4c's real-eval finding that novel phrasing survives much better than
+familiar-but-wrongly-bound phrasing) but, conditional on failing, fail the *same way*. That's a second,
+independent line of evidence (on top of finding 17) that distractor-pull isn't the mechanism here at
+all: a condition that structurally cannot exhibit distractor-pull (no distractor mentioned, and here
+also using a phrase with zero training-time association to misdirect toward) still shows target-
+selection collapse as its majority failure mode.
 
-**Revised reading.** Pooled across all 4 tasks, "the arm never commits to either bowl" remains the
-single largest failure category for both `negative_contrast` (55.6% of failures) and
-`target_cue_landmark` (61.3%) — the original §8.5 finding generalizes past task 5, closing the
-sample-size gap in the direction the original hypothesis predicted. But it is not the *only* failure
-mode, and task 3 shows it's possible for a task to fail almost entirely through a different
-mechanism — correctly locating and approaching the target bowl, then still failing to complete the
-pick-and-place. This probe doesn't instrument grasp/lift/place execution (only eef-to-bowl distance),
-so it can't say *why* task 3's approaches fail — a plausible reading is that off-template phrasing
-disrupts the policy at more than one stage (target selection *and*, independently, fine motor
-execution once near a target), consistent with "template mismatch" as a broad description of the
-failure but not narrowing it to reaching/target-selection alone as §8.5's original task-5-only write-up
-implied.
+**Result — full 10-task cohort, `default`/`negative_contrast` only, among failed episodes:**
 
-Artifacts: `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t{3,7,9}--2026_09_02-14_39_*.jsonl`
-+ matching `--summary.json` per task; rollout videos under `openvla/rollouts/2026_09_02/`. Launch logs:
-`openvla/experiments/logs/probe_bowl_attraction_launch/t{3,7,9}.out`.
-
-**Full-suite extension: all 10 tasks (2026-09-03).** User request: run the same probe on every
-`libero_spatial` task, not just the 4-task surface-family cohort. `target_cue_landmark` only exists
-for surface-family tasks (3,5,7,9 — rephrasing "on X" as "next to X" only makes sense when the native
-phrasing *isn't* already "next to X"), so it can't be extended to all 10 without authoring new
-prompts; scoped down to `default` + `negative_contrast` (both defined for all 10 tasks natively) per a
-follow-up narrowing the request to `negative_contrast`. Tasks 0, 1, 2, 4, 6, 8 run fresh (10
-episodes/condition each, same protocol); tasks 3, 5, 7, 9 reuse the data above. 60 new rollouts, 280
-total across the full suite.
-
-| Task | `default` success | `negative_contrast` success | Real 50-trial `negative_contrast` SR (§1) |
-|--:|--:|--:|--:|
-| 0 | 8/10 (80%) | 9/10 (90%) | 94% |
-| 1 | 7/10 (70%) | 4/10 (40%) | 32% |
-| 2 | 9/10 (90%) | 1/10 (10%) | 2% |
-| 3 | 9/10 (90%) | 4/10 (40%) | 52% |
-| 4 | 9/10 (90%) | 6/10 (60%) | 64% |
-| 5 | 10/10 (100%) | 0/10 (0%) | 4% |
-| 6 | 10/10 (100%) | 7/10 (70%) | 72% |
-| 7 | 8/10 (80%) | 0/10 (0%) | 4% |
-| 8 | 6/10 (60%) | **7/10 (70%)** | 36% |
-| 9 | 5/10 (50%) | 0/10 (0%) | 8% |
-| **Pooled (n=100/condition)** | **81%** | **38%** | **36.8%** (500 trials) |
-
-Pooled success rates now match the real, full-scale eval closely (81% vs. 84.0% for `default`, 38% vs.
-36.8% for `negative_contrast`) — this 100-episode probe reproduces the suite-wide headline number
-almost exactly, not just the direction. **Task 8 is a genuine outlier**: `negative_contrast` (70%)
-scored *above* `default` (60%) here, opposite the real eval's −48pt drop (84%→36%). Instructions were
-spot-checked against the raw JSONL and are correct (target "next to the plate", distractor clause
-"not the one next to the ramekin", matching §1's table exactly) — this looks like real n=10 sampling
-noise on a task with a genuinely large point-estimate swing, not a bug, but it's a large enough
-deviation (both counts land in each condition's ~3-5% tail probability under the real rate) to flag
-rather than smooth over. Every other task's direction and rough magnitude track the real numbers.
-
-Among failed episodes, pooled across all 10 tasks:
-
-| Condition (n=100) | Success | Failures | Target-first (still failed) | Distractor-first | Neither |
+| Condition (n=100 each) | Success | Failures | Target-first (still failed) | Distractor-first | Neither |
 |---|--:|--:|--:|--:|--:|
-| `default` | 81% | 19 | 12 (63.2%) | 0 (0%) | 7 (36.8%) |
-| `negative_contrast` | 38% | 62 | 17 (27.4%) | 9 (14.5%) | **36 (58.1%)** |
+| `default` | 81.0% | 19 | 12 (63.2%) | 0 (0%) | 7 (36.8%) |
+| `negative_contrast` | 38.0% | 62 | 17 (27.4%) | 9 (14.5%) | **36 (58.1%)** |
 
-At full 10-task scale, the picture sharpens rather than muddies: **"arm never approaches either
-bowl" is the majority failure mode (58.1% of all failures)**, not just the largest category — a
-cleaner result than the 4-task subset's 55.6%/61.3%. Distractor-directed misdirection is real and
-non-trivial at this scale (14.5%, and nonzero on 4 of 10 tasks — 1, 2, 5, 9) but still clearly
-secondary. Target-approached-but-still-failed (27.4%) is real too, and — as the 4-task extension
-already showed with task 3 — concentrated unevenly: task 3's failures are almost entirely this mode,
-while tasks 2, 5, 7, 9 show almost none of it (their failures are almost entirely "neither").
+At full 10-task scale, "arm never approaches either bowl" is the outright *majority* failure mode for
+`negative_contrast` (58.1%), not just the largest category — cleaner than the 4-task subset's 55.6%.
+Distractor-directed misdirection is real and non-trivial at this scale (14.5%, nonzero on tasks 1, 2,
+5, 9) but clearly secondary. Target-approached-but-still-failed (27.4%) is real too and concentrated
+unevenly — task 3's failures are almost entirely this mode across *every* condition it was tested
+under (`negative_contrast`, `target_cue_landmark`, and `target_cue_proximity_novel` alike), while tasks
+2, 5, 7, 9 show almost none of it. This probe doesn't instrument grasp/lift/place execution (only
+eef-to-bowl distance), so it can't say *why* task 3's approaches fail — a plausible reading is that
+off-template phrasing disrupts the policy at more than one stage (target selection *and*,
+independently, fine motor execution once near a target) for this specific task, consistent with
+"template mismatch" as a broad description of the failure but not narrowing it to
+reaching/target-selection alone.
 
-Artifacts: `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t{0,1,2,4,6,8}--2026_09_03-*.jsonl`
-+ matching `--summary.json` per task; rollout videos under `openvla/rollouts/2026_09_03/`. Launch logs:
-`openvla/experiments/logs/probe_bowl_attraction_launch/t{0,1,2,4,6,8}.out`.
+Artifacts: `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t{0..9}--2026_09_0{2,3,4}-*.jsonl`
++ matching `--summary.json` per task/condition (gitignored, local only); rollout videos under
+`openvla/rollouts/2026_09_0{2,3,4}/`; launch logs
+`openvla/experiments/logs/probe_bowl_attraction_launch/t*.out`. Code:
+`openvla/experiments/robot/libero/probe_bowl_attraction.py` (uncommitted in the `openvla` fork as of
+this write-up). Full launch-by-launch history (smoke tests, operational incidents, hardware): see
+`eval_log.md`'s 2026-09-02, 2026-09-03, and 2026-09-04 bowl-attraction entries.
 
-### 8.6 Synthesis — why the distractor-mention collapse shows up in the VLA but not the VLM (2026-09-02)
+### 8.6 Synthesis — why the distractor-mention collapse shows up in the VLA but not the VLM (2026-09-02, updated 2026-09-04)
 
 **Original question.** The premise that opened this line of investigation (§8): a standalone VLM
 given the same distractor-mention referring expression can resolve it well above chance, while this
@@ -1473,7 +1406,11 @@ mildly *easier* to ground than LIBERO's own target-only language, not harder, in
 3-bowl scenes). And "the distractor pulls OpenVLA's arm toward the wrong object" is not the dominant
 mechanism either (§8.5, finding 17 — confident misdirection toward the named distractor happened in
 only 14.5% of `negative_contrast` failures pooled across all 10 tasks; the majority failure category
-was the arm never coming within grasping range of *either* bowl).
+was the arm never coming within grasping range of *either* bowl). `target_cue_proximity_novel`
+strengthens this further: it never mentions a distractor and — unlike `target_cue_landmark` — uses a
+phrase with zero fine-tuning-time association to misdirect toward, yet still shows the exact same
+majority-"neither"-approached failure shape (60.0% vs. `target_cue_landmark`'s 61.3%) on the matched
+4-task cohort. A condition that structurally cannot exhibit distractor-pull still fails the same way.
 
 **Best-supported hypothesis, still not a confirmed causal claim, but the sample-size gap is now fully
 closed.** §8.5's instrumented rollouts are the only place in the project that reads OpenVLA's own
@@ -1505,13 +1442,22 @@ extension partially closed the first, and the full 10-task extension closes it c
    10-episode-per-task probe is measuring the same thing the real eval measures. One flagged anomaly:
    task 8 inverted direction (`negative_contrast` scored *above* `default`, opposite the real eval's
    −48pt drop) — instructions verified correct, read as sampling noise on a small per-task n, not
-   investigated further. Remaining unaddressed: the other conditions (`positive_contrast`,
-   `target_cue_region` on landmark-family tasks, `hardneg`, Split 2/3 scene variants) still haven't
-   been run through this probe.
-2. **No length/complexity control.** `negative_contrast` adds a whole extra clause ("...not the one
-   on top of..."). Nothing run so far separates "deviates from the fine-tuning template" from "prompt
-   is simply longer" — both predict the same symptoms observed. A same-length, template-adjacent
-   paraphrase condition would be needed to isolate this. Unaddressed by either extension.
+   investigated further. `target_cue_proximity_novel` (§8.5) has since also been added on the 4-task
+   cohort, matching `target_cue_landmark`'s failure shape almost exactly (60.0% vs. 61.3% neither)
+   despite a very different overall success rate (50.0% vs. 22.5%) — see gap 2 below for what this
+   adds. Remaining unaddressed: `positive_contrast`, `target_cue_region` on landmark-family tasks,
+   `hardneg`, and the Split 2/3 scene variants still haven't been run through this probe.
+2. **No length/complexity control — partially addressed as a side effect of adding
+   `target_cue_proximity_novel`.** `negative_contrast` adds a whole extra clause ("...not the one on
+   top of...", 24 words vs. `default`'s ~15). `target_cue_landmark` and `target_cue_proximity_novel`,
+   by contrast, are *exactly* the same length as `default` — a single relation-word swap ("on the
+   ramekin" → "next to"/"close to the ramekin"), no added clause, verified word-for-word identical
+   length. Both still collapse to a majority-"neither" failure shape (§8.5), which rules out "it's
+   simply a longer sentence" as an explanation for *this* shape of failure — a same-length rephrasing
+   triggers it just as reliably as a longer one. What remains unaddressed is the length confound
+   specific to `negative_contrast` itself: nothing yet isolates whether *its* extra clause (vs. its
+   distractor content) matters, since no condition adds comparable filler length without added
+   semantic content. That narrower version of the gap is unaddressed by either extension.
 3. **No mechanistic localization.** §8.5 shows *what the arm does*, not *where in the network* it
    goes wrong — the vision encoder, the language projector, or the action-token head could each
    independently produce "never commits to a target," and task 3's approach-then-fail pattern is a
@@ -1525,10 +1471,14 @@ extension partially closed the first, and the full 10-task extension closes it c
 now has direct behavioral evidence from the full 10-task suite (not 1, not 4) supporting "arm fails to
 commit to a target" as the *majority* failure mechanism, with pooled success rates that closely
 reproduce the real full-scale eval — about as strong as outcome-matched behavioral evidence gets for
-this probe design. A second, real failure mode (correct target approach, still fails, ~27% of
-failures) persists at scale and is task-concentrated rather than a one-task artifact. Neither the
-length-matched control nor mechanistic localization gaps are touched by either extension — those two
-are what's left before "template-mismatch action collapse, not distractor confusion" can be called
+this probe design. `target_cue_proximity_novel` adds a genuinely new angle rather than just more of
+the same: a condition with no distractor mention *and* no misleading template association still fails
+the same way as one that has both, which is hard to square with anything except target-selection
+collapse being the shared cause. A second, real failure mode (correct target approach, still fails,
+~27% of failures) persists at scale and is task-concentrated rather than a one-task artifact. The
+broad "not simply a longer sentence" reading of the length-control gap is now supported (§gap 2), but
+mechanistic localization is untouched by any extension so far — that's what's left before
+"template-mismatch action collapse, not distractor confusion" can be called
 settled rather than best-supported.
 
 ### 8.7 Qwen bowl-pointing probe, re-run with sampled (not greedy-only) decoding (2026-09-04)

@@ -165,6 +165,22 @@ Any flag not consumed by `run_eval.sh` (`--split`, `--resume`, ...) forwards str
   `10_nvidia_egl.json` mount is unrelated to this and doesn't need to change; it only wires up the
   vendor ICD *json*, not the underlying `.so`, so it's a no-op until the library package above is
   installed.
+- **A concurrent container can silently mutate the shared `pip --user` site-packages other
+  containers also see, breaking imports that worked minutes earlier.** `run_eval.sh` sets
+  `HOME=/workspace/.cache/home`, which is bind-mounted from this repo's `.cache/home/` on the host —
+  every container on this machine shares it, including containers from other concurrent sessions.
+  If any of them ephemerally `pip install --user`s a newer `transformers` (e.g. for a Qwen-VL-style
+  probe, per §8.1's `probe_bowl_pointing_qwen.py` precedent), that install lands in the *shared*
+  `.cache/home/.local/lib/python3.11/site-packages/`, silently overriding the image's pinned
+  version for every other container's `import transformers` from then on — surfaced here as
+  `ImportError: cannot import name 'AutoModelForVision2Seq' from 'transformers'` in
+  `openvla_utils.py`, identical in shape to §8.1's own pitfall but this time caused by a *different*
+  session, not the current one. Confirmed via `docker run --rm <image> python3 -c "import
+  transformers; print(transformers.__version__)"` (no `HOME` mount) showing the image's correct
+  pinned version, vs. the same check *with* the mount showing whatever was last installed. Fix:
+  don't touch the shared directory (another session's work may depend on it) — add
+  `-e PYTHONNOUSERSITE=1` to the `docker run` invocation instead, which makes Python ignore the
+  user-site overlay entirely and fall back to the image's own pinned packages.
 
 ## Coding & import conventions
 
