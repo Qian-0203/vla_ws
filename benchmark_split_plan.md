@@ -548,7 +548,7 @@ only records the design: goal, hypothesis, method, and what's still open.
 | Trials | 1 query/task/condition — a VQA probe, not a rollout, so no seed/trial replication |
 | Metrics | Parsed-answer accuracy vs. chance (50% for 2-bowl, 33% for 3-bowl) |
 | Scripts | `probe_bowl_pointing.py` (OpenVLA, dead end), `probe_bowl_pointing_qwen.py` (Qwen, pursued), `bowl_pointing_common.py` (shared render/annotate/score, holds the marker-placement fix) — none registered in `eval_registry.py` |
-| Status | Full 5-condition x 10-task battery (50 queries) run to completion on Qwen; numbers, the marker-placement bug found and fixed mid-run, and the per-task render table are in `benchmark_split_result.md` §8.1-§8.4. Extended 2026-09-04 to sampled (not greedy-only) decoding — 10 samples/query at temperature 0.7, reporting per-query sample accuracy and majority vote instead of one `do_sample=False` draw — see §8.7 |
+| Status | Full 5-condition x 10-task battery (50 queries) run to completion on Qwen2-VL-7B-Instruct; numbers, the marker-placement bug found and fixed mid-run, and the per-task render table are in `benchmark_split_result.md` §8.1-§8.4. Extended 2026-09-04 to sampled (not greedy-only) decoding — 10 samples/query at temperature 0.7, reporting per-query sample accuracy and majority vote instead of one `do_sample=False` draw — see §8.7. Same day, re-run on Qwen3-VL-8B-Instruct to test whether a newer/stronger VLM raises the accuracy ceiling: not a uniform upgrade — large 2-bowl-scene gains, a regression on the 3-bowl `hardneg` scene — see §8.8 |
 
 ### 11.2 Bowl-attraction probe
 

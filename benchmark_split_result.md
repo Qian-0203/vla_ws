@@ -1599,3 +1599,97 @@ Artifacts: `openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointin
 `raw_model_outputs`/`parsed_answers`/`sample_accuracy`/`answer_counts`/`majority_answer`/
 `majority_correct`; `num_samples`/`temperature` added). Code:
 `probe_bowl_pointing_qwen.py` (`openvla` fork, uncommitted as of this write-up).
+
+### 8.8 Qwen3-VL-8B-Instruct re-run — does a newer/stronger VLM raise the ceiling? (2026-09-04)
+
+**Motivation.** §8.7's Qwen2-VL-7B-Instruct numbers (48-90% depending on condition, chance 33-50%)
+were judged still too low to be a satisfying "resolvable in principle" upper bound. Qwen3-VL is a
+newer model generation from the same family; this checks whether it raises the ceiling, holding the
+render/annotate/scoring pipeline (`bowl_pointing_common.py`) and every condition/task exactly fixed
+so the only changed variable is which model answers.
+
+**Method.** New script `probe_bowl_pointing_qwen3.py` (`openvla` fork, uncommitted) — same structure
+as `probe_bowl_pointing_qwen.py`, swapped to `Qwen3VLForConditionalGeneration` /
+`Qwen/Qwen3-VL-8B-Instruct` (8B chosen over the also-available 32B-Instruct as the closer scale match
+to the existing Qwen2-VL-7B-Instruct numbers, so "newer" isn't conflated with "bigger"). Two API
+differences from the Qwen2-VL script: (1) needs `transformers>=4.57.0` for `qwen3_vl` support — an
+open-ended `pip install -U transformers` pulled today's `5.16.1` instead and reproduced the exact
+failure mode §8.1 first documented for Qwen2-VL (removed `AutoModelForVision2Seq` breaks an unrelated
+transitive import through `libero_utils.py`→`robot_utils.py`→`openvla_utils.py` that
+`bowl_pointing_common.py` pulls in); pinning to `transformers==4.57.6` (the newest release still on
+the 4.x line) satisfies both constraints. (2) No `qwen_vl_utils` dependency needed —
+`processor.apply_chat_template(messages, tokenize=True, add_generation_prompt=True,
+return_dict=True, return_tensors="pt")` handles image encoding directly instead of the separate
+`process_vision_info()` + `processor(...)` two-step Qwen2-VL required (one output key,
+`token_type_ids`, isn't accepted by `generate()` and is popped before the call). Same sampling setup
+as §8.7 (10 samples/query, temperature 0.7, one batched `num_return_sequences=10` call). Smoke-tested
+(1 task, 3 samples) before the full battery — correctly answered task 0, which Qwen2-VL got wrong in
+*every* condition across every prior run (§8.3/§8.4/§8.7). Full battery: same 5 conditions x 10 tasks
+as §8.7 (500 generations), Berkeley server GPU 1 (GPUs 0/2/3 were occupied by another user's
+unrelated training job at the time; GPU 1 also had a small concurrent job from a sibling session of
+this same project, left running alongside since there was ample headroom — confirmed via
+`nvidia-smi`/`docker ps` before launching).
+
+**Result: large gains on the 2-bowl scene, a regression on the 3-bowl scene — not a uniform upgrade.**
+
+| Condition | Scene | Qwen2-VL (§8.7) | Qwen3-VL-8B | Δ | Chance |
+|---|---|---|---|---|---|
+| `default` | `libero_spatial` (2 bowls) | 50.0% | **81.0%** | +31.0 | 50% |
+| `negative_contrast` | `libero_spatial` (2 bowls) | 60.0% | **90.0%** | +30.0 | 50% |
+| `positive_contrast` | `libero_spatial` (2 bowls) | 80.0% | **84.0%** | +4.0 | 50% |
+| `hardneg_default` | `libero_spatial_3bowl_hardneg` (3 bowls) | 60.0% | **42.0%** | −18.0 | 33% |
+| `hardneg` | `libero_spatial_3bowl_hardneg` (3 bowls) | 70.0% | **48.0%** | −22.0 | 33% |
+
+(Sample-accuracy mean over 10 samples/query; majority-vote numbers track within 1pt of these in
+every row — e.g. `default` majority-vote is 80.0% vs. 81.0% sample-mean — so only one number per row
+is shown.) Every condition still clears its chance baseline on both models, so §8.6's core synthesis
+(a capable VLM resolves this referring expression above chance regardless of distractor-mention,
+unlike OpenVLA's action-decoding collapse) holds for Qwen3-VL too — but "is the newer model just
+better" doesn't have a clean yes: it gains 30+ points on the 2-bowl scene's `default`/
+`negative_contrast` cells, a smaller +4 on `positive_contrast`, and *loses* 18-22 points on both
+3-bowl `hardneg`/`hardneg_default` cells.
+
+**Within-query variance: real, for the first time.** §8.7 found zero within-query disagreement
+across all 50 Qwen2-VL queries at temperature 0.7 — every query's 10 samples were unanimous.
+Qwen3-VL shows genuine sample-to-sample disagreement on 5 of 50 queries:
+
+| Condition | Task | Target | Sample accuracy | Answer distribution |
+|---|--:|--:|--:|---|
+| `default` | 1 | 2 | 0.4 | `{2: 4, 1: 6}` |
+| `default` | 5 | 1 | 0.7 | `{1: 7, 2: 3}` |
+| `positive_contrast` | 1 | 2 | 0.4 | `{2: 4, 1: 6}` |
+| `hardneg` | 1 | 3 | 0.8 | `{3: 8, 1: 2}` |
+| `hardneg_default` | 6 | 2 | 0.2 | `{1: 8, 2: 2}` |
+
+This is itself an answer to the original request (sample instead of relying on one greedy decode):
+for Qwen2-VL the trend confirmed a fully deterministic model at this temperature; for Qwen3-VL there
+is an actual trend to characterize on a handful of queries, task 1 (2-bowl scene) being the most
+consistently uncertain one across two different conditions on the identical image.
+
+**Per-task detail: the 3-bowl regression is concentrated, not diffuse.** Comparing majority-vote
+correctness per (condition, task) against §8.7's Qwen2-VL numbers: task 3 ("on the cookie box")
+flips from correct to incorrect in **all 5 conditions**, unanimously (all 10/10 samples answer "1"
+instead of the correct "2" in every condition it's wrong in) — a clean, consistent miss, not noise
+from a close call. In the `hardneg`/`hardneg_default` 3-bowl cells specifically, tasks 3, 5, 6, 7 flip
+correct→incorrect while only tasks 1, 2 flip the other way — the regression is concentrated in
+specific tasks rather than spread evenly across the 3-bowl scene's 10 tasks. On the 2-bowl scene, the
+gains are broader: 6 of 10 tasks flip incorrect→correct across `default`/`negative_contrast`/
+`positive_contrast` combined, against only task 1 and task 3 flipping the other way.
+
+**Reading.** Qwen3-VL-8B is a real improvement on the easier (2-bowl, no or single-clause
+distractor-mention) end of this probe, but not a strictly-better replacement for Qwen2-VL-7B on the
+harder 3-bowl `hardneg` scene specifically — whatever changed between model generations helped some
+tasks and hurt others, task 3 being the clearest single-task regression. The original complaint
+("accuracy is still too low") is only partly addressed: `negative_contrast` now reaches a genuinely
+strong 90%, but `hardneg`/`hardneg_default` are now *lower* than before, and no condition reaches
+what would read as a clean, uncontested ceiling (100% or near it). Not investigated further here:
+whether task 3's clean flip reflects something specific about that scene's render (worth an eyeball
+of `libero_spatial--*--t3.png` in the shared fig directory before trusting the number further), and
+whether Qwen3-VL-32B-Instruct (available, not run) would resolve the 3-bowl regression the 8B version
+didn't.
+
+Artifacts: `openvla/experiments/logs/probe_bowl_pointing_qwen3/probe_bowl_pointing_qwen3.jsonl` (new
+file, same schema as §8.7's Qwen2-VL output); annotated images shared with the other probe scripts
+(`openvla/experiments/figures/probe_bowl_pointing/`, unchanged — same render cache keyed by
+`(suite, task_id)`, independent of which model is being probed). Code:
+`probe_bowl_pointing_qwen3.py` (new, uncommitted in the `openvla` fork as of this write-up).

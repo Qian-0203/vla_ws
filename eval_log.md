@@ -565,6 +565,44 @@ control and mechanistic-localization gaps remain open (§8.6).
 
 ---
 
+## 2026-09-04 — Qwen3-VL-8B-Instruct bowl-pointing probe (diagnostic, not a `run_eval.sh --split` launch)
+
+- **Trigger:** user judged §8.7's Qwen2-VL-7B-Instruct accuracy (48-90%, chance 33-50%) still too
+  low; asked whether a newer/stronger VLM (Qwen3-VL) raises the ceiling.
+- **Code:** new `probe_bowl_pointing_qwen3.py` (`openvla` fork, uncommitted) — same structure as
+  `probe_bowl_pointing_qwen.py`, swapped to `Qwen3VLForConditionalGeneration` /
+  `Qwen/Qwen3-VL-8B-Instruct` (8B chosen over the also-available 32B-Instruct to keep the scale
+  comparable to Qwen2-VL-7B-Instruct). Hit and fixed the same class of pitfall §8.1 first documented
+  for Qwen2-VL: an open-ended `transformers>=4.57.0` pulled today's `5.16.1`, which removed
+  `AutoModelForVision2Seq` and broke an unrelated transitive import through `libero_utils.py` ->
+  `robot_utils.py` -> `openvla_utils.py`; pinned to `transformers==4.57.6` (newest release still on
+  the 4.x line) to get both `qwen3_vl` support and the still-present `AutoModelForVision2Seq`. No
+  `qwen_vl_utils` needed this time — `processor.apply_chat_template(..., tokenize=True,
+  return_dict=True, return_tensors="pt")` handles image encoding directly.
+- **Hardware:** Berkeley server (`config/berkeley.env`), `openvla-libero:blackwell` image — **GPU 1**
+  (GPUs 0/2/3 were occupied by another Linux user's unrelated training job; GPU 1 also had a small
+  concurrent job from a sibling session of this project, left running alongside since there was ~82GB
+  of headroom; confirmed via `nvidia-smi`/`docker ps` before launching).
+- **What ran:** smoke test first (1 task, 3 samples — correctly answered task 0, which Qwen2-VL got
+  wrong in every prior run), then the full battery: same 5 conditions x 10 tasks x 10 samples,
+  temperature 0.7 (500 generations).
+- **Outcome:** full detail in `benchmark_split_result.md` §8.8. Headline: **not a uniform upgrade**.
+  Large gains on the 2-bowl scene (`default` 50%→81%, `negative_contrast` 60%→90%, `positive_contrast`
+  80%→84%) but a regression on the 3-bowl `hardneg` scene (`hardneg` 70%→48%, `hardneg_default`
+  60%→42%) — every condition still clears its chance baseline on both models, so §8.6's core
+  synthesis is untouched, but the newer model doesn't simply dominate the older one. Also the first
+  run in this probe family with genuine within-query sampling variance: 5/50 queries show real
+  sample-to-sample disagreement (vs. 0/50 for Qwen2-VL in §8.7). Task 3 ("on the cookie box") flips
+  from correct to incorrect in all 5 conditions, unanimously — the single clearest regression.
+- **Artifacts:** `openvla/experiments/logs/probe_bowl_pointing_qwen3/probe_bowl_pointing_qwen3.jsonl`
+  (new file); annotated images shared/unchanged
+  (`openvla/experiments/figures/probe_bowl_pointing/`). Code: `probe_bowl_pointing_qwen3.py` (new,
+  uncommitted in the `openvla` fork as of this entry).
+
+**Status:** closed — see `benchmark_split_result.md` §8.8.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
