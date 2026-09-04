@@ -531,6 +531,40 @@ control and mechanistic-localization gaps remain open (§8.6).
 
 ---
 
+## 2026-09-04 — Qwen bowl-pointing probe: sampled decoding re-run (diagnostic, not a `run_eval.sh --split` launch)
+
+- **Trigger:** user request to sample multiple responses per query (not just one greedy decode) on
+  the Qwen bowl-pointing VQA probe (§8.1-§8.4), to see the trend rather than a single point estimate.
+- **Code change:** `probe_bowl_pointing_qwen.py` (`openvla` fork, uncommitted) — `query_qwen()` now
+  draws `num_samples` generations per query via one `model.generate(..., do_sample=True,
+  temperature=cfg.temperature, num_return_sequences=cfg.num_samples)` call instead of a single
+  `do_sample=False` call; each record reports `sample_accuracy` (fraction of samples correct) and a
+  majority-vote answer alongside the full per-sample list. `--num_samples 1 --temperature 0`
+  reproduces the old greedy behavior exactly.
+- **Hardware:** Berkeley server (`config/berkeley.env`), `openvla-libero:blackwell` image, ephemeral
+  `transformers==4.51.3` + `qwen-vl-utils` install (same pattern as every prior Qwen run) — **GPU 2**
+  specifically, not GPU 0/1 (both occupied at the time by an unrelated job under a different Linux
+  user, `hense1219`; confirmed via `nvidia-smi`/`docker ps` before launching so as not to disturb it).
+- **What ran:** smoke test first (1 task, 3 samples, temperature 0.7 — confirmed the code path end to
+  end), then the full battery: same 5 conditions x 10 tasks as §8.3, `--num_samples 10 --temperature
+  0.7` (500 generations total).
+- **Outcome:** full detail in `benchmark_split_result.md` §8.7. Headline: **zero within-query
+  disagreement across all 50 queries** — every query's 10 samples unanimously agree, so
+  `sample_accuracy` is exactly 0.0 or 1.0 everywhere, never split. `default`/`hardneg`/
+  `hardneg_default` reproduce their §8.3 greedy numbers exactly (50%/70%/60%); `negative_contrast`
+  (70%→60%) and `positive_contrast` (70%→80%) each move by one task versus the old greedy table, and
+  in both cases the new answer is itself unanimous across all 10 samples — not resolved noise, but an
+  unexplained (disclosed, not investigated) difference between the old single-sequence `generate()`
+  call and the new batched `num_return_sequences=10` call.
+- **Artifacts:** `openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl`
+  (overwritten in place, schema extended — see §8.7); annotated images unchanged (same render cache,
+  `openvla/experiments/figures/probe_bowl_pointing/`). Code:
+  `probe_bowl_pointing_qwen.py` (uncommitted in the `openvla` fork as of this entry).
+
+**Status:** closed — see `benchmark_split_result.md` §8.7.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`

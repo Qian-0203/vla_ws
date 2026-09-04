@@ -1530,3 +1530,72 @@ failures) persists at scale and is task-concentrated rather than a one-task arti
 length-matched control nor mechanistic localization gaps are touched by either extension — those two
 are what's left before "template-mismatch action collapse, not distractor confusion" can be called
 settled rather than best-supported.
+
+### 8.7 Qwen bowl-pointing probe, re-run with sampled (not greedy-only) decoding (2026-09-04)
+
+**Motivation.** Every Qwen run so far (§8.1-§8.4) drew exactly one greedy (`do_sample=False`)
+generation per query, so each condition's reported accuracy was a single point estimate over an
+already-small n (10 per task, 40-50 pooled) — no way to tell how much of a given number reflects a
+stable model tendency vs. one lucky/unlucky decode. Request: sample multiple responses per query
+instead, to see the trend rather than relying on greedy decoding alone.
+
+**Method.** `probe_bowl_pointing_qwen.py` (`openvla` fork, uncommitted as of this write-up) changed
+to draw `num_samples=10` generations per query at `temperature=0.7` (`do_sample=True`, all 10 drawn
+in one `model.generate(..., num_return_sequences=10)` call rather than 10 separate calls). Each
+record now reports `sample_accuracy` (fraction of the 10 samples that name the correct bowl) and a
+majority-vote answer/correctness, alongside the full list of parsed answers and an `answer_counts`
+distribution — instead of a single `raw_model_output`/`correct` pair. `--num_samples 1 --temperature
+0` reproduces the exact old greedy behavior for compatibility. Smoke-tested on 1 task, 3 samples,
+before committing to the full battery. Full battery: same 5 conditions x 10 tasks as §8.3 (50
+queries x 10 samples = 500 generations), run on the Berkeley server's GPU 2 (idle at the time; GPUs
+0-1 were occupied by another user's unrelated job).
+
+**Result: zero within-query disagreement — the sampled "trend" is that there isn't one.** Across all
+50 queries, every single one of the 10 samples landed on the *same* bowl number — `sample_accuracy`
+is exactly 0.0 or 1.0 for all 50 records, never anything in between, and majority-vote answers are
+therefore identical to a per-query accuracy count. At `temperature=0.7`, this model's answer to this
+VQA probe is not meaningfully stochastic for this stimulus: sampling more doesn't surface a
+distribution to characterize, it just reproduces the same answer 10 times over.
+
+| Condition | Scene | Sample accuracy (mean over 10 samples/query) | Majority-vote accuracy | §8.3 greedy accuracy |
+|---|---|---|---|---|
+| `default` | `libero_spatial` (2 bowls) | 50.0% | 5/10 | 5/10 (50%) |
+| `negative_contrast` | `libero_spatial` (2 bowls) | 60.0% | 6/10 | 7/10 (70%) |
+| `positive_contrast` | `libero_spatial` (2 bowls) | 80.0% | 8/10 | 7/10 (70%) |
+| `hardneg_default` | `libero_spatial_3bowl_hardneg` (3 bowls) | 60.0% | 6/10 | 6/10 (60%) |
+| `hardneg` | `libero_spatial_3bowl_hardneg` (3 bowls) | 70.0% | 7/10 | 7/10 (70%) |
+
+`default`, `hardneg`, and `hardneg_default` reproduce their §8.3 greedy numbers exactly, task-for-task
+(verified against the per-task JSONL, not just the aggregate). `negative_contrast` and
+`positive_contrast` each move by one task relative to §8.3/§8.4's greedy table: task 4 flips
+correct->incorrect for `negative_contrast` (was "1->1 ✓", now unanimously "1->2" across all 10
+samples), and task 8 flips incorrect->correct for `positive_contrast` (was "2->1 ✗", now unanimously
+"2->2" across all 10 samples). Both raw model outputs for the flipped queries are the bare digit with
+no explanation text (`'2'`), so this isn't a `parse_answer` mis-extraction from a differently-worded
+explanation — the model's realized top answer for these two queries genuinely differs from the old
+greedy run.
+
+**Reading.** Two things worth separating:
+
+1. **The trend confirms the greedy numbers, it doesn't undercut them.** 0 of 50 queries show any
+   split (e.g. 6/10, 8/10) that would indicate a close call resolved differently draw-to-draw — every
+   query is either fully consistent-correct or fully consistent-wrong across independent samples.
+   §8.1-§8.6's conclusions (every condition clears its chance baseline; distractor-mention phrasing
+   scores at or above its no-mention counterpart in both scenes) are unaffected and, if anything,
+   strengthened — the numbers were never one lucky decode away from looking different.
+2. **The 2 one-task deltas are a disclosed, unexplained caveat, not sampling noise.** Because each
+   flipped query is unanimous across 10 independent draws (not a 5/5 or 6/4 split), the mechanism
+   isn't "the model was genuinely torn and chance tipped it" — it's some other difference between the
+   old single-sequence `generate()` call and the new batched `num_return_sequences=10` call (bf16
+   batching-precision differences shifting a close top-2 logit gap is the natural suspect, but this
+   wasn't investigated and shouldn't be presumed). Effect size is small (1 task / 10 in each of 2
+   conditions) and doesn't change either condition's qualitative reading (`negative_contrast` and
+   `positive_contrast` both still comfortably clear chance and their `default` counterpart), but it
+   means these two conditions' exact numbers are not bit-for-bit reproducible between the greedy and
+   sampled code paths, and that gap is left open rather than papered over.
+
+Artifacts: `openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl`
+(overwritten in place — schema changed: `raw_model_output`/`correct` replaced by
+`raw_model_outputs`/`parsed_answers`/`sample_accuracy`/`answer_counts`/`majority_answer`/
+`majority_correct`; `num_samples`/`temperature` added). Code:
+`probe_bowl_pointing_qwen.py` (`openvla` fork, uncommitted as of this write-up).

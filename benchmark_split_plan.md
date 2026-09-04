@@ -30,6 +30,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` and `semantic` each redefined a second time (see Split 2 below) -- both current suites run 2026-08-27, 85.2% each |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
 | 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`), not yet run |
+| VLM Bowl-Pointing / Bowl-Attraction Probes (§11, not a `SPLITS` entry) | Is the distractor-mention collapse (Splits 1/2) a grounding failure or an action-decoding failure? | Standalone diagnostic scripts, run directly — not registered in `eval_registry.py`. Both probes run to completion on their respective batteries; open gaps listed in §11.3 |
 
 "Implemented" = task suite + prompts exist in the registry and can be run with one `run_eval.sh`
 command. Whether a condition has actually been *run* is tracked in `benchmark_split_result.md`, not
@@ -253,7 +254,7 @@ change, this is purely about what's physically present.
 | Conditions | 6 cells: {landmark, surface, region} target x {landmark, surface} distractor (containment target excluded — only 1 task, `top_drawer`, and no distractor-placement variants exist for it) |
 | Tasks | 4 cells (10 tasks total) already exist inside baseline `libero_spatial` — see `eval_registry.GROUNDING_PROBE_CELLS`; 2 cells (`surface`/`landmark` and `region`/`surface`) needed a new scene (existing distractor bowl moved to a different pre-existing region; canonical `libero_spatial` untouched) |
 | Trials | 50/task/cell, seed 7 |
-| Metrics | Final success, first-pick accuracy, wrong-bowl pick rate, distractor attraction rate (see §9 — the latter three need per-step contact logging not yet implemented) |
+| Metrics | Final success, first-pick accuracy, wrong-bowl pick rate, distractor attraction rate (per-step contact logging now exists as a standalone probe, not integrated into this split's own eval loop — see §11.2) |
 | Output | `libero_spatial` results filtered by `--task_ids` for the 4 existing cells; `EVAL-libero_spatial_grounding_*-openvla-*.txt` for the 2 new ones |
 
 Registry: existing-scene cells run via `--split spatial/default --task_ids <ids from
@@ -499,10 +500,14 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
    condition's instruction dict). The original full 3x3 (with distractor mention) is kept only as
    an explicitly deprioritized stretch option, not a commitment.
 3. **First-pick accuracy / wrong-bowl pick rate / distractor attraction rate** (referenced by
-   Split 4a): these need per-step end-effector-to-object contact/proximity logging that
-   `run_libero_eval.py` does not currently record (it only logs final success + video). Adding
-   this is a moderate scope change to the rollout loop — worth doing once Split 4a's cell
-   mapping is validated as useful, not preemptively.
+   Split 4a) — **partially resolved, see §11.2.** `run_libero_eval.py` itself still doesn't record
+   per-step end-effector-to-object proximity (only final success + video), so this remains
+   unimplemented for Split 4a's full 6-cell design. Instead of extending the main eval loop, a
+   standalone diagnostic script (`probe_bowl_attraction.py`, §11.2) added exactly this
+   instrumentation for a different, narrower purpose (the distractor-mention collapse probe), and
+   reuses it on 4 of `libero_spatial`'s 10 tasks. Whether to generalize that script (or port its
+   instrumentation into the main loop) for Split 4a's own 6 cells is still open — not done
+   preemptively, same reasoning as before.
 
 ## 10. Execution checklist
 
@@ -518,3 +523,71 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
 7. Append an entry to `eval_log.md` (launch batch, hardware, order, results-file paths) **and**
    update `benchmark_split_result.md` (the condition's detail section, status tables, findings).
    Every real run touches both — never overwrite existing sections in either.
+
+## 11. VLM Bowl-Pointing / Bowl-Attraction Probes — grounding-vs-action-decoding diagnostics
+
+Neither probe below is a `SPLITS` registry entry — both are standalone scripts under
+`openvla/experiments/robot/libero/`, run directly (not via `run_eval.sh --split`), because the
+question they answer (does the distractor-mention success-rate collapse in Splits 1/2 reflect
+broken grounding, or broken action decoding downstream of intact grounding?) can't be answered from
+task-success numbers alone, however they're sliced. Full numbers, the mid-investigation
+marker-placement bug, and per-task detail all live in `benchmark_split_result.md` §8 — this section
+only records the design: goal, hypothesis, method, and what's still open.
+
+### 11.1 VQA bowl-pointing probe
+
+| Field | Description |
+|---|---|
+| Goal | Determine whether OpenVLA's task-success collapse under distractor-mention prompts (Split 1/2 findings) is a broken vision-language grounding signal, or an intact grounding signal that only the action-decoding head fails to express |
+| Hypothesis | If the checkpoint can be made to answer "which bowl matches this instruction" in free text instead of actions, grounding and action-decoding become separately measurable |
+| Method | Render each task's exact episode-0 init state, overlay a shuffled ID number on each bowl (Set-of-Mark), project 3D bowl position to pixels, call `.generate()` directly (bypassing action-token decoding) with the real instruction reformatted as a pointing question. Ground truth = the task's BDDL goal target, invariant across scene variants used here |
+| Result on OpenVLA | **Dead end**, confirmed 3 independent ways (fine-tuned checkpoint free-text, base checkpoint free-text, restricted-logit comparison): this model family has no text-output channel causally responsive to language at the queried point — it unconditionally emits action-bin tokens regardless of the question. Structural to OpenVLA's action-only continued-pretraining recipe, not a symptom of this project's fine-tune or distractor-mention conditions specifically |
+| Pivot | Same render/annotate/score pipeline repointed at `Qwen/Qwen2-VL-7B-Instruct` — a general-purpose VLM never trained on OpenVLA's action-only template — to test whether the referring expression is resolvable *in principle*, independent of which model is asked |
+| Conditions (Qwen only) | `default` / `hardneg_default` (native LIBERO language, distractor never mentioned) · `negative_contrast` · `positive_contrast` · `hardneg` (distractor named, negated or not) |
+| Tasks | All 10 `libero_spatial` tasks (2-bowl conditions); all 10 `libero_spatial_3bowl_hardneg` tasks (3-bowl conditions) |
+| Trials | 1 query/task/condition — a VQA probe, not a rollout, so no seed/trial replication |
+| Metrics | Parsed-answer accuracy vs. chance (50% for 2-bowl, 33% for 3-bowl) |
+| Scripts | `probe_bowl_pointing.py` (OpenVLA, dead end), `probe_bowl_pointing_qwen.py` (Qwen, pursued), `bowl_pointing_common.py` (shared render/annotate/score, holds the marker-placement fix) — none registered in `eval_registry.py` |
+| Status | Full 5-condition x 10-task battery (50 queries) run to completion on Qwen; numbers, the marker-placement bug found and fixed mid-run, and the per-task render table are in `benchmark_split_result.md` §8.1-§8.4. Extended 2026-09-04 to sampled (not greedy-only) decoding — 10 samples/query at temperature 0.7, reporting per-query sample accuracy and majority vote instead of one `do_sample=False` draw — see §8.7 |
+
+### 11.2 Bowl-attraction probe
+
+| Field | Description |
+|---|---|
+| Goal | §11.1 established OpenVLA's only language-responsive output is action tokens themselves — so read that channel directly instead of inferring mechanism from success-rate deltas: does the arm move toward the wrong/distractor bowl (misdirection), or fail to commit to any bowl at all (template-mismatch collapse)? |
+| Hypothesis | Prompt deviation from the fine-tuning template collapses the action decoder's ability to commit to *any* target, with distractor-directed misdirection present but secondary — the same template-mismatch mechanism Split 4b's success-rate pattern already pointed to, tested here from the action-behavior side instead |
+| Method | Run the real `get_action()`/environment-step loop from `run_libero_eval.py` (same model, image preprocessing, seed/init-state protocol) with one addition: at every post-settle step, read each `akita_black_bowl_*` body's 3D position and its distance to the end-effector. Per episode, record the running-min distance to each bowl and `first_bowl_approached` (first step, if any, the gripper comes within 8cm of a given bowl — target, distractor, or `None`) |
+| Controlled variables | Scene = `libero_spatial` (2-bowl); checkpoint; seed-7 init states identical to the corresponding real 50-trial eval (episode `i` here = init state `i` there) |
+| Conditions | `default` · `negative_contrast` (Split 1) · `target_cue_landmark` (Split 4b) — reuses existing condition/instruction definitions, no new prompt text |
+| Tasks | `default`/`negative_contrast`: all 10 `libero_spatial` tasks (extended from task 5 alone, to Split 4b's 4-task surface cohort {3,5,7,9}, to the full suite, closing the sample-size gap in three steps). `target_cue_landmark`: still only the 4-task surface cohort {3,5,7,9} — it can't be authored for tasks whose native phrasing is already "next to X", or for tasks 2/4 which have no landmark-family analog |
+| Trials | 10 episodes/task/condition — 100 rollouts/condition pooled for `default`/`negative_contrast` (10 tasks), 40 for `target_cue_landmark` (4 tasks) |
+| Metrics | Episode success; among failed episodes only: target-approached-first vs. distractor-approached-first vs. neither-approached, both per-task and pooled |
+| Scripts | `probe_bowl_attraction.py` — not registered in `eval_registry.py` |
+| Status | `default`/`negative_contrast` run to completion on all 10 tasks (2026-09-03); `target_cue_landmark` still 4-task only. Pooled failure-mode breakdown, the task-3 exception (arm reaches the target correctly and still fails to complete the pick-and-place), the full-suite pooled numbers (closely reproduce the real 500-trial eval: 81%/38% here vs. 84.0%/36.8% real), and the synthesis against §11.1's Qwen result are in `benchmark_split_result.md` §8.5-§8.6 |
+
+### 11.3 Open gaps
+
+Carried forward from `benchmark_split_result.md` §8.6's revised synthesis:
+
+1. ~~**Sample size.**~~ **Closed (2026-09-03).** §11.2's `default`/`negative_contrast` cells were
+   extended in three steps (1 task -> 4 -> all 10 `libero_spatial` tasks, 200 rollouts pooled across
+   the two conditions) specifically to close this gap — see §11.2's Status row. The picture sharpened
+   rather than changed direction: "arm never approaches either bowl" is the outright majority failure
+   mode at full scale (58.1% of `negative_contrast` failures), and task 3's distinct "approached
+   correctly, still failed" mode persists (27.4% of failures) rather than washing out as a one-task
+   artifact.
+2. **No length/complexity control.** `negative_contrast` adds a whole extra clause ("...not the one
+   on top of...") versus `target_cue_landmark`'s single-word swap ("on" -> "next to"). Nothing run
+   so far separates "deviates from the fine-tuning template" from "prompt is simply longer" — both
+   predict the same symptoms observed in §11.2. Would need a same-length, template-adjacent
+   paraphrase condition to isolate. Unaddressed by the sample-size extension.
+3. **No mechanistic localization.** §11.2 shows *what the arm does* (approach behavior), not
+   *where in the network* it goes wrong — vision encoder, language projector, or action-token head
+   could each independently produce "never commits to a target," and task 3's approach-then-fail
+   pattern is a separate, untested localization question (likely downstream, in grasp/lift/place
+   control, but not confirmed). Unaddressed by the sample-size extension.
+4. **Narrow condition sweep (task sweep now closed for 2 of 3 conditions).** `default`/
+   `negative_contrast` now cover all 10 tasks, but `target_cue_landmark` is still 4-task only (see
+   §11.2's Tasks row for why it can't be trivially extended), and `positive_contrast`,
+   `target_cue_region`, `hardneg`, and every Split 2/3 scene variant remain entirely untested by
+   this probe.
