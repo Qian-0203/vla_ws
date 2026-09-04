@@ -501,6 +501,48 @@ control and mechanistic-localization gaps remain open (§8.6).
 
 ---
 
+## 2026-09-04 — Bowl-attraction probe: `target_cue_proximity_novel` added (diagnostic, not a `run_eval.sh --split` launch)
+
+- **Trigger:** user asked to add Split 4c's novel-phrasing condition (`target_cue_proximity_novel`,
+  "close to X") to the bowl-attraction probe and merge all of §8.5's results into one consolidated
+  table instead of the scattered per-round subsections.
+- **Hardware:** same Berkeley-profile server, `openvla-libero:blackwell`. GPUs 0/2/3 were heavily
+  loaded by unrelated concurrent training jobs (99-100% util) at launch time; ran all 4 tasks (3, 5,
+  7, 9) sequentially on GPU 1, the only lightly-loaded GPU, rather than parallelizing.
+- **New pitfall hit and fixed — see `CLAUDE.md` "Known pitfalls."** Task 3 (launched first) succeeded,
+  but tasks 5/7/9 (launched after) all failed identically with `ImportError: cannot import name
+  'AutoModelForVision2Seq' from 'transformers'`. Root cause: `run_eval.sh`'s `HOME=/workspace/.cache/home`
+  mount is a *shared*, host-persisted directory — some concurrent session had `pip install --user`ed
+  `transformers==5.16.1` into it (confirmed via direct inspection of
+  `.cache/home/.local/lib/python3.11/site-packages/transformers-5.16.1.dist-info`), silently
+  overriding the image's correctly-pinned `4.40.1` for every container sharing that mount, including
+  this one — not caused by anything this session did. Verified the image's own baked-in version was
+  still correct (`docker run --rm <image> python3 -c "import transformers; print(...)"`, no `HOME`
+  mount, printed `4.40.1`). Fixed by adding `-e PYTHONNOUSERSITE=1` to the container invocation
+  (rather than touching or reinstalling into the shared directory, which another session may still
+  need) and re-ran tasks 5/7/9 successfully.
+- **What ran:** `probe_bowl_attraction.py --task_id {3,5,7,9} --conditions target_cue_proximity_novel --num_trials 10`,
+  40 rollouts total, using the same protocol as every prior round.
+- **Outcome:** full detail in the consolidated `benchmark_split_result.md` §8.5/§8.6. Headline: pooled
+  success 50.0% (vs. real 53.0% for the same 4-task cohort, Split 4c) — the best-performing of the
+  three off-template/distractor-mention conditions tested through this probe, matching Split 4c's
+  finding that novel phrasing beats familiar-but-wrongly-bound phrasing. Its failure-mode shape
+  (among failures: 60.0% neither-approached, 40.0% target-approached-but-failed, 0% distractor-first)
+  is nearly identical to `target_cue_landmark`'s (61.3%/38.7%/0%) despite the large gap in overall
+  success rate — a second, independent line of evidence that distractor-pull isn't the mechanism,
+  since this condition structurally cannot exhibit it (no distractor mentioned, no misleading
+  template association) yet still fails the same way.
+- **Artifacts:** `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t{3,5,7,9}--2026_09_04-*.jsonl`
+  + matching `--summary.json` per task (gitignored, local only); 40 rollout videos under
+  `openvla/rollouts/2026_09_04/`; launch logs
+  `openvla/experiments/logs/probe_bowl_attraction_launch/t{3,5,7,9}_novel.out` (5/7/9's first, failed
+  attempt overwritten by the successful re-run at the same path).
+
+**Status:** closed — see `benchmark_split_result.md` §8.5/§8.6 (now one consolidated table across all
+4 conditions tested through this probe).
+
+---
+
 ## 2026-09-02 — Split 4c: Familiar vs. Novel Proximity-Cue Probe
 
 - **Trigger:** resolves the open question 4b left behind (§4c of `benchmark_split_plan.md`) — whether
