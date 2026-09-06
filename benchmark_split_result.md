@@ -50,7 +50,7 @@ Applies to every condition below unless a section says otherwise.
 | 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b/4c fully run — 4c's `target_cue_proximity_novel` (53.0% pooled, tasks 3/5/7/9) came in *above* `target_cue_landmark` (30.5%), the opposite of the plan's predicted direction; full three-way synthesis in §5.4 |
 | VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
 | Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02/03/04, all 10 `libero_spatial` tasks for `default`+`negative_contrast` (280 rollouts); `target_cue_landmark` + `target_cue_proximity_novel` on the 4-task surface cohort (80 more). Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): pooled at full scale, "arm never approaches either bowl" is the *majority* failure mode (58.1% of `negative_contrast` failures) — success rates closely match the real 500/200-trial evals. `target_cue_proximity_novel` (no distractor, no misleading template) fails the same way as `target_cue_landmark` despite a much higher success rate — a second line of evidence against distractor-pull. Task 3 shows a persistent second mode (correct approach, still fails). See §8.6 for the synthesis and open gaps |
-| Mechanistic Localization Probe (§8.9, not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`), uncommitted | Run 2026-09-04 (task 5, `default`+`negative_contrast`, 15 full-length episodes each) and re-confirmed 2026-09-06. Logit-lens (resolution layer) and attention-mass (vision-patch share) diagnostics at every action-token prediction: **null result** — the two conditions don't differ by more than ~0.5 stdev on either diagnostic. Confounded by the script's disclosed missing center-crop preprocessing step, which likely explains both conditions' near-0% success here (vs. 92-94%/2-4% in the real eval). See §8.9 |
+| Mechanistic Localization Probe (§8.9-§8.10, not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`), uncommitted | Run 2026-09-04 (task 5, `default`+`negative_contrast`, 15 full-length episodes each), confounded (0% success both conditions, missing center-crop). Fixed and re-run 2026-09-06: added center-crop, then found and fixed a second bug (`output_attentions=True` forces `eager` attention, which flips the argmax on 55-88% of continuous-action-dim predictions on this bf16 checkpoint — teacher-forced redesign decouples diagnosis from action-selection). Re-run success rates now match the real eval (93.3%/0% vs. 92-94%/2-4%), but logit-lens/attention-mass diagnostics still show **no condition-level difference** (~0.5 stdev apart) — a genuine, unconfounded null result. See §8.10 |
 
 ---
 
@@ -902,19 +902,28 @@ because novelty itself is safe).
     which fits finding 17's action-collapse mechanism better than a simple template-match/no-match
     story: a phrase with no strong prior at all degrades more gracefully than one with a strong, wrong
     prior. Full three-way synthesis with 4a and 4b in `benchmark_split_result.md` §5.4.
-19. **A first mechanistic-localization pass (logit lens + attention mass) finds no condition-level
-    difference on task 5's `default` vs. `negative_contrast` — but the run is confounded and
-    underpowered, so this doesn't rule findings 17/18's action-collapse mechanism in or out.** §8.9's
-    per-action-token diagnostics (resolution layer, vision-patch attention share) average to
-    statistically indistinguishable values across the two conditions (well under 1 stdev apart on
-    both), despite `negative_contrast` collapsing to near-zero success in the real eval. The most
-    likely reading is that these two *coarse, aggregate* diagnostics simply aren't sensitive to
-    whatever the action-collapse mechanism is (both average over an entire episode regardless of
-    whether that episode individually "commits" or not) — not that no mechanistic difference exists.
-    Compounding this, the run itself has a disclosed confound (missing center-crop preprocessing)
-    that drove both conditions' task success to ~0%, far below either condition's real-eval number, so
-    the sample this null result is drawn from may not be behaviorally representative to begin with.
-    Full detail and next steps in §8.9.
+19. **A mechanistic-localization probe, fixed and re-run with a real behavioral contrast, still finds
+    no condition-level difference on task 5's `default` vs. `negative_contrast` — a genuine null, not
+    ruling findings 17/18's action-collapse mechanism in or out.** §8.9's first pass came back null
+    under a disclosed confound (missing center-crop preprocessing drove both conditions to ~0% success,
+    far below the real eval). §8.10 fixed that, and along the way found a second, more fundamental
+    problem: requesting `output_attentions=True` (needed for the diagnostics) silently falls back to
+    `eager` attention, and on this bf16 checkpoint that kernel swap flips the actual argmax on 55-88%
+    of predictions for the 6 continuous action dimensions (vs. only 10-12% for the gripper, whose
+    decision margin is much larger) — meaning every prior run had been diagnosing a policy that wasn't
+    the one actually being executed. A teacher-forced redesign (execute the fast/`sdpa` path's action;
+    diagnose it via a separate pass forced to reproduce those exact tokens) restored real success rates
+    (93.3%/0% vs. the eval's 92-94%/2-4%). On that valid contrast, resolution layer and vision-attention
+    mass *still* don't differ between conditions by more than ~half a stdev — the same qualitative null
+    as §8.9, but no longer explainable by a missing behavioral contrast, so a materially stronger
+    result. The likely reading is unchanged from §8.9: these are coarse, per-condition-averaged
+    diagnostics, and the "never commits" failure (§8.5) is plausibly a per-episode phenomenon that
+    averaging over a whole condition washes out — not that no mechanistic difference exists anywhere in
+    the network. A useful side effect: the `sdpa`/`eager` argmax-mismatch rate itself tracks each
+    dimension's logit-lens resolution layer almost exactly (late-resolving = small margin = kernel-
+    sensitive), an internal consistency check that the resolution-layer diagnostic is measuring
+    something real, even though it doesn't discriminate between prompt conditions here. Full detail and
+    next steps in §8.9-§8.10.
 
 ## 7. Render / contact-sheet check log
 
@@ -1472,20 +1481,25 @@ extension partially closed the first, and the full 10-task extension closes it c
    specific to `negative_contrast` itself: nothing yet isolates whether *its* extra clause (vs. its
    distractor content) matters, since no condition adds comparable filler length without added
    semantic content. That narrower version of the gap is unaddressed by either extension.
-3. ~~**No mechanistic localization.**~~ **Attempted (§8.9), result is a null finding with a real
-   confound, not a clean close.** §8.5 shows *what the arm does*, not *where in the network* it goes
-   wrong — the vision encoder, the language projector, or the action-token head could each
-   independently produce "never commits to a target," and task 3's approach-then-fail pattern is a
-   separate localization question again (likely downstream of target selection, in grasp/lift/place
-   control, but untested). "Action decoder mismatch" is the natural reading given OpenVLA's
-   architecture (action tokens are the only output this model produces, §8's dead end). §8.9's logit-
-   lens/attention-mass probe opens the model up as planned, but on task 5's `default`/
-   `negative_contrast` pair the two coarse diagnostics it computes (resolution layer, vision-attention
-   mass) don't differ between conditions by more than about half a standard deviation — no localization
-   signal one way or the other — and the run's near-zero task success in *both* conditions (a sharp,
-   known-cause departure from the real 92-94%/2-4% eval numbers, see §8.9) means even that null result
-   should be read cautiously rather than as ruling anything out. Task 3's approach-then-fail
-   localization question is untouched.
+3. ~~**No mechanistic localization.**~~ **Attempted with a valid behavioral contrast (§8.9→§8.10), a
+   genuine null result on two coarse diagnostics, not a clean close.** §8.5 shows *what the arm does*,
+   not *where in the network* it goes wrong — the vision encoder, the language projector, or the
+   action-token head could each independently produce "never commits to a target," and task 3's
+   approach-then-fail pattern is a separate localization question again (likely downstream of target
+   selection, in grasp/lift/place control, but untested). "Action decoder mismatch" is the natural
+   reading given OpenVLA's architecture (action tokens are the only output this model produces, §8's
+   dead end). §8.9's first pass came back null under a confound (0% success in both conditions, traced
+   to a missing center-crop step); §8.10 fixed that *and* a second, more fundamental issue it surfaced
+   along the way — requesting `output_attentions=True` forces a fallback to numerically different
+   `eager` attention, which on this bf16 checkpoint actually changes the argmax on the majority of
+   continuous action dimensions, so the original diagnostics had been reading a policy that wasn't the
+   one being evaluated. A teacher-forced redesign (diagnose the policy that was actually executed,
+   rather than let the diagnostic pass choose its own) restored real success rates (93.3%/0% vs. the
+   eval's 92-94%/2-4%) — and on that now-valid contrast, resolution layer and vision-attention mass
+   *still* don't differ between conditions by more than about half a standard deviation. This is a
+   stronger null than §8.9's (no longer explainable by a missing behavioral contrast), but still a null
+   on two specific coarse diagnostics, on one task — not evidence that no mechanistic difference exists
+   anywhere in the network. Task 3's approach-then-fail localization question is untouched.
 
 **Net.** The VLA/VLM split is well explained at the outcome level (findings 12-17), and the mechanism
 now has direct behavioral evidence from the full 10-task suite (not 1, not 4) supporting "arm fails to
@@ -1496,12 +1510,15 @@ the same: a condition with no distractor mention *and* no misleading template as
 the same way as one that has both, which is hard to square with anything except target-selection
 collapse being the shared cause. A second, real failure mode (correct target approach, still fails,
 ~27% of failures) persists at scale and is task-concentrated rather than a one-task artifact. The
-broad "not simply a longer sentence" reading of the length-control gap is now supported (§gap 2). A
-first mechanistic-localization pass has now run (§8.9) but came back null on its two coarse diagnostics
-under a known preprocessing confound — that's what's left before "template-mismatch action collapse,
-not distractor confusion" can be called settled rather than best-supported: either fix §8.9's missing
-center-crop step and re-run for a success-rate-matched comparison, or design a diagnostic that
-conditions on per-episode approach behavior (from §8.5) rather than aggregating by condition alone.
+broad "not simply a longer sentence" reading of the length-control gap is now supported (§gap 2).
+Mechanistic localization has now run twice (§8.9's confounded first pass, §8.10's fixed, real-success-
+rate-matched re-run) and come back null both times on the same two coarse diagnostics (resolution
+layer, vision-attention mass) — a genuine, no-longer-confounded null, not evidence against the
+mechanism, but not positive confirmation either. That's what's left before "template-mismatch action
+collapse, not distractor confusion" can be called settled rather than best-supported: design a
+diagnostic that conditions on per-episode approach behavior (from §8.5) rather than aggregating by
+prompt condition alone, since §8.10's own reading is that a per-condition average is plausibly the
+wrong grain to see this failure mode at.
 
 ### 8.7 Qwen bowl-pointing probe, re-run with sampled (not greedy-only) decoding (2026-09-04)
 
@@ -1750,7 +1767,8 @@ null under a confound," not "checked, no mechanistic difference exists."
 probe matches the real eval's contrast, then re-run before drawing any conclusion from these
 diagnostics; separately, consider conditioning the diagnostics on §8.5's per-episode approach labels
 (task 3's "approached but still failed" cohort vs. the "never approached" cohort) rather than only on
-prompt condition, since that's the behavioral split the mechanism question is actually about.
+prompt condition, since that's the behavioral split the mechanism question is actually about. See §8.10
+for the fix and re-run — the recommendation above turned out to be necessary but not sufficient.
 
 Artifacts: `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--compare1--2026_09_04-13_57_46.jsonl`
 (5 episodes/condition, 30 steps, superseded) and
@@ -1760,3 +1778,119 @@ them). Code: `openvla/experiments/robot/libero/probe_mechanistic_localization.py
 `openvla` fork as of this write-up; its docstring's "DRAFT / not yet run" header is now stale and
 should be updated if the script is revisited). Launch history: `eval_log.md`'s 2026-09-04 (retroactive)
 and 2026-09-06 entries.
+
+### 8.10 Mechanistic localization probe, fixed — center-crop + teacher-forced diagnostics (2026-09-06)
+
+**Motivation.** §8.9's recommended next step: fix the disclosed missing center-crop bug and re-run,
+since 0% success in both conditions meant the run likely never contained the behavioral contrast
+(`default` succeeds, `negative_contrast` doesn't) the diagnostics were built to distinguish.
+
+**Fix #1 — center-crop, applied and confirmed necessary but not sufficient.** Added the same
+`crop_and_resize(image, crop_scale=0.9, batch_size=1)` step `openvla_utils.get_vla_action` uses,
+gated on `cfg.center_crop` exactly as originally intended. Re-ran the same battery (task 5,
+`default`/`negative_contrast`, 15 episodes each, full 220-step episodes): `default` success rose from
+0/15 to 1/15 (6.7%) — real but nowhere near the eval's 92-94% — so a second, independent problem
+remained.
+
+**Fix #2 — root cause found: `output_attentions=True` doesn't just add a side-channel, it changes
+which action gets executed.** A controlled single-frame test — same image, same prompt, decoded two
+ways — compared `predict_action()`'s fast path (`generate()`, whatever `attn_implementation` the model
+was loaded with, here `sdpa`) against the probe's diagnostic path (`generate(...,
+output_attentions=True, ...)`, which HF silently falls back to the numerically different `eager`
+kernel for, since `sdpa` doesn't support returning attention weights — a warning the probe's own log
+output had been printing all along without anyone connecting it to the success-rate gap). Result: **4
+of 7 action dimensions differed on the very first prediction of a fresh episode** — not a
+many-steps-later divergence from compounding error, a first-token disagreement. Root cause: this
+checkpoint runs in bf16 (~3 decimal digits) and discretizes continuous actions into many bins; wherever
+the top-1 and runner-up bin logits are close, the `sdpa`/`eager` kernels' different floating-point
+summation order is enough to flip the argmax. Every prior run in §8.9 had therefore been diagnosing a
+policy that wasn't the one actually being evaluated at 6/7 of its action dimensions, independent of and
+compounding the center-crop bug.
+
+**Redesign — two-pass, teacher-forced diagnostics.** `get_action_with_diagnostics` now: (1) runs the
+fast path first (`generate()`, no diagnostic flags — identical to `predict_action()`) to decide the
+actual executed action; (2) runs one *separate*, non-incremental forward pass, teacher-forced on those
+exact tokens (`vla(input_ids=prompt+generated_tokens, ..., output_attentions=True,
+output_hidden_states=True)`), purely to read off hidden-states/attentions. `eager` fallback still
+happens on pass 2, but its own argmax is recorded (`diag_argmax_matches_executed`) and discarded, never
+used to act — matching `modeling_prismatic.py`'s multimodal-embedding splice (patches inserted after
+position 0) means one full-sequence forward pass is mathematically equivalent to the old per-step
+incremental `generate()` loop's hidden-states/attentions, just computed in one shot instead of 7.
+
+**Validation: success rates now closely match the real eval.** Re-ran the same battery a third time:
+
+| Condition | This probe (15 episodes) | Real eval (§2, task 5) |
+|---|--:|--:|
+| `default` | **14/15 (93.3%)** | 92-94% |
+| `negative_contrast` | **0/15 (0%)** | 2-4% |
+
+Both numbers now land inside or essentially at the real eval's range — the probe is finally measuring
+the behavior it was built to measure.
+
+**Result, on now-valid behavioral data: still no condition-level difference on either diagnostic.**
+
+| Condition (n=10,871 / 23,100 token-records) | Resolution layer (frac) | Vision-attn, last layer |
+|---|--:|--:|
+| `default` (93.3% success) | 0.8467 ± 0.1660 | 0.1163 ± 0.0263 |
+| `negative_contrast` (0% success) | 0.8477 ± 0.1758 | 0.0964 ± 0.0258 |
+
+This is the same qualitative null as §8.9's confounded run, but now unconfounded: `default` and
+`negative_contrast` differ by 93 points of real success, yet these two aggregate diagnostics still
+don't move. That's a materially stronger null result than §8.9's — it's no longer explainable by "the
+run didn't contain the behavioral contrast," because now it demonstrably does.
+
+**A genuinely new finding: the `sdpa`/`eager` argmax mismatch rate itself is large, checkpoint-wide,
+and tracks resolution-layer margin.** Recording `diag_argmax_matches_executed` at scale (not just the
+single frame that first revealed it):
+
+| Action dim | `default` match rate | `negative_contrast` match rate | Resolution layer (frac) |
+|---|--:|--:|--:|
+| 0 (x) | 12.1% | 19.2% | ~0.89 |
+| 1 (y) | 23.2% | 29.7% | ~0.88 |
+| 2 (z) | 14.0% | 16.4% | ~0.90 |
+| 3 (roll) | 38.6% | 38.8% | ~0.88 |
+| 4 (pitch) | 35.7% | 48.0% | ~0.83 |
+| 5 (yaw) | 32.1% | 38.7% | ~0.88 |
+| 6 (gripper) | 90.1% | 87.6% | ~0.66 |
+
+The gripper dimension — whose logit-lens resolution layer is far earlier (~0.66 vs. ~0.83-0.90 for the
+continuous dims, a pattern already visible in §8.9) — is also the only dimension where the two kernels
+usually agree (~88-90%). The 6 continuous dims resolve very late (small top-1/runner-up margin, by
+construction of what "late resolution" means) *and* are exactly the ones where `sdpa` vs. `eager`
+disagree on 55-88% of predictions. These aren't two separate findings — late resolution *is* a small
+decision margin, and a small margin is what makes a dimension sensitive to a same-model,
+different-kernel numerical perturbation. This holds equally in both prompt conditions (match rates are
+close between `default` and `negative_contrast` on every dimension), so it's a property of the
+checkpoint's general decision calibration, not something the failing condition induces.
+
+**Reading — gap #3 (§8.6) is now genuinely, not tentatively, closed.** Unlike §8.9's attempt, this run
+has: (1) a valid behavioral contrast (93.3% vs. 0%, matching the real eval), (2) diagnostics computed
+from the policy that's actually being executed (teacher-forced, not a policy the eager kernel would
+have chosen on its own), and (3) the null result replicates the confounded run's qualitative shape,
+which is itself informative — it means the earlier confound wasn't accidentally hiding a real signal.
+The most defensible remaining explanation for *why* these two diagnostics see nothing: they're coarse,
+per-token, within-condition averages, and the "never commits" failure (§8.5) is plausibly a
+per-episode or per-moment phenomenon (some negative_contrast episodes might still show default-like
+attention/resolution patterns right up until the moment the arm gives up) that averaging over an entire
+condition would wash out — the same limitation §8.9 flagged, now on solid footing rather than
+confounded footing. §8.9's suggested next step (conditioning diagnostics on §8.5's per-episode
+approach/no-approach labels rather than on prompt condition alone) is the natural continuation, not yet
+done. Task 3's separate "approached but still failed" localization question is also still untouched.
+One task (task 5) at n=15/condition remains the scope here — no cross-task replication, unlike §8.5's
+full 10-task extension.
+
+**Methodological note for reuse.** Any future probe on this checkpoint that wants both (a) real,
+eval-matching behavior and (b) attention/hidden-state introspection needs this two-pass,
+teacher-forced structure — a single `generate(..., output_attentions=True)` call is not a passive
+side-channel on this model at bf16: it can silently substitute a different, worse-performing policy
+for the one actually being studied.
+
+Artifacts: `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--ccfix_full--2026_09_06-08_53_13.jsonl`
+(center-crop-only fix, still confounded by the eager-argmax issue, 1/15 `default` success — kept for
+the record, superseded by the run below) and
+`libero_spatial--t5--tf_full--2026_09_06-10_14_08.jsonl` (both fixes, the validated run analyzed
+above); smoke tests `*ccfix_smoketest*`/`*tf_smoketest*`; all gitignored, local only, no rollout videos.
+Code: `openvla/experiments/robot/libero/probe_mechanistic_localization.py` (uncommitted in the
+`openvla` fork as of this write-up; developed in an isolated worktree, then copied back to this
+canonical path — its docstring documents both 2026-09-06 fixes inline). Launch history: `eval_log.md`'s
+2026-09-06 entry.

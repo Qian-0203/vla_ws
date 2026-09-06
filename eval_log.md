@@ -706,6 +706,61 @@ control and mechanistic-localization gaps remain open (§8.6).
 
 ---
 
+## 2026-09-06 — Mechanistic localization probe: center-crop fix, then a second bug found and fixed, then a valid re-run (diagnostic, not a `run_eval.sh --split` launch)
+
+- **Trigger:** user asked to add back the disclosed missing center-crop step (§8.9's recommended next
+  step) and re-run.
+- **Hardware:** GCP server (`config/server.env`), `openvla-libero:blackwell`, GPU 1 throughout (idle at
+  every launch; GPUs 0/2/3 occupied by unrelated jobs, confirmed via `nvidia-smi` each time).
+- **Isolation:** code changes made in an isolated worktree (`openvla/.claude/worktrees/mechloc-centercrop`,
+  branch `worktree-mechloc-centercrop`) per this session's background-job convention, since the script
+  needed editing (not just running). Final script and output `.jsonl` files copied back to the
+  canonical `openvla/experiments/robot/libero/` and `openvla/experiments/logs/probe_mechanistic_localization/`
+  paths once validated; the script stays uncommitted there, matching every sibling probe script's
+  convention in this project.
+- **What ran, in order:**
+  1. Added center-crop (`crop_and_resize`, `crop_scale=0.9`, matching `openvla_utils.get_vla_action`
+     exactly). Smoke-tested (2 episodes, full 220 steps), then ran the full battery (task 5,
+     `default`+`negative_contrast`, 15 episodes each, full 220-step episodes, `--run_id_note ccfix_full`).
+     Result: `default` success rose from 0/15 to only 1/15 (6.7%) — real improvement, nowhere near the
+     real eval's 92-94%, so a second problem clearly remained.
+  2. Root-caused the remainder with a cheap controlled test (not a full rollout): same single frame,
+     decoded once via `predict_action()`'s fast path (`sdpa`) and once via the probe's diagnostic path
+     (`generate(..., output_attentions=True)`, which HF silently falls back to `eager` attention for,
+     since `sdpa` doesn't support returning attention weights). 4 of 7 action dims differed on the very
+     first prediction of a fresh episode — this bf16 checkpoint's coarse action-bin argmax is sensitive
+     enough to the `sdpa`/`eager` kernels' differing float summation order that the diagnostic path had
+     been silently studying a different (and evidently much worse) policy than the one actually being
+     evaluated, on top of the center-crop bug.
+  3. Redesigned `get_action_with_diagnostics` as two passes: pass 1 (`generate()`, no diagnostic flags)
+     decides the real executed action; pass 2 is a separate, non-incremental forward pass teacher-forced
+     on those exact tokens (`vla(input_ids=prompt+generated_tokens, ..., output_attentions=True,
+     output_hidden_states=True)`), used only to read hidden-states/attentions — its own argmax is
+     recorded (`diag_argmax_matches_executed`, a new field) but never used to act. Smoke-tested (3
+     episodes, full 220 steps — 3/3 success, immediately consistent with the real eval), then ran the
+     full battery again (`--run_id_note tf_full`).
+- **Outcome:** full detail in `benchmark_split_result.md` §8.10 and finding 19. Headline: success rates
+  now match the real eval (`default` 14/15 = 93.3% vs. 92-94%; `negative_contrast` 0/15 = 0% vs. 2-4%)
+  — the probe is finally measuring the behavior it was built to measure. On that valid contrast, the
+  resolution-layer and vision-attention diagnostics still show no condition-level difference (~0.5
+  stdev apart) — the same qualitative null as the 2026-09-04 run, now unconfounded, so a materially
+  stronger result. New side finding: the `sdpa`/`eager` argmax-mismatch rate is large (55-88%) for the
+  6 continuous action dims and small (10-12%) for the gripper, tightly tracking each dimension's
+  logit-lens resolution layer (late-resolving = small decision margin = kernel-sensitive) — consistent
+  in both prompt conditions, so a property of the checkpoint's general calibration, not of the failing
+  condition specifically.
+- **Artifacts:** `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--ccfix_full--2026_09_06-08_53_13.jsonl`
+  (center-crop-only fix, superseded), `libero_spatial--t5--tf_full--2026_09_06-10_14_08.jsonl` (both
+  fixes, the validated run), plus `*ccfix_smoketest*`/`*tf_smoketest*` (gitignored, local only, no
+  rollout videos). Code: `openvla/experiments/robot/libero/probe_mechanistic_localization.py` (updated,
+  still uncommitted in the `openvla` fork as of this entry).
+
+**Status:** closed — see `benchmark_split_result.md` §8.10. Gap #3 (§8.6) now has a real, unconfounded
+null result rather than a confounded one; the per-episode-approach-conditioning idea from §8.9 remains
+the natural next step if this line of investigation continues.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
