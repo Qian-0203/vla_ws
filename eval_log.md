@@ -645,6 +645,67 @@ control and mechanistic-localization gaps remain open (§8.6).
 
 ---
 
+## 2026-09-04 — Mechanistic localization probe: task 5, `default`/`negative_contrast` (diagnostic, not a `run_eval.sh --split` launch) — retroactively logged 2026-09-06
+
+- **Note on timing.** This run actually happened on 2026-09-04, in a prior session, but was never
+  logged here or written up in `benchmark_split_result.md` at the time — discovered on 2026-09-06 as
+  pre-existing output files while responding to a request to run the probe. Logged now, retroactively,
+  rather than left undocumented.
+- **Trigger:** `benchmark_split_result.md` §8.6 gap #3 ("no mechanistic localization" — §8.5's
+  bowl-attraction probe shows *what* the arm does, not *where in the network* it goes wrong).
+- **Hardware:** Berkeley-profile server (4x RTX PRO 6000 Blackwell), `openvla-libero:blackwell`
+  (exact GPU/launch command not recoverable after the fact — no launch log was captured for this
+  run).
+- **What ran:** new standalone script `openvla/experiments/robot/libero/probe_mechanistic_localization.py`
+  — instruments real action rollouts (not VQA) with a logit-lens (resolution layer) and
+  attention-mass (vision-patch share) diagnostic at every action-token prediction. Two output files
+  found: `compare1` (5 episodes x 2 conditions, 30 instrumented steps) superseded by `fullcompare1`
+  (15 episodes x 2 conditions, **full 220-step episodes** — `--max_env_steps_to_instrument 220`, not
+  the script's own 30-step default), on task 5, conditions `default`/`negative_contrast`.
+- **Outcome:** full detail in `benchmark_split_result.md` §8.9 and finding 19. Headline: **null
+  result** — the two conditions' resolution-layer and vision-attention diagnostics are
+  indistinguishable (well under 0.5 stdev apart on every metric), but the run is confounded: the
+  script's disclosed missing center-crop preprocessing step drove task success to 0/15 in *both*
+  conditions, far below the real eval's 92-94%/2-4% contrast for this task, so the run may not contain
+  the behavioral difference the diagnostics were meant to distinguish. Treated as "tried, came back
+  null under a confound," not a clean close of gap #3.
+- **Artifacts:** `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--compare1--2026_09_04-13_57_46.jsonl`
+  + `libero_spatial--t5--fullcompare1--2026_09_04-15_09_35.jsonl` (gitignored, local only; no rollout
+  videos, this script doesn't record them). Code:
+  `openvla/experiments/robot/libero/probe_mechanistic_localization.py` (new, uncommitted in the
+  `openvla` fork as of this entry; its own docstring's "DRAFT / not yet run" header predates this run
+  and is now stale).
+
+**Status:** open — see `benchmark_split_result.md` §8.6 gap #3 / §8.9 for recommended next steps
+(fix center-crop and re-run; condition diagnostics on §8.5's per-episode approach labels).
+
+---
+
+## 2026-09-06 — Mechanistic localization probe: re-confirmation run (diagnostic, not a `run_eval.sh --split` launch)
+
+- **Trigger:** user asked to run `probe_mechanistic_localization.py`. Discovered the undocumented
+  2026-09-04 run (previous entry) in the process; that data was written up instead of re-running the
+  full battery, but this session's own smoke test and default-config run are logged here for
+  completeness.
+- **Hardware:** GCP server (`config/server.env`, 4x RTX PRO 6000 Blackwell), `openvla-libero:blackwell`,
+  GPU 1 (idle at launch time; GPUs 0/2/3 were occupied by unrelated concurrent jobs, confirmed via
+  `nvidia-smi`). Full precision (`--load_in_4bit False --load_in_8bit False`), `OPENVLA_ATTN_IMPLEMENTATION=sdpa`
+  (HF's SDPA path auto-falls-back to eager attention when `output_attentions=True` is requested, with
+  a one-time warning — no code change needed).
+- **What ran:** smoke test (task 5, `default`, 1 episode, 3 instrumented steps) to confirm the draft
+  script still executes correctly on the current image/checkpoint, then the script's own default
+  config (task 5, `default`+`negative_contrast`, 3 trials each, 30 instrumented steps/episode — 6
+  episodes, 42 token-level records total).
+- **Outcome:** both runs completed cleanly, reproducing the same qualitative pattern as the
+  2026-09-04 `fullcompare1` run (see previous entry / `benchmark_split_result.md` §8.9) — not
+  separately analyzed, since §8.9's write-up is based on the larger, full-episode 2026-09-04 data.
+- **Artifacts:** `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--smoketest--2026_09_06-08_22_17.jsonl`
+  + `libero_spatial--t5--2026_09_06-08_23_20.jsonl` (gitignored, local only).
+
+**Status:** closed — see `benchmark_split_result.md` §8.9 (write-up based on the 2026-09-04 data).
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
