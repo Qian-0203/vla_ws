@@ -761,6 +761,52 @@ the natural next step if this line of investigation continues.
 
 ---
 
+## 2026-09-06 — Mechanistic localization probe: regrouped by §8.5's approach behavior instead of prompt condition (diagnostic, not a `run_eval.sh --split` launch)
+
+- **Trigger:** user asked to redo the §8.10 diagnostics grouped by `probe_bowl_attraction.py`'s
+  per-episode approach label (target/distractor/neither) rather than by prompt condition, per §8.9/
+  §8.10's own recommendation that a per-condition average might be washing out a per-episode effect.
+- **Hardware:** GCP server (`config/server.env`), `openvla-libero:blackwell`, GPU 1 throughout.
+- **First attempt (failed) — separate `probe_bowl_attraction.py` re-run doesn't give a joinable
+  label.** Ran it fresh on the exact same task/conditions/episodes/seed as §8.10's `tf_full` run,
+  expecting identical trajectories. It wasn't: `default` success was 14/15 in both runs but a
+  *different* episode failed (ep 13 here vs. ep 10 in `tf_full`), and `negative_contrast` success was
+  1/15 here vs. 0/15 there. Two separate process launches of nominally the same computation diverged
+  over the 220-step closed loop from ordinary GPU non-determinism (unseeded cuDNN/cuBLAS kernel
+  selection) — not an attention-implementation issue this time, just run-to-run variance. Per-episode
+  joins across two separately-launched probe scripts are therefore not valid on this checkpoint at
+  this rollout length, even with matching seed/checkpoint/greedy-decoding.
+- **Fix:** instrumented the same per-step eef-to-bowl-center distance bookkeeping
+  `probe_bowl_attraction.py` uses directly into `probe_mechanistic_localization.py`'s own rollout loop
+  (identical `near_thresh_m=0.08`, identical "first bowl within threshold" derivation), so the approach
+  label and the mechanistic diagnostics now come from the same trajectory by construction. Smoke-tested
+  (2 episodes), then ran the full battery a fourth time (`--run_id_note dist_full`) — episode outcomes
+  reproduced §8.10's `tf_full` run exactly, confirming this script's own rollouts are internally
+  reproducible (the divergence above was specific to comparing across the two different scripts).
+- **Outcome:** full detail in `benchmark_split_result.md` §8.11 and finding 19 (updated). Headline: a
+  first pooled-across-conditions regroup looked like a real effect (`target_first` episodes' mean
+  vision-attention 0.114 vs. `distractor_first`/`neither`'s ~0.096) — until checking group composition
+  showed it was a confound (`target_first` is 15/17 `default` episodes, so the group difference mostly
+  restated the already-known condition-level gap). The properly isolated test — within
+  `negative_contrast` only, comparing behavior with prompt condition held fixed — found
+  `target_first`/`distractor_first`/`neither` at 0.095/0.096/0.098, indistinguishable (`target_first`
+  n=2, underpowered). Resolution layer showed a small, inconclusive gap (`distractor_first` ~0.02-0.03
+  lower) not treated as a finding given n=2 for `target_first`. Side observation: 2 of 15
+  `negative_contrast` episodes reached the target bowl first and still failed — the same
+  "approached-but-failed" pattern §8.5/§8.6 documented for task 3, here at a lower (13%) rate.
+- **Artifacts:** `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t5--joinmechloc--2026_09_06-11_22_47.jsonl`
+  (the non-joinable separate re-run, kept for the record) and
+  `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--dist_full--2026_09_06-11_40_47.jsonl`
+  (the combined, self-consistent run analyzed above); gitignored, local only. Code:
+  `openvla/experiments/robot/libero/probe_mechanistic_localization.py` (updated again, still
+  uncommitted in the `openvla` fork as of this entry).
+
+**Status:** closed — see `benchmark_split_result.md` §8.11. Gap #3 (§8.6) has now been tested at both
+the condition level (§8.10) and the per-episode-behavior level (§8.11, after correcting a confound) —
+both null. Remaining open avenues: a different diagnostic, or extending past task 5.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`

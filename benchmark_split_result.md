@@ -50,7 +50,7 @@ Applies to every condition below unless a section says otherwise.
 | 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b/4c fully run — 4c's `target_cue_proximity_novel` (53.0% pooled, tasks 3/5/7/9) came in *above* `target_cue_landmark` (30.5%), the opposite of the plan's predicted direction; full three-way synthesis in §5.4 |
 | VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
 | Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02/03/04, all 10 `libero_spatial` tasks for `default`+`negative_contrast` (280 rollouts); `target_cue_landmark` + `target_cue_proximity_novel` on the 4-task surface cohort (80 more). Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): pooled at full scale, "arm never approaches either bowl" is the *majority* failure mode (58.1% of `negative_contrast` failures) — success rates closely match the real 500/200-trial evals. `target_cue_proximity_novel` (no distractor, no misleading template) fails the same way as `target_cue_landmark` despite a much higher success rate — a second line of evidence against distractor-pull. Task 3 shows a persistent second mode (correct approach, still fails). See §8.6 for the synthesis and open gaps |
-| Mechanistic Localization Probe (§8.9-§8.10, not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`), uncommitted | Run 2026-09-04 (task 5, `default`+`negative_contrast`, 15 full-length episodes each), confounded (0% success both conditions, missing center-crop). Fixed and re-run 2026-09-06: added center-crop, then found and fixed a second bug (`output_attentions=True` forces `eager` attention, which flips the argmax on 55-88% of continuous-action-dim predictions on this bf16 checkpoint — teacher-forced redesign decouples diagnosis from action-selection). Re-run success rates now match the real eval (93.3%/0% vs. 92-94%/2-4%), but logit-lens/attention-mass diagnostics still show **no condition-level difference** (~0.5 stdev apart) — a genuine, unconfounded null result. See §8.10 |
+| Mechanistic Localization Probe (§8.9-§8.11, not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`), uncommitted | Run 2026-09-04 (task 5, `default`+`negative_contrast`, 15 full-length episodes each), confounded (0% success both conditions, missing center-crop). Fixed 2026-09-06: added center-crop, then found and fixed a second bug (`output_attentions=True` forces `eager` attention, flipping the argmax on 55-88% of continuous-action-dim predictions on this bf16 checkpoint — teacher-forced redesign decouples diagnosis from action-selection). Re-run success matches the real eval (93.3%/0% vs. 92-94%/2-4%); logit-lens/attention-mass diagnostics show **no condition-level difference**. Re-tested grouped by §8.5's per-episode approach behavior instead of prompt condition (§8.11) — caught a condition/behavior confound in the first attempt, corrected it, **still null** once condition is held fixed. Two coarse diagnostics, tested at both grains, both null. See §8.9-§8.11 |
 
 ---
 
@@ -922,8 +922,22 @@ because novelty itself is safe).
     the network. A useful side effect: the `sdpa`/`eager` argmax-mismatch rate itself tracks each
     dimension's logit-lens resolution layer almost exactly (late-resolving = small margin = kernel-
     sensitive), an internal consistency check that the resolution-layer diagnostic is measuring
-    something real, even though it doesn't discriminate between prompt conditions here. Full detail and
-    next steps in §8.9-§8.10.
+    something real, even though it doesn't discriminate between prompt conditions here.
+
+    **§8.11 then tested the one remaining explanation for the null** — that a per-condition average
+    washes out a per-episode effect — by regrouping on §8.5's per-episode approach label
+    (target/distractor/neither) instead of prompt condition, instrumented in the same rollout this
+    time (a separate `probe_bowl_attraction.py` re-run was tried first and found NOT to reproduce the
+    same trajectories as this script's own runs, even with matching seed/checkpoint/greedy-decoding —
+    ordinary GPU non-determinism across process launches, not an attention-kernel issue this time). The
+    first pooled-across-conditions regroup looked like a real effect (`target_first` episodes'
+    vision-attention 0.114 vs. `distractor_first`/`neither`'s ~0.096) — until checking group
+    composition revealed it was a confound: `target_first` is 15/17 `default` episodes, so the group
+    difference was mostly restating the already-known *condition*-level gap. Properly isolated (within
+    `negative_contrast` only, comparing behavior with condition held fixed):
+    `target_first`/`distractor_first`/`neither` land at 0.095/0.096/0.098 — indistinguishable. The null
+    survives the specific rescue hypothesis §8.9/§8.10 proposed for it. Full detail and next steps in
+    §8.9-§8.11.
 
 ## 7. Render / contact-sheet check log
 
@@ -1496,10 +1510,17 @@ extension partially closed the first, and the full 10-task extension closes it c
    one being evaluated. A teacher-forced redesign (diagnose the policy that was actually executed,
    rather than let the diagnostic pass choose its own) restored real success rates (93.3%/0% vs. the
    eval's 92-94%/2-4%) — and on that now-valid contrast, resolution layer and vision-attention mass
-   *still* don't differ between conditions by more than about half a standard deviation. This is a
-   stronger null than §8.9's (no longer explainable by a missing behavioral contrast), but still a null
-   on two specific coarse diagnostics, on one task — not evidence that no mechanistic difference exists
-   anywhere in the network. Task 3's approach-then-fail localization question is untouched.
+   *still* don't differ between conditions by more than about half a standard deviation. §8.11 then
+   tried the natural next step both §8.9 and §8.10 had flagged — condition on §8.5's per-episode
+   approach behavior instead of prompt condition, in case a per-condition average was washing out a
+   per-episode effect — and, after catching and correcting a real confound along the way (pooling
+   across conditions by behavior mostly just re-detects the condition-level difference, since almost
+   all `target_first` episodes happen to be `default`), the properly-isolated test (holding condition
+   fixed, comparing behavior within `negative_contrast` only) is *also* null. Gap #3 has now been
+   tested at both levels either diagnostic could plausibly show something at, on this task, and neither
+   does — the strongest support yet for "these two diagnostics don't localize this failure," though
+   still not proof no mechanistic difference exists anywhere in the network, and still one task. Task
+   3's approach-then-fail localization question is untouched.
 
 **Net.** The VLA/VLM split is well explained at the outcome level (findings 12-17), and the mechanism
 now has direct behavioral evidence from the full 10-task suite (not 1, not 4) supporting "arm fails to
@@ -1511,14 +1532,16 @@ the same way as one that has both, which is hard to square with anything except 
 collapse being the shared cause. A second, real failure mode (correct target approach, still fails,
 ~27% of failures) persists at scale and is task-concentrated rather than a one-task artifact. The
 broad "not simply a longer sentence" reading of the length-control gap is now supported (§gap 2).
-Mechanistic localization has now run twice (§8.9's confounded first pass, §8.10's fixed, real-success-
-rate-matched re-run) and come back null both times on the same two coarse diagnostics (resolution
-layer, vision-attention mass) — a genuine, no-longer-confounded null, not evidence against the
-mechanism, but not positive confirmation either. That's what's left before "template-mismatch action
-collapse, not distractor confusion" can be called settled rather than best-supported: design a
-diagnostic that conditions on per-episode approach behavior (from §8.5) rather than aggregating by
-prompt condition alone, since §8.10's own reading is that a per-condition average is plausibly the
-wrong grain to see this failure mode at.
+Mechanistic localization has now been tried three times (§8.9's confounded first pass; §8.10's fixed,
+real-success-rate-matched re-run, pooled by prompt condition; §8.11's re-test pooled by §8.5's
+per-episode approach behavior instead, after catching and correcting a condition/behavior confound
+along the way) and come back null every time on the same two coarse diagnostics (resolution layer,
+vision-attention mass) — a genuine null at both grains anyone had proposed testing it at, not evidence
+against the mechanism, but not positive confirmation either. That's what's left before "template-
+mismatch action collapse, not distractor confusion" can be called settled rather than best-supported:
+either a different diagnostic (not resolution-layer/attention-mass) or more tasks (this is still n=1
+task, and §8.11's within-condition behavioral comparison specifically is underpowered at n=2 for
+`target_first`) would be needed to move this further.
 
 ### 8.7 Qwen bowl-pointing probe, re-run with sampled (not greedy-only) decoding (2026-09-04)
 
@@ -1894,3 +1917,96 @@ Code: `openvla/experiments/robot/libero/probe_mechanistic_localization.py` (unco
 `openvla` fork as of this write-up; developed in an isolated worktree, then copied back to this
 canonical path — its docstring documents both 2026-09-06 fixes inline). Launch history: `eval_log.md`'s
 2026-09-06 entry.
+
+### 8.11 Regrouping §8.10's diagnostics by §8.5's approach behavior instead of prompt condition (2026-09-06)
+
+**Motivation.** §8.9/§8.10 both flagged the same caveat: pooling the diagnostics by *prompt condition*
+could wash out a real effect if the underlying mechanism is per-episode (some episodes commit to a
+bowl, others never do) rather than something that shifts uniformly across an entire condition. §8.5's
+bowl-attraction probe already has exactly this per-episode label (`first_bowl_approached`: target,
+distractor, or neither). This section conditions §8.10's diagnostics on that label instead.
+
+**First attempt (invalid) — separately re-running `probe_bowl_attraction.py` does not give a joinable
+label.** Re-ran it fresh on the same task/conditions/episodes/seed as §8.10's `tf_full` run, expecting
+identical trajectories (same checkpoint, same greedy decoding, same seed, same init states). It wasn't:
+`default` success was 14/15 in both runs but a *different* episode failed (ep 13 here vs. ep 10 in
+§8.10), and `negative_contrast` success was 1/15 here vs. 0/15 in §8.10. Two separate process launches
+of nominally the same computation diverged over the 220-step closed loop — the same family of issue
+§8.10 found between `sdpa` and `eager` (small floating-point differences compounding in closed-loop
+control), except this time between two runs of the *identical* code path, purely from ordinary
+run-to-run GPU non-determinism (unseeded cuDNN/cuBLAS kernel selection, no `torch.use_deterministic_algorithms`).
+**Methodological consequence for this whole project, not just this probe:** per-episode data from two
+separately-launched rollouts cannot be assumed to be the same trajectory beyond the first few steps,
+even with matching seeds and greedy decoding, on this checkpoint at this rollout length. Any future
+per-episode join across two probe scripts needs either single-run instrumentation (below) or an
+explicit trajectory check (e.g. matching `success` *and* the exact env-step of any recorded event).
+
+**Fix — instrument bowl-distance tracking directly into `probe_mechanistic_localization.py`.** Added
+the same per-step eef-to-bowl-center distance bookkeeping `probe_bowl_attraction.py` uses (identical
+`near_thresh_m=0.08`, identical "first bowl within threshold, by step order" derivation) directly into
+this script's own rollout loop, so the approach label and the mechanistic diagnostics now come from the
+same trajectory by construction — no cross-run join needed. Re-ran the same battery a fourth time
+(`--run_id_note dist_full`); episode outcomes reproduced §8.10's `tf_full` run exactly (`default` ep 10
+fails, `negative_contrast` 0/15) — confirming this script's own rollouts *are* reproducible run-to-run
+(the non-determinism above is specific to comparing across the two different scripts, not a property of
+re-running this one).
+
+**First pooled regroup looked promising, then turned out to be a confound.** Pooling every
+instrumented step across *both* prompt conditions by behavioral label instead of by condition:
+
+| Behavioral group | Episodes | Vision-attn, last layer |
+|---|--:|--:|
+| `target_first` | 17 (15 `default` + 2 `negative_contrast`) | 0.1137 |
+| `distractor_first` | 7 (`negative_contrast` only) | 0.0956 |
+| `neither` | 6 (`negative_contrast` only) | 0.0980 |
+
+This looked like a real, sizeable effect — until checking the group composition: `target_first` is 15/17
+`default` episodes and only 2/17 `negative_contrast` episodes, so a group-level average is almost
+entirely a restatement of §8.10's already-known *condition*-level difference (`default` 0.116 vs.
+`negative_contrast` 0.096 pooled), not a new *behavioral* signal. Confirmed directly: `default`'s
+`target_first` episodes average 0.1162; `negative_contrast`'s 2 `target_first` episodes average only
+0.0946 — the same behavioral label, wildly different vision-attention level, entirely tracking which
+condition the episode came from. The apparent 0.1137-vs-0.096 group gap was this confound, not the
+effect being looked for.
+
+**The valid test: hold prompt condition fixed, vary only behavior.** Restricting to `negative_contrast`
+episodes only (where all three behavioral outcomes actually occur) and comparing episode-level means:
+
+| Within `negative_contrast` | Episodes | Vision-attn, last layer | Resolution layer (frac) |
+|---|--:|--:|--:|
+| `target_first` | 2 | 0.0946 | 0.859 |
+| `distractor_first` | 7 | 0.0956 | 0.836 |
+| `neither` | 6 | 0.0980 | 0.858 |
+
+Vision attention is indistinguishable across all three groups (0.0946-0.0980, well inside each group's
+own episode-to-episode spread). Resolution layer shows a small, suggestive gap (`distractor_first`
+~0.02-0.03 lower/earlier-resolving than the other two), but `target_first` has only 2 episodes — nowhere
+near enough to treat this as a finding rather than noise.
+
+**Reading — the null result survives the exact test §8.9/§8.10 recommended, at a cost the recommendation
+didn't anticipate (a confound, now caught and corrected).** Conditioning on approach behavior instead of
+prompt condition was the natural next step; done properly (holding condition fixed while comparing
+behavior, not pooling across both), it does not rescue a signal from either diagnostic on this task.
+Combined with §8.10's own condition-level null, gap #3 has now been tested at both the level §8.9
+originally used (by condition) and the level §8.9/§8.10 speculated might reveal something (by
+behavior) — neither shows a reliable difference. This makes "these two coarse diagnostics don't
+localize this failure mode" the best-supported reading to date, though still only on one task (n=15
+`negative_contrast` episodes, only 2 of which are `target_first` — underpowered for that specific
+comparison) and still only two diagnostics; it does not rule out that a different diagnostic, or more
+tasks, would find something these two don't.
+
+**Side observation.** 2 of 15 `negative_contrast` episodes reached for the target bowl first and *still*
+failed the task — the same "approached correctly, still failed" pattern §8.5/§8.6 documented as task
+3's dominant failure mode (there, under multiple conditions), here appearing at a much lower rate (13%)
+on task 5. Not investigated further; consistent with that pattern being real but task-heterogeneous
+rather than task-3-specific.
+
+Artifacts: `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t5--joinmechloc--2026_09_06-11_22_47.jsonl`
+(the separate, non-joinable re-run — kept for the record as a demonstration of the cross-run
+non-determinism finding, not used in the analysis above) and
+`openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--dist_full--2026_09_06-11_40_47.jsonl`
+(the combined, self-consistent run analyzed above; adds `dist_by_bowl`, `min_dist_by_bowl`,
+`first_near_step_by_bowl`, `first_bowl_approached`, `first_bowl_is_target` fields to each record,
+matching `probe_bowl_attraction.py`'s schema); both gitignored, local only. Code:
+`openvla/experiments/robot/libero/probe_mechanistic_localization.py` (uncommitted in the `openvla`
+fork; distance instrumentation added on top of §8.10's teacher-forced version).
