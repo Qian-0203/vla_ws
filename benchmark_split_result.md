@@ -2171,3 +2171,77 @@ Artifacts: `openvla/experiments/logs/probe_mechanistic_localization/libero_spati
 session's background job, GPU 0 on the same GCP server as §8.9-§8.11 (`config/server.env`,
 `openvla-libero:blackwell`). Code: `probe_mechanistic_localization.py`, unchanged from §8.11's
 committed version.
+
+### 8.14 Early-window replication at n=50: signal confirmed, but not clean (2026-09-08)
+
+**Motivation.** §8.13's Result C (a `target_cue_landmark`-specific early-window vision-attention
+deficit, p=0.029) was flagged as one borderline test at n=15, needing either more episodes or a design
+immune to the length/outcome coupling *by construction* rather than by post hoc restriction to steps
+0-9 of a variable-length rollout.
+
+**Method — the early window only needs steps 0-9, so cap the rollout there directly.** Result C's window
+is env_step 10-19 (the first 10 real steps after the 10-step warmup). Setting
+`--max_env_steps_to_instrument 10` makes every episode end exactly there — over 20x cheaper per episode
+than the up-to-220-step runs, and, unlike §8.13's post hoc restriction, this makes the length/outcome
+coupling from Result B structurally impossible rather than merely avoided: every episode is exactly 10
+instrumented steps, full stop, so there is no variable episode length left to correlate with anything.
+This let the full 50 pre-sampled init states/task be used per condition instead of 15. Ran `default`,
+`target_cue_landmark`, `target_cue_proximity_novel` (task 5) at `--num_trials 50
+--max_env_steps_to_instrument 10` — smoke-tested (2 episodes) then the full battery, which completed in
+under a minute given the tiny per-episode cost.
+
+**Result — both comparisons are now non-borderline, but the picture is more complicated than §8.13 suggested.**
+
+| vs. `default` (episode-level, cont. dims, n=50/condition) | vision_attn_last_layer | resolution_layer_frac |
+|---|---|---|
+| `target_cue_landmark` | mean 0.1045 vs. 0.1083, **p=0.0009, d=0.62** | mean 0.8606 vs. 0.8693, **p=0.019, d=0.45** |
+| `target_cue_proximity_novel` | mean 0.1109 vs. 0.1083, **p=0.039, d=-0.42** | mean 0.8623 vs. 0.8693, p=0.19 (null) |
+
+**Reading.**
+
+1. **§8.13's headline result replicates and strengthens.** `target_cue_landmark`'s early-window
+   vision-attention deficit goes from a borderline p=0.029 (n=15) to a clearly significant p=0.0009
+   (n=50, medium effect d=0.62) under a design that rules out the length/outcome confound by
+   construction, not just by restricting the analysis window post hoc. This is now a real, replicated
+   result, not a single borderline test.
+2. **But `target_cue_proximity_novel` is not the clean null control §8.13 expected.** At n=15 it looked
+   indistinguishable from `default` (p=0.19); at n=50 it's nominally significant (p=0.039) — in the
+   *opposite* direction from `target_cue_landmark` (higher, not lower, vision-attention than `default`).
+   So the story isn't "only the template-bound phrase shows an early deficit, novel phrasing is
+   unaffected" — both off-template conditions differ measurably from `default` in the early window, with
+   different signs and different magnitudes (d=0.62 vs. d=-0.42). `target_cue_landmark`'s effect is the
+   more robust of the two.
+3. **Resolution-layer's direction flips between the whole-episode (§8.13) and early-window-only
+   measurement — itself informative.** Over the full episode (§8.13), `target_cue_landmark` resolves
+   *later* than `default` (d=-0.62). Restricted to the true early window with the length confound
+   structurally removed, it resolves *earlier* (d=+0.45, this section). Since this early-window design
+   cannot be contaminated by episode-length coupling by construction, the sign flip means the
+   whole-episode average and the early window are picking up genuinely different phenomena, not a
+   diluted/concentrated version of the same one. A tentative reading: `target_cue_landmark` reuses
+   "next to X," a phrase natively bound to *other* tasks (finding 18) — an *earlier*, more decisive
+   resolution early on could reflect the policy confidently committing to that other task's motion
+   pattern (confident misexecution) rather than hesitating, with the *later* whole-episode average
+   instead reflecting the long failure tail once that misexecution doesn't complete the actual task
+   (consistent with Result B's finding that whole-episode diagnostics substantially track episode
+   length/outcome). This is a plausible story, not a confirmed one — no diagnostic here directly measures
+   "is the policy executing a different task's motion," only logit-lens/attention proxies.
+4. **Multiple-comparisons caution.** This is one of many tests run across §8.9-§8.14; `target_cue_landmark`'s
+   two results (p=0.0009, p=0.019) are comfortably significant even under a conservative correction,
+   but `target_cue_proximity_novel`'s vision-attention result (p=0.039) is more marginal and should be
+   weighted accordingly.
+
+**Net effect on gap #3.** Still no diagnostic here cleanly, monotonically separates "will fail" from
+"will succeed" by condition — but this replication upgrades the early-window signal from "an
+unreplicated hint" to "a real, replicated, but more complicated pattern than first thought," and
+establishes a cheap, confound-free method (truncate to the window of interest, not the whole episode) for
+testing it further. The natural next step is a diagnostic that can distinguish "confidently executing
+the wrong motion" from "confidently executing the right one," rather than resolution-layer/attention-mass
+alone, which can't tell those apart.
+
+Artifacts: `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--earlywin_smoketest--2026_09_08-*.jsonl`
+(smoke test, deleted after passing) and
+`libero_spatial--t5--earlywin_n50--2026_09_08-04_46_21.jsonl` (the analyzed run: 50 episodes × 3
+conditions × exactly 10 instrumented steps each, 1,500 records); gitignored, local only. Launch: this
+session's background job, GPU 0, same server/image as §8.9-§8.13. Code:
+`probe_mechanistic_localization.py`, unchanged — only `--max_env_steps_to_instrument`/`--num_trials`
+CLI values differ from prior runs.

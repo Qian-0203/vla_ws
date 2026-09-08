@@ -850,6 +850,39 @@ coupling (e.g. counting a fixed window backward from episode end instead of forw
 
 ---
 
+## 2026-09-08 — Mechanistic localization probe: early-window replication at n=50 (diagnostic, not a `run_eval.sh --split` launch)
+
+- **Trigger:** user asked to replicate §8.13's borderline (p=0.029, n=15) early-window vision-attention
+  finding with more episodes.
+- **Method:** the early window only needs env_step 10-19 (10 real steps after warmup), so
+  `--max_env_steps_to_instrument 10` truncates every episode there directly — >20x cheaper per episode
+  than the up-to-220-step runs, and unlike §8.13's post hoc restriction this makes the length/outcome
+  coupling (§8.13 Result B) structurally impossible rather than merely avoided, since every episode is
+  now exactly 10 steps by construction. Confirmed 50 pre-sampled init states exist per task (matching
+  `NUM_TRIALS_PER_TASK=50`'s default), so ran `--num_trials 50` — hardware: same GCP server, GPU 0,
+  `openvla-libero:blackwell`. Conditions: `default`, `target_cue_landmark`, `target_cue_proximity_novel`
+  (task 5). Smoke-tested (2 episodes) then the full 150-episode battery, which completed in under a
+  minute given the tiny per-episode cost.
+- **Outcome:** `target_cue_landmark`'s early-window vision-attention deficit replicates and strengthens
+  (p=0.029→0.0009, n=15→50, d=0.62) — no longer a single borderline test. But `target_cue_proximity_novel`,
+  expected to be an unaffected control, also differs from `default` at n=50 (p=0.039) — in the opposite
+  direction (higher, not lower, vision-attention) — so the clean "only the template-bound phrase shows
+  an effect" story doesn't fully hold. Resolution-layer's direction flips between the whole-episode
+  measurement (§8.13: `target_cue_landmark` resolves *later* than `default`) and this early-window-only
+  one (resolves *earlier*, p=0.019) — informative given this design structurally rules out the
+  length/outcome confound, meaning the two measurements are picking up genuinely different phenomena.
+  Full detail and a tentative "confident misexecution" interpretation in `benchmark_split_result.md` §8.14.
+- **Artifacts:** `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--earlywin_n50--2026_09_08-04_46_21.jsonl`
+  (1,500 records: 50 episodes × 3 conditions × 10 steps each); smoketest jsonl deleted after passing;
+  both gitignored, local only.
+
+**Status:** open, further narrowed. The early-window signal is now a replicated, non-borderline result,
+but more complicated than first thought — next step is a diagnostic that can distinguish "confidently
+executing the wrong motion" from "confidently executing the right one," which resolution-layer/attention-
+mass alone cannot do.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
