@@ -2094,3 +2094,80 @@ Artifacts: no new rollouts — pure re-analysis of
 (§8.11). Analysis script: ad hoc, not checked into either repo (stdlib-only Python — the host has
 neither `numpy` nor `scipy` installed outside the Docker image; Mann-Whitney implemented by hand with
 tie correction).
+
+### 8.13 Length-matched rerun: length-dilution ruled out, but both diagnostics turn out to track episode length/outcome generally (2026-09-08)
+
+**Motivation.** §8.12 flagged that `negative_contrast`'s large vision-attention gap could be pure
+prompt-length dilution (softmax attention share mechanically shrinks as more text tokens compete) and
+proposed the direct test: run the same probe on `target_cue_landmark`/`target_cue_proximity_novel`,
+both word-for-word the same length as `default` (§8.6 gap 2), and see whether the gap survives.
+
+**Method.** Same script, same task (5), same battery size (15 episodes/condition, full 220-step cap,
+teacher-forced two-pass diagnostics, `--conditions target_cue_landmark,target_cue_proximity_novel`).
+Smoke-tested first, then launched on GPU 0 (GPU 1 was occupied by an unrelated process on this shared
+server — left untouched). Success rates: `target_cue_landmark` 1/15 (6.7%, vs. the real eval's 0/10 for
+this task — consistent within small-n noise) and `target_cue_proximity_novel` 10/15 (66.7%, vs. the
+real eval's 5/10 — same direction, somewhat higher here, also plausible small-n noise). Analyzed
+alongside §8.11's `dist_full` (`default`/`negative_contrast`) using the same episode-level
+Mann-Whitney methodology as §8.12.
+
+**Result A — length-dilution is ruled out as a sufficient explanation.** `target_cue_landmark`, matched
+length to `default`, still shows a significant whole-episode vision-attention drop, and — unlike
+`negative_contrast` — a significant resolution-layer shift too:
+
+| vs. `default` (episode-level, cont. dims) | vision_attn_last_layer | resolution_layer_frac |
+|---|---|---|
+| `negative_contrast` (0/15 success, +12 words) | p<0.0001, d=1.88 | p=0.12, d=-0.38 (null) |
+| `target_cue_landmark` (1/15 success, same length) | **p=0.0023, d=1.15** | **p=0.0095, d=-0.62** |
+| `target_cue_proximity_novel` (10/15 success, same length) | p=0.69, d=0.12 (null) | p=0.25, d=0.37 (null) |
+
+If the §8.12 gap were pure length dilution, a length-matched condition should never show it — but
+`target_cue_landmark` does, on both diagnostics (smaller effect than `negative_contrast`'s on
+vision-attention, but resolution-layer is significant here where it wasn't for `negative_contrast` at
+all). Length dilution is not sufficient to explain the pattern.
+
+**Result B — but pooled across all 4 conditions (60 episodes), both diagnostics track episode
+length/success generally, not condition-specific content.** Ignoring which condition an episode came
+from: `corr(episode_length, mean vision_attn) = -0.675`; pooled success (n=25) vision-attn mean 0.1147
+vs. pooled failure (n=35) mean 0.1029 (Mann-Whitney p<0.0001). Resolution-layer shows the same pattern,
+weaker: `corr(episode_length, mean resolution_layer_frac) = +0.375`; pooled success mean 0.8721 vs.
+failure mean 0.8811 (p=0.0002). Because a failed episode runs to the 220-step cap while a successful one
+ends the moment the task completes (~85-135 steps here), whole-episode averages are structurally
+weighted toward whichever condition/episode fails — success and episode length are mechanically coupled
+by the closed-loop termination rule itself, independent of anything specific to *why* a given prompt
+causes failure. This means a real part of §8.12's "condition-level difference" is better described as
+"failing episodes run long, and long tails of these coarse per-token averages pull the whole-episode
+mean down (vision-attn) or up (resolution-layer)" rather than a distinct signature of each condition's
+language content.
+
+**Result C — the one test immune to the length/outcome confound still shows a small, condition-specific
+signal, but it's borderline.** Restricting to a fixed early window (steps 0-9, present identically in
+every episode regardless of eventual length or outcome) removes the length-coupling by construction.
+There, `target_cue_landmark` still differs from `default` on vision-attention (early-phase means 0.1040
+vs. 0.1065, p=0.029) while `target_cue_proximity_novel` does not (0.1087 vs. 0.1065, p=0.19). This is
+suggestively consistent with finding 18 ("template *binding*, not template *matching*"):
+`target_cue_landmark` reuses "next to X," a phrase natively bound to *other* tasks at fine-tuning time,
+while `target_cue_proximity_novel`'s "close to X" has no such binding — and only the former shows even
+this small early deficit. But it is one borderline p-value (0.029) among many comparisons run across
+§8.9-§8.13, on n=15 episodes; it should be read as a hint worth targeted replication, not a finding.
+
+**Reading — gap #3 needs a second, more careful revision.** §8.12's "vision-attention isn't null" stands,
+but its likely cause is now more mundane than either "distractor pull" or "target-selection collapse":
+these whole-episode diagnostics are substantially proxies for episode length/success, which is itself
+determined by the closed-loop termination rule, not a clean window into *why* the underlying policy
+failed. The one signal that survives controlling for that (Result C) is small, condition-specific to
+`target_cue_landmark` over `target_cue_proximity_novel`, and not yet strong enough to call a finding.
+Net effect on the project's mechanistic-localization question: still no diagnostic here cleanly
+localizes the "never commits to a target" mechanism from §8.5/§8.6; the clearest remaining lead is
+Result C's early-window, template-binding-consistent hint, which would need either more episodes (n=15
+is thin for a p=0.029 result) or a diagnostic specifically designed to avoid the length/outcome coupling
+(e.g. a fixed number of *pre-outcome* steps counted backward from episode end, rather than forward from
+episode start, so both successful and failed episodes contribute a comparable "final approach" window).
+
+Artifacts: `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--lenmatch_smoketest--2026_09_08-*.jsonl`
+(smoke test, deleted after passing) and
+`libero_spatial--t5--lenmatch_full--2026_09_08-04_11_24.jsonl` (the analyzed run: 15 episodes ×
+2 conditions, full 220-step cap); both gitignored, local only, no rollout videos. Launch: this
+session's background job, GPU 0 on the same GCP server as §8.9-§8.11 (`config/server.env`,
+`openvla-libero:blackwell`). Code: `probe_mechanistic_localization.py`, unchanged from §8.11's
+committed version.

@@ -807,6 +807,49 @@ both null. Remaining open avenues: a different diagnostic, or extending past tas
 
 ---
 
+## 2026-09-08 — Mechanistic localization probe: episode-level reanalysis + length-matched rerun (diagnostic, not a `run_eval.sh --split` launch)
+
+- **Trigger:** user asked to continue digging into the mechanistic localization probe; identified that
+  §8.10/§8.11's "no condition-level difference" conclusion rested on comparing means against pooled
+  per-token stdev rather than the correct episode-level unit (n=15/condition), and that §8.9's
+  phase-based breakdown was only ever run on confounded (0%-success) data.
+- **Part 1 — Tier-0 reanalysis (no new rollouts).** Re-analyzed §8.11's existing `dist_full` JSONL at
+  the episode level: vision-attention shows a large, highly significant condition-level difference
+  (`default` vs. `negative_contrast`, p<0.0001, Cohen's d≈1.9) that the token-pooled comparison had
+  masked; resolution-layer's null holds. Flagged a likely prompt-length confound (`negative_contrast`'s
+  instruction is ~12 words longer than `default`'s) as the probable cause, since attention is
+  softmax-normalized over the whole sequence and more text tokens mechanically dilute vision's share.
+- **Part 2 — length-matched rerun to test the confound.** Hardware: same GCP server, GPU 0 (GPU 1 was
+  occupied by an unrelated `openpi` process — left untouched), `openvla-libero:blackwell`. Ran
+  `probe_mechanistic_localization.py --task_id 5 --conditions
+  target_cue_landmark,target_cue_proximity_novel --num_trials 15 --max_env_steps_to_instrument 220`
+  (both conditions word-for-word the same length as `default`, per §8.6 gap 2) — smoke-tested (1
+  episode/condition, 5 steps) then the full battery. Success: `target_cue_landmark` 1/15 (6.7%, vs. real
+  eval's 0/10), `target_cue_proximity_novel` 10/15 (66.7%, vs. real eval's 5/10) — both consistent with
+  the real eval within small-n noise.
+- **Outcome:** length dilution is NOT sufficient to explain §8.12's finding — `target_cue_landmark`
+  (matched length) still shows a significant vision-attention drop (p=0.0023, d=1.15) and, unlike
+  `negative_contrast`, a significant resolution-layer shift too (p=0.0095, d=-0.62); `target_cue_proximity_novel`
+  (matched length, high success) shows neither. But pooling all 4 conditions' 60 episodes together, both
+  diagnostics track episode length/success generally (`corr(length, vision_attn)=-0.675`; pooled
+  success-vs-fail p<0.0001 for vision-attn, p=0.0002 for resolution-layer) — largely because a failed
+  episode runs to the 220-step cap while a successful one ends early, mechanically coupling length to
+  outcome regardless of condition. The one test immune to that coupling (a fixed steps-0-9 window,
+  identical extent in every episode) still shows a small, borderline `target_cue_landmark`-specific
+  signal (p=0.029) absent in `target_cue_proximity_novel` (p=0.19) — suggestively aligned with finding
+  18's "template binding, not template matching," but one borderline p-value among many comparisons run
+  across §8.9-§8.13, not yet a finding.
+- **Artifacts:** `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--lenmatch_full--2026_09_08-04_11_24.jsonl`
+  (analyzed run); smoketest jsonl deleted after passing; both gitignored, local only. Full detail in
+  `benchmark_split_result.md` §8.12-§8.13.
+
+**Status:** open, narrowed. Gap #3 (§8.6) still has no diagnostic that cleanly localizes the "never
+commits" mechanism; the clearest remaining lead is §8.13's small early-window, template-binding-
+consistent hint, which needs either more episodes or a diagnostic designed to avoid the length/outcome
+coupling (e.g. counting a fixed window backward from episode end instead of forward from episode start).
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
