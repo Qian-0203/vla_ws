@@ -1520,7 +1520,13 @@ extension partially closed the first, and the full 10-task extension closes it c
    tested at both levels either diagnostic could plausibly show something at, on this task, and neither
    does — the strongest support yet for "these two diagnostics don't localize this failure," though
    still not proof no mechanistic difference exists anywhere in the network, and still one task. Task
-   3's approach-then-fail localization question is untouched.
+   3's approach-then-fail localization question is untouched. **[2026-09-08 correction, see §8.12]**
+   "neither diagnostic differs by condition" turns out to be an artifact of comparing means against
+   pooled per-token stdev instead of episode-level stdev — redone at the episode level (the
+   statistically correct unit), vision-attention shows a large, highly significant condition-level
+   difference (p<0.0001, Cohen's d≈1.9); resolution-layer's null holds either way. §8.12 flags a
+   likely length-dilution confound (`negative_contrast`'s longer prompt) as the probable cause and a
+   length-matched rerun as the direct test — see §8.12/§8.13.
 
 **Net.** The VLA/VLM split is well explained at the outcome level (findings 12-17), and the mechanism
 now has direct behavioral evidence from the full 10-task suite (not 1, not 4) supporting "arm fails to
@@ -2008,5 +2014,83 @@ non-determinism finding, not used in the analysis above) and
 (the combined, self-consistent run analyzed above; adds `dist_by_bowl`, `min_dist_by_bowl`,
 `first_near_step_by_bowl`, `first_bowl_approached`, `first_bowl_is_target` fields to each record,
 matching `probe_bowl_attraction.py`'s schema); both gitignored, local only. Code:
-`openvla/experiments/robot/libero/probe_mechanistic_localization.py` (uncommitted in the `openvla`
-fork; distance instrumentation added on top of §8.10's teacher-forced version).
+`openvla/experiments/robot/libero/probe_mechanistic_localization.py` (now committed in the `openvla`
+fork — `0bd16d9`/`360f56e`, brought over from an isolated worktree on 2026-09-08 — its "DRAFT/not yet
+run" header updated to reflect this section's validated status at the same time).
+
+### 8.12 Tier-0 reanalysis: episode-level statistics show the vision-attention diagnostic isn't actually null (2026-09-08)
+
+**Motivation.** §8.10/§8.11 called both diagnostics null by comparing each condition's mean against
+the **pooled per-token population stdev** (e.g. "well under half a standard deviation" in §8.10). That
+yardstick treats ~23,100 per-token records per condition as independent draws. They aren't: steps
+within a 15-episode, up-to-220-step rollout are highly autocorrelated, and the true independent unit is
+the episode (n=15/condition). This section redoes the comparison at the correct level, purely by
+re-analyzing the existing `dist_full` JSONL (no new rollouts) — plus two additional angles the
+existing write-ups hadn't tried on the corrected data.
+
+**Method.** For each diagnostic and each episode, average `per_token_diag` over all instrumented steps
+(continuous dims 0-5 and the gripper dim 6 reported separately, matching §8.10's own dimension split),
+giving one scalar per episode. Compare the 15-vs-15 episode-level distributions with a two-sided
+Mann-Whitney U test (tie-corrected normal approximation) and Cohen's d. Separately, redo the
+first-10/next-10/remaining-steps phase split (only ever run on §8.9's confounded, 0%-success data) on
+the valid `dist_full` data. Separately again, join each episode's per-step `dist_by_bowl` distance
+trajectory against its per-step diagnostics directly (rather than only the coarse episode-level
+`first_bowl_approached` label §8.11 used), via per-episode Pearson correlation between distance-to-target-bowl and vision-attention/resolution-layer.
+
+**Result 1 — vision-attention is a large, highly significant condition-level effect at the episode level; resolution-layer is not.**
+
+| Diagnostic (episode-level mean) | `default` (n=15) | `negative_contrast` (n=15) | Mann-Whitney p | Cohen's d |
+|---|--:|--:|--:|--:|
+| resolution_layer_frac, cont. dims (0-5) | 0.8752 ± 0.0064 | 0.8796 ± 0.0153 | 0.12 | -0.38 |
+| resolution_layer_frac, gripper (dim 6) | 0.6688 ± 0.0245 | 0.6565 ± 0.0480 | 0.22 | 0.33 |
+| vision_attn_last_layer, cont. dims (0-5) | 0.1140 ± 0.0028 | 0.0951 ± 0.0041 | **<0.0001** | **1.88** |
+| vision_attn_last_layer, gripper (dim 6) | 0.1295 ± 0.0033 | 0.1048 ± 0.0072 | **<0.0001** | **1.83** |
+
+Resolution-layer replicates §8.10's null (p=0.12/0.22, small/inverted d) — that part of the earlier
+claim holds. Vision-attention does not: episode-level variance is far tighter than token-level variance
+(each mean already averages over 88-220 autocorrelated steps), so the same ~0.019-0.025 raw gap that
+looked "under half a token-level stdev" is in fact a huge, highly significant effect (d≈1.8-1.9) by the
+statistically correct test. This is present from the very first instrumented steps too (episode-level
+Mann-Whitney restricted to steps 0-9 only: `default` 0.1065 vs. `negative_contrast` 0.0918, p<0.0001) —
+not something that only appears once the arm has already given up.
+
+**This is very likely a prompt-length artifact, not a new mechanistic signal.** Attention weights are
+softmax-normalized over the whole sequence at each layer; `negative_contrast`'s task-5 instruction adds
+a whole extra clause (§8.6 gap 2: ~24 words vs. `default`'s ~15), so more text tokens compete in the
+same softmax row, mechanically diluting vision's *share* of attention regardless of any interesting
+target-selection mechanism. A large, clean, present-from-step-0 effect is exactly what pure token-count
+dilution would produce. `target_cue_landmark`/`target_cue_proximity_novel` are word-for-word the same
+length as `default` (§8.6 gap 2) and have never been run through this probe — a length-matched rerun on
+those conditions is the direct test of this hypothesis: if vision-attention still drops relative to
+`default` despite matched length, the effect is real and semantic; if it doesn't, it's the dilution
+confound. **Launched 2026-09-08 — see the next section once complete.**
+
+**Result 2 — phase breakdown redone on valid data: mostly reconfirms the null, one borderline early-phase signal.** Resolution-layer's episode-level early-phase-only (steps 0-9) comparison shows a
+small gap (`default` 0.8685 vs. `negative_contrast` 0.8537, p=0.034) that disappears once averaged over
+the whole episode (p=0.12 above) — consistent with §8.9/§8.10's own caveat that whole-episode averaging
+could wash out an early-window effect, but this is one borderline test among several run here, on n=15,
+and shouldn't be leaned on without replication.
+
+**Result 3 — distance/attention time-course join: still inconclusive.** Per-episode Pearson correlation
+between distance-to-target-bowl and vision-attention is noisy and inconsistent within every behavioral
+group (`default`: -0.52 to +0.13, mean -0.24; `negative_contrast`/`neither`: -0.12 to +0.55, mean +0.30;
+`negative_contrast`/`distractor_first`: -0.65 to +0.13, mean -0.12; `negative_contrast`/`target_first`,
+n=2: -0.14, +0.10). No group shows a clean, consistent sign, and `target_first` remains underpowered at
+n=2. This confirms rather than resolves the existing "underpowered" caveat — no new signal here.
+
+**Reading.** §8.6/§8.10/§8.11's headline conclusion needs a correction, not a reversal: resolution-layer
+is still null by any reasonable test, but "neither diagnostic shows a condition-level difference" was
+never true of vision-attention once measured at the right statistical level — it shows a large, robust
+one. Whether that reflects the failure mechanism this probe was built to find, or just reflects
+`negative_contrast`'s longer prompt, is exactly what the length-matched rerun below is designed to
+separate. Either answer revises gap #3's status in §8.6: a confirmed length-dilution artifact would
+mean resolution-layer and vision-attention are *both* uninformative about the "never commits"
+mechanism (just for different reasons — one washed out by averaging, one confounded by prompt length);
+a signal that survives length-matching would be the first positive mechanistic result this line of
+investigation has produced.
+
+Artifacts: no new rollouts — pure re-analysis of
+`openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--dist_full--2026_09_06-11_40_47.jsonl`
+(§8.11). Analysis script: ad hoc, not checked into either repo (stdlib-only Python — the host has
+neither `numpy` nor `scipy` installed outside the Docker image; Mann-Whitney implemented by hand with
+tie correction).
