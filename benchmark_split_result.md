@@ -998,293 +998,125 @@ suite in this project.
 ## 8. VLM Bowl-Pointing Probe — grounding-vs-action-decoding diagnostic (2026-08-25)
 
 **Question.** Every distractor-mention condition (`negative_contrast`, `positive_contrast`,
-`landmark_with_hardneg_prompt`) collapses this checkpoint's task success rate, but end-to-end
-success can't say *why*: is vision-language grounding itself broken once a second referent is
-mentioned, or is grounding fine and only the action-decoding head falls apart on out-of-distribution
-phrasing? This probe tried to isolate the two by showing the model the same scene with each black
-bowl overlaid with a random number (Set-of-Mark style) and asking it, in free text, which numbered
-bowl matches the (unmodified) failing instruction — swapping "output an action" for "output a
-number" while holding scene and language fixed. Ground truth: every task's BDDL goal predicate names
-`akita_black_bowl_1` as the target, invariant across all scene variants used here.
+`landmark_with_hardneg_prompt`) collapses this checkpoint's task success, but end-to-end success can't
+say *why*: is vision-language grounding itself broken once a second referent is mentioned, or is
+grounding fine and only action-decoding falls apart on out-of-distribution phrasing? This probe tries
+to isolate the two by showing the model the same scene with each black bowl overlaid with a random
+number (Set-of-Mark style) and asking, in free text, which numbered bowl matches the (unmodified)
+failing instruction — swapping "output an action" for "output a number" while holding scene and
+language fixed. Ground truth: every task's BDDL goal names `akita_black_bowl_1` as the target.
 
-**Method.** New standalone script `openvla/experiments/robot/libero/probe_bowl_pointing.py` (not a
-benchmark split — it's a VQA probe, not an action rollout, so it isn't wired into
-`eval_registry.py`). For a given task: render the exact episode-0 init state the real eval would see
-(same settle-step count/dummy action as `run_libero_eval.py`), project each bowl's true 3D position
-into the rendered frame via robosuite `camera_utils`, overlay a shuffled marker number per bowl, then
-call the checkpoint's `.generate()` directly (bypassing `predict_action()`'s action-token-only
-decoding) with the condition's real instruction text reformatted as "which numbered bowl...".
+**Method.** `openvla/experiments/robot/libero/probe_bowl_pointing.py`: render the exact episode-0 init
+state the real eval would see, project each bowl's 3D position into the frame, overlay a shuffled
+marker number per bowl, then call the checkpoint's `.generate()` directly (bypassing action-only
+decoding) with the instruction reformatted as "which numbered bowl...".
 
-**Result: the probe is not viable on this model family — confirmed three ways, smoke-tested on 2
-tasks before committing to a full run.**
+**Result — dead end on OpenVLA, confirmed three ways.**
 
-1. **Free-text generation on the fine-tuned checkpoint always returns action-bin tokens, regardless
-   of the question.** Both a real bowl-pointing query and a content-free control ("What is 2+2?")
-   decoded to garbage text (e.g. `'論˚塔▓貴军忠'`). Inspecting the raw token ids showed they fall in
-   `[31744, 31999]` — exactly the tail-of-vocabulary range (`vocab_size=32000`) this checkpoint
-   reserves for its 256 action bins. The model isn't answering badly; it isn't answering at all —
-   it unconditionally emits action tokens after the `"...Out:"` + empty-token position no matter
-   what precedes it.
-2. **The base, pre-LIBERO-finetune `openvla/openvla-7b` does the same thing.** Downloaded fresh and
-   ran the identical free-text check — same action-bin-range token ids for both the real and control
-   prompts. This rules out "this project's LoRA fine-tune broke it": OpenVLA is continue-pretrained
-   from Prismatic-VLM exclusively on the template `"In: What action should the robot take to
-   {instruction}?\nOut:"` → action tokens across all of Open X-Embodiment, which appears to collapse
-   the model's conditional distribution at that template's completion point onto the action-token
-   subspace for *any* input. This is structural to the OpenVLA checkpoint family under this prompt
-   template, not a symptom of the distractor-mention failures being investigated.
-3. **A restricted-logit comparison (bypassing generation entirely) found no language-conditioned
-   signal either.** Single forward pass per query, comparing raw next-token logits for just the
-   candidate digit tokens ("1"/"2"/"3", ids 29896/29906/29941) instead of letting the model generate
-   freely. Tested per image against three prompt variants: the real matching instruction, an
-   unrelated question, and the *other* task's mismatched instruction. The ranking among the three
-   candidates was **identical across all three prompt variants for a given image** (e.g. target-1
-   image → `['3','2','1']` every time; target-2 image → `['3','1','2']` every time) — the ranking
-   tracks only *which image*, never *what was asked*. Whatever tiny logit gap exists here isn't
-   responsive to language at all, so it can't be read as a grounding signal.
+1. Free-text generation on the fine-tuned checkpoint always returns action-bin tokens (ids in
+   `[31744, 31999]`, the tail-of-vocabulary range reserved for the 256 action bins) regardless of the
+   question — a real bowl-pointing query and a content-free control ("What is 2+2?") both decode to
+   garbage.
+2. The base, pre-LIBERO-finetune `openvla/openvla-7b` does the same — this is structural to the
+   OpenVLA checkpoint family's action-only continued-pretraining recipe, not a symptom of this
+   project's fine-tune or its distractor-mention conditions.
+3. A restricted-logit comparison (raw next-token logits over just the candidate digit tokens, no
+   generation) found the ranking among candidates tracks only *which image* was shown, identically
+   across three different prompt variants (real instruction / unrelated question / mismatched
+   instruction) — whatever tiny logit gap exists isn't responsive to language at all.
 
-**Conclusion.** OpenVLA (base or LIBERO-finetuned) has no text-output channel that's causally
-responsive to language input at the point this diagnostic needs to query it — a consequence of its
-action-only continued-pretraining recipe, not something specific to this project's distractor-mention
-conditions. Grounding cannot be separated from action decoding via a VQA-style probe on this model
-family; end-to-end task success remains the only measurable signal for this checkpoint. Given the
-dead end was confirmed on 3 independent angles (2 checkpoints x free-text, plus restricted-logit), the
-full 30-query battery (all 3 conditions x 10 tasks) was not run — it would only reproduce the same
-negative result at 15x the cost. The script itself (`probe_bowl_pointing.py`) is left in place and
-functions correctly end-to-end (rendering, 3D→pixel projection, marker overlay, structured
-JSONL/figure output all verified working) — it would be directly reusable if a future checkpoint
-without this action-token collapse becomes available to test, or repurposed for the "genuinely
-separate general-purpose VLM" alternative noted below.
+**Conclusion.** OpenVLA has no text-output channel causally responsive to language at the point this
+diagnostic needs to query it. Grounding cannot be separated from action decoding via a VQA-style probe
+on this model family; end-to-end task success remains the only measurable signal for it. Confirmed on
+3 independent angles, so the full battery wasn't run on OpenVLA — it would only reproduce the same
+negative result. The script is left in place and works end-to-end; reusable for a future checkpoint
+without this collapse, or for probing a genuinely separate VLM (pursued below).
 
-Two smoke-test example images (annotated, as fed to the model, with different target numbers to
-confirm the marker-shuffle logic): `openvla/experiments/figures/probe_bowl_pointing/`.
+### 8.1 Qwen2-VL-7B-Instruct: is the referring expression resolvable in principle? (2026-08-25)
 
-**Open alternative (not pursued, deferred pending decision).** A genuinely separate general-purpose
-VLM — one never trained on OpenVLA's action-only template — could still be shown the same
-numbered-bowl images and instructions to test whether the referring expression is resolvable *in
-principle*. This answers a different question than originally posed (not "does this checkpoint's
-grounding survive independently of decoding" but "is the language itself unambiguous to a capable
-VLM") and requires standing up a new model dependency — deferred rather than pursued opportunistically.
+**Superseded by §8.2's marker-placement fix — numbers below are historical, see §8.2 for corrected ones.**
 
-### 8.1 Qwen2-VL-7B-Instruct run (2026-08-25) — the alternative above, pursued
+`probe_bowl_pointing_qwen.py` reuses the same render/annotate/score pipeline but queries
+`Qwen/Qwen2-VL-7B-Instruct` via ordinary free-text `.generate()`. Full battery (3 conditions × 10
+tasks, no parse failures):
 
-**Superseded by §8.2 (2026-08-26).** The rendering used for every image in this section had a
-marker-placement bug — see §8.2 for the fix and a corrected re-run. Left in place as the historical
-record of what was actually run and concluded at the time; do not use the accuracy numbers below as
-current.
-
-**Setup.** `openvla/experiments/robot/libero/probe_bowl_pointing_qwen.py` (new, uncommitted in the
-`openvla` fork) reuses `bowl_pointing_common.py`'s identical render/annotate/score pipeline —
-same numbered-bowl images, same instructions, same ground truth — but queries
-`Qwen/Qwen2-VL-7B-Instruct` via ordinary free-text `.generate()` instead of the OpenVLA checkpoint.
-Needed `transformers==4.51.3` + `qwen-vl-utils` installed ephemerally over the eval image's pinned
-`4.40.1` (an open-ended `>=4.49` pulls today's `5.15.1` instead, which removed
-`AutoModelForVision2Seq` and broke an unrelated import `bowl_pointing_common.py` pulls in
-transitively through `libero_utils.py` → `robot_utils.py` → `openvla_utils.py`, despite never
-calling into OpenVLA code). Full battery: 3 conditions x 10 tasks = 30 queries, no parse failures.
-
-**Result: not resolvable in principle either — Qwen's answers track a numeric/positional bias, not the instruction.**
-
-| Condition | Scene | Accuracy | Chance level |
+| Condition | Scene | Accuracy | Chance |
 |---|---|---|---|
 | `negative_contrast` | `libero_spatial` (2 bowls) | 6/10 (60%) | 50% |
 | `positive_contrast` | `libero_spatial` (2 bowls) | 4/10 (40%) | 50% |
 | `hardneg` | `libero_spatial_3bowl_hardneg` (3 bowls) | 6/10 (60%) | 33% |
 
-None of these clear chance convincingly, and the raw answer distributions explain why:
-
-- **`hardneg`: Qwen answered "1" zero times across all 10 queries**, regardless of where the target
-  actually was (target was bowl "1" on task 0, which it got wrong) — parsed answers were six "2"s and
-  four "3"s only. A pure numeric/positional preference, not target-tracking.
-- **`positive_contrast`: 7/10 answers were "2"**, vs. an even 5/5 split for `negative_contrast` on the
-  *same 10 images* (render is cached per `(suite, task_id)`, so `negative_contrast` and
-  `positive_contrast` show Qwen the identical picture per task — only the instruction wording
-  differs). So the model **is** sensitive to the prompt (5/10 tasks flip answer between the two
-  conditions on an unchanged image) — it's just not sensitive in a way that tracks correctness.
-
-**Conclusion.** The bowl-pointing referring expression is not cleanly resolvable even by a capable,
-independently-trained general-purpose VLM under this rendering (small overhead markers on a
-256x256 clip, single frame, no interaction) — so the OpenVLA failure pattern documented in
-findings 1, 5, 9, 10 (finding 12) cannot be presumed to reflect *unambiguous* language that OpenVLA
-alone fails to ground. This doesn't rescue OpenVLA's action-space failures (Qwen isn't asked to act,
-and OpenVLA's action-only decoding collapse in §8 is a separate, model-family-specific problem) — it
-narrows what §8's dead end was blocking: even with a working text channel, this probe's rendering
-may be too weak a stimulus (marker size/contrast, single static frame, no zoom) to isolate language
-grounding cleanly, independent of which model answers it. A follow-up would need to strengthen the
-stimulus (larger/higher-contrast markers, multiple viewpoints) before concluding anything about
-grounding difficulty from accuracy numbers alone.
-
-Annotated images (all 30, overwriting the two pre-existing OpenVLA smoke-test images at the same
-filenames — harmless, since the annotation only depends on scene geometry, not which model is being
-probed): `openvla/experiments/figures/probe_bowl_pointing/`. Structured output:
-`openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl` (gitignored,
-local only).
+None cleared chance convincingly, and answers showed a numeric/positional bias rather than
+target-tracking (e.g. Qwen answered "1" zero times across all 10 `hardneg` queries, regardless of
+where the target actually was). Read at the time as "not resolvable in principle even by a capable
+VLM" — revised in §8.2.
 
 ### 8.2 Marker-placement bug found and fixed — Qwen re-run (2026-08-26)
 
-**Trigger.** User inspection of the §8.1 gallery flagged two problems by eye: the filled marker
-circles (radius 15px on a 224px image) were large enough to fully occlude the target bowl, and some
-markers looked like they weren't centered on their bowl at all. The initial hypothesis was that
-`num_steps_wait=10` doesn't give bowls (which spawn slightly above the table and fall) enough time
-to settle before the frame used for marker projection is captured.
+**Bug.** User inspection flagged large, occluding markers and some that looked off-bowl. Sweeping
+`num_steps_wait` ruled out physics-settle timing as the cause, but cross-checking the hand-projected
+marker position against MuJoCo's own segmentation render exposed a real bug:
+`project_points_from_world_to_camera()`'s output was off by ~46px (20% of the frame) for one bowl on
+one task — enough to land the marker on bare table. Root mechanism in the projection call not
+identified, but segmentation-based ground truth is trustworthy by construction (same draw call as the
+RGB frame).
 
-**That specific hypothesis was ruled out.** Re-rendering `libero_spatial` task 0 with
-`num_steps_wait` swept from 0 to 120 and logging each bowl's z-height every step showed physics
-fully stable by step 5 (z stops changing entirely); the marker position computed at step 10 is
-pixel-identical to step 120. Settle timing was not the mechanism.
+**Fix.** `bowl_pointing_common.py` now reads each bowl's segmentation mask directly and uses its pixel
+centroid as the marker position, sidestepping the projection call entirely; markers also changed from
+occluding filled circles to small outline dots with an offset label.
 
-**But a real, independent bug was confirmed anyway.** `render_and_annotate()` (in
-`bowl_pointing_common.py`) computed marker pixel positions by hand-projecting each bowl's 3D
-`sim.data.body_xpos` through `robosuite.utils.camera_utils.project_points_from_world_to_camera()`.
-Cross-checking that projection against MuJoCo's own segmentation render (`sim.render(...,
-segmentation=True)` — which pixels the renderer itself assigned to each body's geoms, so it can't be
-wrong about where an object actually drew) at task 0, step 120:
+**Re-run, same model/prompts/scoring, only the images changed:**
 
-| Object | Hand-projected pixel (224-space) | Segmentation ground truth | Error |
+| Condition | Before fix (§8.1) | After fix | Chance |
 |---|---|---|---|
-| `akita_black_bowl_2` | (33, 106) | (31, 114) | ~9 px |
-| `plate_1` | — | — | ~3 px |
-| **`akita_black_bowl_1`** | **(57, 84)** | **(56, 130)** | **~46 px (~20% of the frame)** |
+| `negative_contrast` | 60% | **70%** | 50% |
+| `positive_contrast` | 40% | **70%** | 50% |
+| `hardneg` | 60% | **70%** | 33% |
 
-`akita_black_bowl_1`'s hand-projected marker landed squarely on bare table — querying the
-segmentation mask at that exact pixel returned body `"table"`, not the bowl — while the true bowl
-sat 46px away. Single-point vs. batched projection gave identical (wrong) output, ruling out a
-batching bug; `body_xpos`, `geom_xpos`, and `qpos` for the two bowls were internally consistent with
-each other (same asset, same quaternion convention, both matched their own `qpos`); the flip
-convention was verified by applying the identical `[::-1, ::-1]` transform to both the image and the
-segmentation mask before comparing. The discrepancy is isolated to
-`project_points_from_world_to_camera()`'s output for this specific 3D point vs. this camera
-transform — root mechanism not identified, but not needed, since ground truth from segmentation is
-trustworthy by construction (same draw call as the RGB frame).
+All three now clear chance clearly. A second thing changed with the fix: `negative_contrast` and
+`positive_contrast` (identical images, only wording differs) disagreed on 5/10 tasks before the fix,
+now agree on 10/10 — the earlier "phrasing sensitivity" finding was very likely noisy-marker artifact,
+not a real wording effect.
 
-**Fix (`bowl_pointing_common.py`, uncommitted in the `openvla` fork as of this write-up).** Replaced
-the hand-projection with `_bowl_pixel_centroid()`: reads back each bowl's segmentation mask
-directly and uses its pixel centroid as the marker position, sidestepping
-`project_points_from_world_to_camera()` entirely. Also fixed the occlusion problem: markers changed
-from filled `radius=15` circles to `radius=6` outline dots with a crosshair, with the number label
-offset above-right of the dot (white-haloed for legibility) instead of drawn inside a filled shape
-covering the bowl.
-
-**Qwen2-VL-7B-Instruct re-run, full battery (3 conditions x 10 tasks), identical model/prompts/scoring, only the images changed:**
-
-| Condition | Before fix (§8.1) | After fix | Chance level |
-|---|---|---|---|
-| `negative_contrast` | 6/10 (60%) | **7/10 (70%)** | 50% |
-| `positive_contrast` | 4/10 (40%) | **7/10 (70%)** | 50% |
-| `hardneg` | 6/10 (60%) | **7/10 (70%)** | 33% |
-
-All three conditions now clear their chance baseline clearly, where before none did convincingly.
-`positive_contrast` shows the largest correction (40% → 70%) — it was previously *below* chance.
-
-**A second finding changed along with the headline number.** Before the fix, `negative_contrast` and
-`positive_contrast` (identical images, only instruction wording differs) disagreed on 5/10 tasks —
-read at the time as "Qwen is prompt-sensitive but not in a way that tracks correctness" (§8.1). After
-the fix, **the two conditions agree on all 10/10 tasks** (identical target, identical parsed answer,
-identical correctness per task id). With clean markers, Qwen's answer is invariant to which of the
-two phrasings it's given — the earlier phrasing-sensitivity finding was very likely an artifact of
-the model reacting to noisy/ambiguous marker placement, not a genuine wording effect. Similarly, the
-old "Qwen never answered '1' across all 10 `hardneg` queries" finding (read as a pure
-numeric/positional bias) softens: post-fix it answers "1" once (task 1, still incorrect there, but no
-longer a hard zero) — consistent with the fix removing a source of noise rather than a source of
-genuine task difficulty.
-
-**Revised conclusion.** With accurate, non-occluding markers, the bowl-pointing referring expression
-IS resolvable well above chance by a capable general-purpose VLM. §8.1's "not resolvable in
-principle" conclusion was itself a probe-rendering artifact, not evidence about the language. This
-reopens (but does not resolve) the question §8.1 was trying to close: findings 1-11's outcome-level
-interpretation (finding 12's caveat) still cannot be corroborated by directly interrogating OpenVLA's
-internal grounding (§8's action-token-collapse dead end is untouched by this fix — it's a separate,
-model-family-specific problem), but the *"maybe the language itself is just ambiguous"* alternative
-raised by §8.1 is now weaker than it looked: a capable VLM resolves it fine (70%) once the stimulus
-itself isn't broken.
-
-Corrected images (same filenames, overwritten in place):
-`openvla/experiments/figures/probe_bowl_pointing/`. Re-run structured output (same path/filename as
-§8.1, overwritten): `openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl`
-(gitignored, local only). Code fix: `openvla/experiments/robot/libero/bowl_pointing_common.py`
-(uncommitted in the `openvla` fork as of this write-up — commit separately there per repo
-convention).
+**Revised conclusion.** With accurate markers, the referring expression IS resolvable well above
+chance by a capable VLM — §8.1's "not resolvable in principle" was itself a rendering artifact, not
+evidence about the language.
 
 ### 8.3 `default` (no-distractor-mention) baselines added, 2-bowl and 3-bowl (2026-08-26)
 
-**Motivation.** §8.1/§8.2 only ever asked Qwen to resolve the referring expression under
-distractor-mention phrasing (`negative_contrast`, `positive_contrast`, `hardneg` — every instruction
-either negates or names the distractor). Missing: how does Qwen do on the *same* 2-bowl scenes under
-LIBERO's own native task language, which describes only the target and never mentions the distractor
-at all (this is Split 1's `default` condition, `eval_registry.CONDITIONS["default"] = None` — "use
-the task's own language"). This is the natural comparison point for the distractor-mention
-conditions, so it was added to the probe.
+**Motivation.** §8.1/§8.2 only tested distractor-mention phrasing. Missing: how Qwen does on the same
+scenes under LIBERO's own native, target-only task language (Split 1's `default` condition) — the
+natural comparison point.
 
-**Method.** Added `"default": ("libero_spatial", None)` and, after a follow-up request to extend the
-same comparison to the 3-bowl scene, `"hardneg_default": ("libero_spatial_3bowl_hardneg", None)` to
-`bowl_pointing_common.CONDITION_SUITES`. `render_and_annotate()` now also returns LIBERO's native
-`task.language` string (previously discarded); when a condition's instruction dict is `None`, both
-probe scripts use that string instead of a custom phrasing — same convention
-`eval_registry.CONDITIONS` already uses for real evals (confirmed `task.language` is target-only and
-identical in form across both suites — the 3-bowl scene's extra distractor doesn't change LIBERO's own
-description of the task). Re-ran the full battery (now 5 conditions x 10 tasks = 50 queries) in one
-invocation so all five conditions' results live in the same run/file.
+**Result — both `default` baselines score at or below their distractor-mention counterpart, not above:**
 
-**Result: both `default` baselines score lower than their distractor-mention counterpart.**
-
-| Condition | Scene | Accuracy | Chance level |
+| Condition | Scene | Accuracy | Chance |
 |---|---|---|---|
-| `default` (no distractor mention) | `libero_spatial` (2 bowls) | **5/10 (50%)** | 50% |
-| `negative_contrast` | `libero_spatial` (2 bowls) | 7/10 (70%) | 50% |
-| `positive_contrast` | `libero_spatial` (2 bowls) | 7/10 (70%) | 50% |
-| `hardneg_default` (no distractor mention) | `libero_spatial_3bowl_hardneg` (3 bowls) | **6/10 (60%)** | 33% |
-| `hardneg` | `libero_spatial_3bowl_hardneg` (3 bowls) | 7/10 (70%) | 33% |
+| `default` (no mention) | `libero_spatial` (2 bowls) | **50%** | 50% |
+| `negative_contrast` | `libero_spatial` (2 bowls) | 70% | 50% |
+| `positive_contrast` | `libero_spatial` (2 bowls) | 70% | 50% |
+| `hardneg_default` (no mention) | `libero_spatial_3bowl_hardneg` (3 bowls) | **60%** | 33% |
+| `hardneg` | `libero_spatial_3bowl_hardneg` (3 bowls) | 70% | 33% |
 
-`negative_contrast` and `positive_contrast` remain in 10/10 agreement with each other (see §8.2).
-`default` disagrees with both on exactly 2 of the 10 tasks (task ids 4 and 5, both target=bowl "1"):
-given only the target's own location ("pick up the black bowl inside the top drawer..." / "...on top
-of the ramekin...") Qwen picks the wrong bowl on both, but once the instruction also states where the
-*other* bowl is (either condition), it gets both right. All other 8 tasks are identical across all
-three 2-bowl conditions regardless of phrasing.
+`default` disagrees with the distractor-mention conditions on 2/10 tasks (both target=bowl "1"): given
+only the target's own location, Qwen picks the wrong bowl; stating where the *other* bowl is fixes
+both. `hardneg_default` vs. `hardneg` differ on just 1/10. Both 3-bowl conditions clear the 33% chance
+baseline comfortably even with zero distractor mention.
 
-The 3-bowl pair shows the same direction but a much smaller gap: `hardneg_default` differs from
-`hardneg` on exactly **one** task (task id 5, target=bowl "3", "on top of the ramekin") — mentioning
-the distractor family flips that single task from wrong (guesses the numerically-common "2") to
-right; every other task agrees between the two conditions. Task id 0 ("between the plate and the
-ramekin") is the single hardest case in the whole battery — the only task wrong in **all 5**
-conditions across both scenes, regardless of phrasing; task id 2 ("at the center of the table") is
-wrong in both 3-bowl conditions but correct in all three 2-bowl conditions, so the extra distractor
-bowl (not the phrasing) looks specifically responsible for that one. Both 3-bowl conditions clear the
-33% chance baseline comfortably even without any distractor mention, unlike the 2-bowl case where
-`default` lands exactly on chance.
-
-**Reading.** For this scene/model, naming the distractor family — whether negated
-(`negative_contrast`), stated positively (`positive_contrast`), or as a closer 3-bowl hard-negative
-(`hardneg`) — is not the source of difficulty findings 1/5/9/10 attribute to it for OpenVLA; if
-anything, for Qwen it's a mildly *disambiguating* cue in both scenes (worth 2/10 tasks at 2 bowls,
-1/10 at 3 bowls) rather than a source of confusion. The 3-bowl scene being resolvable well above
-chance even with zero distractor mention (`hardneg_default`, 60% vs. 33% chance) also weakens a
-"more distractors = harder to ground for any model" reading — the extra bowl doesn't come close to
-erasing Qwen's signal the way it erases OpenVLA's task success (findings 2, 7-8). This sharpens
-finding 14's point further: the OpenVLA distractor-mention collapse documented in findings 1-11
-cannot be explained by "the distractor mention itself makes the scene harder to ground" in any
-general sense — a capable VLM grounds the same mentions at least as accurately as no mention at all,
-in both the 2-bowl and 3-bowl scenes. That still doesn't prove OpenVLA's action-decoding head reacts
-the same way (§8's dead end for that model family stands untouched), but it further narrows what's
-left of the "maybe the phrasing/clutter is just inherently harder" reading of findings 1-11.
-
-Updated structured output (same file, now with all 5 conditions):
-`openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl`. New images:
-`openvla/experiments/figures/probe_bowl_pointing/libero_spatial--default--t{0-9}.png` and
-`libero_spatial_3bowl_hardneg--hardneg_default--t{0-9}.png`. Code change: `bowl_pointing_common.py`,
-`probe_bowl_pointing.py`, `probe_bowl_pointing_qwen.py` (`openvla` commit `1b27db3`).
+**Reading.** For this scene/model, naming the distractor family — negated, positive, or hard-negative —
+is a mild *disambiguating* cue for Qwen, not a difficulty source, in both scenes. This sharpens the
+finding that OpenVLA's distractor-mention collapse (findings 1-11) can't be explained by "the mention
+itself makes the scene harder to ground" — a capable VLM grounds it at least as well as no mention at
+all.
 
 ### 8.4 Per-task render + marker table (2026-08-26)
 
-Every rendered scene actually fed to Qwen, with the Set-of-Mark markers baked in (see §8.2 for how
-they're now computed) and each condition's `target→answer` verdict, so the numbers in §8.1-8.3's
-tables can be checked against the actual stimulus per task instead of just the aggregate score.
-`target→answer` reads as the ground-truth marker number, then Qwen's parsed answer (✓ = correct).
+Every rendered scene actually fed to Qwen, markers baked in, with each condition's `target→answer`
+verdict (✓ = correct). Marker color: **1**=red, **2**=green, **3**=blue (shuffled per task).
 
-**2-bowl scenes (`libero_spatial`) — `default`, `negative_contrast`, `positive_contrast` show the
-identical image per task (render is cached per suite/task_id); only the instruction differs:**
+**2-bowl scenes (`libero_spatial`) — `default`/`negative_contrast`/`positive_contrast` show the identical image per task:**
 
-| id | task | scene (markers baked in) | `default` | `negative_contrast` | `positive_contrast` |
+| id | task | scene | `default` | `negative_contrast` | `positive_contrast` |
 |--:|---|---|---|---|---|
 | 0 | between the plate and the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t0.png) | 1→2 ✗ | 1→2 ✗ | 1→2 ✗ |
 | 1 | next to the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t1.png) | 2→2 ✓ | 2→2 ✓ | 2→2 ✓ |
@@ -1297,10 +1129,9 @@ identical image per task (render is cached per suite/task_id); only the instruct
 | 8 | next to the plate | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t8.png) | 2→1 ✗ | 2→1 ✗ | 2→1 ✗ |
 | 9 | on the wooden cabinet | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t9.png) | 1→2 ✗ | 1→2 ✗ | 1→2 ✗ |
 
-**3-bowl scenes (`libero_spatial_3bowl_hardneg`) — `hardneg_default` and `hardneg` show the identical
-image per task; only the instruction differs:**
+**3-bowl scenes (`libero_spatial_3bowl_hardneg`) — `hardneg_default`/`hardneg` show the identical image per task:**
 
-| id | task | scene (markers baked in) | `hardneg_default` | `hardneg` |
+| id | task | scene | `hardneg_default` | `hardneg` |
 |--:|---|---|---|---|
 | 0 | between the plate and the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t0.png) | 1→2 ✗ | 1→2 ✗ |
 | 1 | next to the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t1.png) | 3→2 ✗ | 3→1 ✗ |
@@ -1313,983 +1144,453 @@ image per task; only the instruction differs:**
 | 8 | next to the plate | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t8.png) | 2→2 ✓ | 2→2 ✓ |
 | 9 | on the wooden cabinet | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t9.png) | 3→3 ✓ | 3→3 ✓ |
 
-Marker color key: **1** = red, **2** = green, **3** = blue (which bowl gets which number is shuffled
-per task; color always maps to the same digit). Source images:
-`openvla/experiments/figures/probe_bowl_pointing/` (`openvla` commit `1b27db3`).
+Source images: `openvla/experiments/figures/probe_bowl_pointing/` (`openvla` commit `1b27db3`).
 
-### 8.5 Bowl-attraction probe — instrumented action rollouts, not VQA (2026-09-02, extended through 2026-09-04)
+### 8.5 Bowl-attraction probe — instrumented action rollouts, not VQA (2026-09-02 through 2026-09-04)
 
-**Question.** §8's dead end (finding 12) means OpenVLA's own "which bowl do you think is the target"
-can't be asked via free text or logits — its only language-responsive channel is the action output
-itself. This probe reads that channel directly: instrument real action rollouts with per-step
-end-effector-to-bowl distance, and classify each episode's failure by which bowl (if any) the gripper
-actually reached for first. Distinguishes two readings of findings 1-11: (a) language pulls the arm
-toward the wrong/distractor bowl (grounding-adjacent misdirection), vs. (b) the arm fails to lock onto
-either bowl once the prompt deviates from its fine-tuning template (template-mismatch action collapse,
-matching Split 4b's mechanism).
+**Question.** Since VQA can't probe OpenVLA (§8's dead end), read its only language-responsive channel
+— the action output — directly: instrument real rollouts with per-step end-effector-to-bowl distance,
+and classify each failed episode by which bowl (if any) the gripper reached for first. Distinguishes
+(a) language pulls the arm toward the wrong bowl (grounding-adjacent misdirection) vs. (b) the arm
+fails to lock onto *any* target once the prompt deviates from its fine-tuning template.
 
-**Method.** New standalone script `openvla/experiments/robot/libero/probe_bowl_attraction.py` (not
-wired into `eval_registry.py` — a diagnostic, not a benchmark split). Runs the real
-`get_action()`/environment-step loop used by `run_libero_eval.py` (same model, same image
-preprocessing, same seed/init-state protocol), and at every real step (post-`num_steps_wait`)
-additionally reads `env.env.sim.data.body_xpos` for each `akita_black_bowl_*` body and computes its
-Euclidean distance to `obs["robot0_eef_pos"]`. Per episode, records the running min distance to each
-bowl and the first step (if any) the gripper came within 8cm of each (~bowl radius + gripper
-clearance) — `first_bowl_approached` is whichever bowl that happened to first, `None` if neither ever
-did. `libero_spatial` (2-bowl scene, distractor bowl 2 physically present and unchanged across every
-condition below), same seed-7 init states as the real eval (episode `i` here uses the identical init
-state as episode `i` in the real 50-trial runs). 10 episodes/condition/task throughout.
+**Method.** `probe_bowl_attraction.py` runs the real `run_libero_eval.py` action loop (same model,
+preprocessing, seed/init-state protocol) and additionally logs each bowl's distance to the
+end-effector every step. Per episode: running min distance to each bowl, and the first step (if any)
+the gripper came within 8cm of each — `first_bowl_approached` is whichever bowl that was first, `None`
+if neither. `libero_spatial` (2-bowl scene), 10 episodes/condition/task, same seed-7 init states as the
+real eval. Ran across four rounds as scope grew (task 5 only → tasks 3/7/9 → all 10 tasks →
+`target_cue_proximity_novel` added); full launch-by-launch history in `eval_log.md`'s 2026-09-02/03/04
+entries. This section reports the final, consolidated numbers only.
 
-This ran across four rounds as the probe's scope grew (task 5 only → tasks 3/7/9 → all 10 tasks →
-`target_cue_proximity_novel` added) — see `eval_log.md`'s 2026-09-02/03/04 entries for the launch-by-
-launch history, smoke tests, and operational incidents (2 orphaned-container launches on 2026-09-02;
-a shared/mutated `transformers==5.16.1` in the host-mounted `.cache/home` broke the `openvla_utils.py`
-import for the `target_cue_proximity_novel` re-run on 2026-09-04, fixed with `PYTHONNOUSERSITE=1` to
-bypass the mutated user-site overlay without touching it — likely written by a concurrent Qwen-VL
-probe session sharing the same mounted `HOME`). All results below are pooled from that combined data;
-this section reports only the final consolidated numbers.
-
-**Result — all tasks, all conditions, one table.** `default` and `negative_contrast` are defined for
-all 10 `libero_spatial` tasks. `target_cue_landmark` (Split 4b's familiar "next to X" rephrasing) and
-`target_cue_proximity_novel` (Split 4c's novel "close to X" rephrasing) only exist for the 4
-surface-family tasks (3, 5, 7, 9) — rephrasing as landmark-style only makes sense for tasks whose
-native phrasing isn't already "next to X," and tasks 2/4 have no landmark-family analog at all.
+**Result — pooled success rates closely reproduce the real eval, validating the probe:**
 
 | Task | `default` | `negative_contrast` | `target_cue_landmark` | `target_cue_proximity_novel` |
 |--:|--:|--:|--:|--:|
-| 0 | 8/10 (80%) | 9/10 (90%) | — | — |
-| 1 | 7/10 (70%) | 4/10 (40%) | — | — |
-| 2 | 9/10 (90%) | 1/10 (10%) | — | — |
-| 3 | 9/10 (90%) | 4/10 (40%) | 5/10 (50%) | 7/10 (70%) |
-| 4 | 9/10 (90%) | 6/10 (60%) | — | — |
-| 5 | 10/10 (100%) | 0/10 (0%) | 0/10 (0%) | 5/10 (50%) |
-| 6 | 10/10 (100%) | 7/10 (70%) | — | — |
-| 7 | 8/10 (80%) | 0/10 (0%) | 2/10 (20%) | 5/10 (50%) |
-| 8 | 6/10 (60%) | **7/10 (70%)** | — | — |
-| 9 | 5/10 (50%) | 0/10 (0%) | 2/10 (20%) | 3/10 (30%) |
-| **Pooled** | **81/100 (81.0%)** | **38/100 (38.0%)** | **9/40 (22.5%)** | **20/40 (50.0%)** |
-| Real 500/500 or 200/200-trial SR (§1, §5.2, §5.3) | 84.0% | 36.8% | 30.5% | 53.0% |
+| 0 | 80% | 90% | — | — |
+| 1 | 70% | 40% | — | — |
+| 2 | 90% | 10% | — | — |
+| 3 | 90% | 40% | 50% | 70% |
+| 4 | 90% | 60% | — | — |
+| 5 | 100% | 0% | 0% | 50% |
+| 6 | 100% | 70% | — | — |
+| 7 | 80% | 0% | 20% | 50% |
+| 8 | 60% | **70%** | — | — |
+| 9 | 50% | 0% | 20% | 30% |
+| **Pooled** | **81.0%** | **38.0%** | **22.5%** | **50.0%** |
+| Real 500/200-trial SR | 84.0% | 36.8% | 30.5% | 53.0% |
 
-Every pooled probe number closely reproduces the corresponding real, full-scale eval number — this
-10-episode-per-task probe is measuring the same thing the real eval measures, not just pointing the
-same direction. **Task 8 is a flagged outlier**: `negative_contrast` (70%) scored *above* `default`
-(60%) here, opposite the real eval's −48pt drop (84%→36%); instructions were spot-checked against the
-raw JSONL and are correct, read as sampling noise on n=10, not investigated further. Every other task
-tracks the real numbers' direction and rough magnitude.
+Task 8 is a flagged outlier (`negative_contrast` scored above `default`, opposite the real eval's
+direction; instructions verified correct, read as n=10 sampling noise). Every other task tracks the
+real numbers' direction and rough magnitude.
 
-**Result — failure-mode breakdown, matched 4-task cohort (tasks 3, 5, 7, 9 — the only tasks all 4
-conditions share), among failed episodes only:**
+**Result — failure-mode breakdown among failed episodes, matched 4-task cohort (3, 5, 7, 9):**
 
-| Condition (n=40 each) | Success | Failures | Target-first (still failed) | Distractor-first | Neither |
-|---|--:|--:|--:|--:|--:|
-| `default` | 80.0% | 8 | 5 (62.5%) | 0 (0%) | 3 (37.5%) |
-| `negative_contrast` | 10.0% | 36 | 10 (27.8%) | 6 (16.7%) | **20 (55.6%)** |
-| `target_cue_landmark` | 22.5% | 31 | 12 (38.7%) | 0 (0%) | **19 (61.3%)** |
-| `target_cue_proximity_novel` | 50.0% | 20 | 8 (40.0%) | 0 (0%) | **12 (60.0%)** |
+| Condition (n=40) | Success | Target-first, still failed | Distractor-first | Neither |
+|---|--:|--:|--:|--:|
+| `default` | 80.0% | 62.5% | 0% | 37.5% |
+| `negative_contrast` | 10.0% | 27.8% | 16.7% | **55.6%** |
+| `target_cue_landmark` | 22.5% | 38.7% | 0% | **61.3%** |
+| `target_cue_proximity_novel` | 50.0% | 40.0% | 0% | **60.0%** |
 
-**The novel-phrasing condition is the key new data point.** `target_cue_proximity_novel` never
-mentions a second bowl, exactly like `target_cue_landmark` — but where `target_cue_landmark` reuses
-"next to X," a phrase natively bound to *other* tasks (finding 18), `target_cue_proximity_novel` uses
-"close to X," a phrase the checkpoint saw at fine-tuning time for *no* task. Despite that, its
-failure-mode shape is nearly identical to `target_cue_landmark`'s (60.0% neither vs. 61.3%, 40.0%
-target-first-but-failed vs. 38.7%, 0% distractor-first in both — expected, since neither condition
-names a distractor). The two conditions differ enormously in *how often* they fail overall (50.0% vs.
-22.5% success — matching Split 4c's real-eval finding that novel phrasing survives much better than
-familiar-but-wrongly-bound phrasing) but, conditional on failing, fail the *same way*. That's a second,
-independent line of evidence (on top of finding 17) that distractor-pull isn't the mechanism here at
-all: a condition that structurally cannot exhibit distractor-pull (no distractor mentioned, and here
-also using a phrase with zero training-time association to misdirect toward) still shows target-
-selection collapse as its majority failure mode.
+**`target_cue_proximity_novel` is the key data point.** It mentions no distractor, like
+`target_cue_landmark` — but where `target_cue_landmark` reuses "next to X" (a phrase natively bound to
+*other* tasks, finding 18), `target_cue_proximity_novel`'s "close to X" has no such training-time
+association. Despite that, its failure shape is nearly identical (60.0% vs. 61.3% neither, 0%
+distractor-first in both). The two conditions differ enormously in *how often* they fail (50.0% vs.
+22.5% success) but, conditional on failing, fail the *same way* — independent evidence that
+distractor-pull isn't the mechanism: a condition that structurally cannot exhibit it still shows
+target-selection collapse as its majority failure mode.
 
-**Result — full 10-task cohort, `default`/`negative_contrast` only, among failed episodes:**
+**Result — full 10-task cohort, `default`/`negative_contrast`, among failed episodes:**
 
-| Condition (n=100 each) | Success | Failures | Target-first (still failed) | Distractor-first | Neither |
-|---|--:|--:|--:|--:|--:|
-| `default` | 81.0% | 19 | 12 (63.2%) | 0 (0%) | 7 (36.8%) |
-| `negative_contrast` | 38.0% | 62 | 17 (27.4%) | 9 (14.5%) | **36 (58.1%)** |
+| Condition (n=100) | Success | Target-first, still failed | Distractor-first | Neither |
+|---|--:|--:|--:|--:|
+| `default` | 81.0% | 63.2% | 0% | 36.8% |
+| `negative_contrast` | 38.0% | 27.4% | 14.5% | **58.1%** |
 
-At full 10-task scale, "arm never approaches either bowl" is the outright *majority* failure mode for
-`negative_contrast` (58.1%), not just the largest category — cleaner than the 4-task subset's 55.6%.
-Distractor-directed misdirection is real and non-trivial at this scale (14.5%, nonzero on tasks 1, 2,
-5, 9) but clearly secondary. Target-approached-but-still-failed (27.4%) is real too and concentrated
-unevenly — task 3's failures are almost entirely this mode across *every* condition it was tested
-under (`negative_contrast`, `target_cue_landmark`, and `target_cue_proximity_novel` alike), while tasks
-2, 5, 7, 9 show almost none of it. This probe doesn't instrument grasp/lift/place execution (only
-eef-to-bowl distance), so it can't say *why* task 3's approaches fail — a plausible reading is that
-off-template phrasing disrupts the policy at more than one stage (target selection *and*,
-independently, fine motor execution once near a target) for this specific task, consistent with
-"template mismatch" as a broad description of the failure but not narrowing it to
-reaching/target-selection alone.
+At full scale, "arm never approaches either bowl" is the outright *majority* failure mode for
+`negative_contrast` (58.1%). Distractor-directed misdirection is real but secondary (14.5%,
+tasks 1/2/5/9). Target-approached-but-still-failed (27.4%) is concentrated in task 3 across every
+condition it was tested under — this probe doesn't instrument grasp/lift/place, so it can't say why,
+but it's consistent with off-template phrasing disrupting the policy at more than one stage for that
+specific task.
 
-Artifacts: `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t{0..9}--2026_09_0{2,3,4}-*.jsonl`
-+ matching `--summary.json` per task/condition (gitignored, local only); rollout videos under
-`openvla/rollouts/2026_09_0{2,3,4}/`; launch logs
-`openvla/experiments/logs/probe_bowl_attraction_launch/t*.out`. Code:
-`openvla/experiments/robot/libero/probe_bowl_attraction.py` (uncommitted in the `openvla` fork as of
-this write-up). Full launch-by-launch history (smoke tests, operational incidents, hardware): see
-`eval_log.md`'s 2026-09-02, 2026-09-03, and 2026-09-04 bowl-attraction entries.
+Artifacts: `openvla/experiments/logs/probe_bowl_attraction/` (per-task JSONL + summaries, gitignored);
+rollout videos under `openvla/rollouts/2026_09_0{2,3,4}/`. Code:
+`experiments/robot/libero/probe_bowl_attraction.py`. Full launch history (smoke tests, operational
+incidents, hardware): `eval_log.md`'s 2026-09-02/03/04 entries.
 
-### 8.6 Synthesis — why the distractor-mention collapse shows up in the VLA but not the VLM (2026-09-02, updated 2026-09-04)
+### 8.6 Synthesis — why the distractor-mention collapse shows up in the VLA but not the VLM (2026-09-02, updated through 2026-09-09)
 
-**Original question.** The premise that opened this line of investigation (§8): a standalone VLM
-given the same distractor-mention referring expression can resolve it well above chance, while this
-project's OpenVLA checkpoint's task success collapses under the identical phrasing. Why the split by
-model type?
+**What's ruled out.** Not that the language is ambiguous and only OpenVLA fails to parse it (§8.1-8.3
+— Qwen2-VL resolves distractor-mention phrasing at 70%, scoring it *easier* to ground than LIBERO's
+own target-only language). Not "the distractor pulls the arm toward the wrong object" as the dominant
+mechanism either (§8.5 — misdirection was only 14.5% of `negative_contrast` failures; the majority was
+the arm never approaching *either* bowl). `target_cue_proximity_novel` strengthens this further: no
+distractor mention and no misleading template association, yet the same majority-"neither" failure
+shape.
 
-**What's ruled out.** It is not that the language is ambiguous and only OpenVLA fails to parse it
-(§8.1-8.3, findings 13-16 — once the probe's marker-placement bug was fixed, Qwen2-VL resolves
-`negative_contrast`/`positive_contrast`/`hardneg` at 70%, and scores distractor-mention phrasing as
-mildly *easier* to ground than LIBERO's own target-only language, not harder, in both the 2-bowl and
-3-bowl scenes). And "the distractor pulls OpenVLA's arm toward the wrong object" is not the dominant
-mechanism either (§8.5, finding 17 — confident misdirection toward the named distractor happened in
-only 14.5% of `negative_contrast` failures pooled across all 10 tasks; the majority failure category
-was the arm never coming within grasping range of *either* bowl). `target_cue_proximity_novel`
-strengthens this further: it never mentions a distractor and — unlike `target_cue_landmark` — uses a
-phrase with zero fine-tuning-time association to misdirect toward, yet still shows the exact same
-majority-"neither"-approached failure shape (60.0% vs. `target_cue_landmark`'s 61.3%) on the matched
-4-task cohort. A condition that structurally cannot exhibit distractor-pull still fails the same way.
+**Best-supported hypothesis.** §8.5's instrumented rollouts, pooled across all 10 tasks (280 rollouts
+`default`+`negative_contrast`, plus `target_cue_landmark`/`target_cue_proximity_novel` on the 4-task
+surface cohort), point to *template-mismatch action collapse*: once the prompt deviates from the
+fine-tuning template, the action decoder most often stops committing to any target at all (58.1% of
+`negative_contrast` failures — a majority). A model with no action-decoding head (Qwen) never exhibits
+this because it's never asked to act; a model whose only output is action tokens, fine-tuned on one
+narrow template per task (finding 18, "template *binding*, not template *matching*"), collapses on
+phrasing a VLM finds easy.
 
-**Best-supported hypothesis, still not a confirmed causal claim, but the sample-size gap is now fully
-closed.** §8.5's instrumented rollouts are the only place in the project that reads OpenVLA's own
-behavior directly rather than inferring mechanism from success-rate deltas, and pooled across all 10
-`libero_spatial` tasks (280 rollouts total across `default`+`negative_contrast`, plus
-`target_cue_landmark` on the 4-task surface cohort) they point toward *template-mismatch action
-collapse* as the majority failure mechanism: once the prompt deviates from the fine-tuning template,
-the action decoder most often stops committing to any target at all (58.1% of `negative_contrast`
-failures at full 10-task scale — a majority, not just a plurality), independent of whether the added
-language is itself resolvable by a model built to answer it. A model with no action-decoding head
-(Qwen) never exhibits this failure mode because it's never asked to act; a model whose only output is
-action tokens, fine-tuned on one narrow template per task (finding 18's "template *binding*, not
-template *matching*"), collapses on phrasing a VLM finds easy.
+**Three gaps, current status:**
 
-This reading originally rested on one task's worth of evidence; three gaps were flagged. The 4-task
-extension partially closed the first, and the full 10-task extension closes it completely:
+1. **Sample size — closed.** Extended from 1 task to all 10 (280 rollouts). The "arm never commits"
+   pattern is the outright majority of failures at full scale (58.1%), not a one-task artifact. Task
+   3's "approached correctly, still failed" persists as a genuine second mechanism (27.4% of failures,
+   task-concentrated). Pooled success rates closely reproduce the real eval (81%/38% vs. 84.0%/36.8%).
+2. **Length/complexity control — partially addressed.** `target_cue_landmark`/`target_cue_proximity_novel`
+   are word-for-word the same length as `default` (single relation-word swap, no added clause) yet
+   still collapse to the same majority-"neither" shape — rules out "it's simply a longer sentence" as
+   the explanation for *this* failure shape. Still open: whether `negative_contrast`'s own extra clause
+   (vs. its distractor content specifically) matters, since no condition adds comparable filler length
+   without semantic content.
+3. **Mechanistic localization — open, substantially narrowed. Full detail in §8.9-§8.15; this is the
+   current summary.** §8.9 (confounded, missing center-crop) → §8.10 (fixed: center-crop +
+   teacher-forced diagnostics, since `output_attentions=True` alone silently swaps in a different,
+   worse-performing policy on this bf16 checkpoint) found resolution-layer and vision-attention-mass
+   showed **no condition-level difference** — but that used the wrong statistical unit (pooled
+   per-token stdev instead of episode-level, n=15/condition). §8.12's episode-level correction found
+   vision-attention *is* a large, highly significant effect (p<0.0001, d≈1.9); resolution-layer's null
+   holds either way. §8.13 ruled out prompt-length dilution as a sufficient cause, but found both
+   diagnostics substantially track episode length/success generally (a structural artifact of
+   closed-loop termination: failing episodes run to the step cap, inflating their whole-episode
+   average) — not a clean condition-content signal. A fixed early window (steps 0-9, immune to that
+   confound by construction) showed a small `target_cue_landmark`-specific signal, replicated
+   non-borderline at n=50 (§8.14: p=0.0009, d=0.62) — but `target_cue_proximity_novel` also diverges
+   (opposite sign), so it's real but not a clean binary story. Neither diagnostic can tell "confident
+   correct motion" from "confident wrong motion" apart; §8.15 adds that (final-layer logit
+   margin/entropy) but it's implemented, not yet run — blocked on GPU access matching the established
+   bf16 protocol.
 
-1. ~~**Sample size.**~~ **Fully closed, with a refinement that survives at scale.** Extended from 1
-   task, to 4, to all 10 `libero_spatial` tasks for `default`/`negative_contrast` (280 rollouts total;
-   `target_cue_landmark` remains 4-task, since it can't be authored for tasks whose native phrasing
-   already *is* "next to X," or for tasks 2/4 which have no landmark-family analog at all). The "arm
-   never commits" pattern doesn't just generalize — at full scale it's the outright majority of
-   failures (58.1%), a cleaner result than either the task-5-only or 4-task readings. But it remains
-   task-heterogeneous, not universal: task 3's failures are still dominated by "approached correctly,
-   still failed" (a pattern nearly absent from tasks 2, 5, 7, 9), and pooled across all 10 tasks that
-   second mode still accounts for a real 27.4% of failures — not a fluke of one task, a genuine second
-   mechanism. Pooled success rates now closely reproduce the real, full-scale (500-trial) numbers (81%
-   vs. 84.0% `default`, 38% vs. 36.8% `negative_contrast`), which is itself validation that this
-   10-episode-per-task probe is measuring the same thing the real eval measures. One flagged anomaly:
-   task 8 inverted direction (`negative_contrast` scored *above* `default`, opposite the real eval's
-   −48pt drop) — instructions verified correct, read as sampling noise on a small per-task n, not
-   investigated further. `target_cue_proximity_novel` (§8.5) has since also been added on the 4-task
-   cohort, matching `target_cue_landmark`'s failure shape almost exactly (60.0% vs. 61.3% neither)
-   despite a very different overall success rate (50.0% vs. 22.5%) — see gap 2 below for what this
-   adds. Remaining unaddressed: `positive_contrast`, `target_cue_region` on landmark-family tasks,
-   `hardneg`, and the Split 2/3 scene variants still haven't been run through this probe.
-2. **No length/complexity control — partially addressed as a side effect of adding
-   `target_cue_proximity_novel`.** `negative_contrast` adds a whole extra clause ("...not the one on
-   top of...", 24 words vs. `default`'s ~15). `target_cue_landmark` and `target_cue_proximity_novel`,
-   by contrast, are *exactly* the same length as `default` — a single relation-word swap ("on the
-   ramekin" → "next to"/"close to the ramekin"), no added clause, verified word-for-word identical
-   length. Both still collapse to a majority-"neither" failure shape (§8.5), which rules out "it's
-   simply a longer sentence" as an explanation for *this* shape of failure — a same-length rephrasing
-   triggers it just as reliably as a longer one. What remains unaddressed is the length confound
-   specific to `negative_contrast` itself: nothing yet isolates whether *its* extra clause (vs. its
-   distractor content) matters, since no condition adds comparable filler length without added
-   semantic content. That narrower version of the gap is unaddressed by either extension.
-3. ~~**No mechanistic localization.**~~ **Attempted with a valid behavioral contrast (§8.9→§8.10), a
-   genuine null result on two coarse diagnostics, not a clean close.** §8.5 shows *what the arm does*,
-   not *where in the network* it goes wrong — the vision encoder, the language projector, or the
-   action-token head could each independently produce "never commits to a target," and task 3's
-   approach-then-fail pattern is a separate localization question again (likely downstream of target
-   selection, in grasp/lift/place control, but untested). "Action decoder mismatch" is the natural
-   reading given OpenVLA's architecture (action tokens are the only output this model produces, §8's
-   dead end). §8.9's first pass came back null under a confound (0% success in both conditions, traced
-   to a missing center-crop step); §8.10 fixed that *and* a second, more fundamental issue it surfaced
-   along the way — requesting `output_attentions=True` forces a fallback to numerically different
-   `eager` attention, which on this bf16 checkpoint actually changes the argmax on the majority of
-   continuous action dimensions, so the original diagnostics had been reading a policy that wasn't the
-   one being evaluated. A teacher-forced redesign (diagnose the policy that was actually executed,
-   rather than let the diagnostic pass choose its own) restored real success rates (93.3%/0% vs. the
-   eval's 92-94%/2-4%) — and on that now-valid contrast, resolution layer and vision-attention mass
-   *still* don't differ between conditions by more than about half a standard deviation. §8.11 then
-   tried the natural next step both §8.9 and §8.10 had flagged — condition on §8.5's per-episode
-   approach behavior instead of prompt condition, in case a per-condition average was washing out a
-   per-episode effect — and, after catching and correcting a real confound along the way (pooling
-   across conditions by behavior mostly just re-detects the condition-level difference, since almost
-   all `target_first` episodes happen to be `default`), the properly-isolated test (holding condition
-   fixed, comparing behavior within `negative_contrast` only) is *also* null. Gap #3 has now been
-   tested at both levels either diagnostic could plausibly show something at, on this task, and neither
-   does — the strongest support yet for "these two diagnostics don't localize this failure," though
-   still not proof no mechanistic difference exists anywhere in the network, and still one task. Task
-   3's approach-then-fail localization question is untouched. **[2026-09-08 correction, see §8.12]**
-   "neither diagnostic differs by condition" turns out to be an artifact of comparing means against
-   pooled per-token stdev instead of episode-level stdev — redone at the episode level (the
-   statistically correct unit), vision-attention shows a large, highly significant condition-level
-   difference (p<0.0001, Cohen's d≈1.9); resolution-layer's null holds either way. §8.12 flags a
-   likely length-dilution confound (`negative_contrast`'s longer prompt) as the probable cause and a
-   length-matched rerun as the direct test — see §8.12/§8.13. **[2026-09-08/09 update, see §8.13-§8.15]**
-   Length-dilution alone was ruled out (§8.13), but both diagnostics turned out to substantially track
-   episode length/success (a structural artifact of closed-loop termination), not condition content
-   specifically; a fixed early window immune to that confound by construction showed a small,
-   `target_cue_landmark`-specific signal that replicated non-borderline at n=50 (§8.14, p=0.0009,
-   d=0.62) — but `target_cue_proximity_novel` also diverges (opposite sign), so it's a real, replicated
-   pattern, not yet a clean localization. Still no diagnostic here can tell "confident correct motion"
-   from "confident wrong motion" apart; §8.15 adds that (final-layer logit margin/entropy crossed
-   against the already-recorded bowl-distance trajectory) but it's implemented, not yet run — blocked
-   on GPU access matching the established bf16 protocol.
-
-**Net.** The VLA/VLM split is well explained at the outcome level (findings 12-17), and the mechanism
-now has direct behavioral evidence from the full 10-task suite (not 1, not 4) supporting "arm fails to
-commit to a target" as the *majority* failure mechanism, with pooled success rates that closely
-reproduce the real full-scale eval — about as strong as outcome-matched behavioral evidence gets for
-this probe design. `target_cue_proximity_novel` adds a genuinely new angle rather than just more of
-the same: a condition with no distractor mention *and* no misleading template association still fails
-the same way as one that has both, which is hard to square with anything except target-selection
-collapse being the shared cause. A second, real failure mode (correct target approach, still fails,
-~27% of failures) persists at scale and is task-concentrated rather than a one-task artifact. The
-broad "not simply a longer sentence" reading of the length-control gap is now supported (§gap 2).
-Mechanistic localization has now been tried three times (§8.9's confounded first pass; §8.10's fixed,
-real-success-rate-matched re-run, pooled by prompt condition; §8.11's re-test pooled by §8.5's
-per-episode approach behavior instead, after catching and correcting a condition/behavior confound
-along the way) and come back null every time on the same two coarse diagnostics (resolution layer,
-vision-attention mass) — a genuine null at both grains anyone had proposed testing it at, not evidence
-against the mechanism, but not positive confirmation either. That's what's left before "template-
-mismatch action collapse, not distractor confusion" can be called settled rather than best-supported:
-either a different diagnostic (not resolution-layer/attention-mass) or more tasks (this is still n=1
-task, and §8.11's within-condition behavioral comparison specifically is underpowered at n=2 for
-`target_first`) would be needed to move this further.
+**Net.** The VLA/VLM split is well explained at the outcome level (findings 12-17). "Arm fails to
+commit to a target" is the best-supported majority mechanism, directly evidenced (not inferred) at full
+10-task scale, with a second, task-concentrated "approached but still failed" mode. Mechanistic
+localization has moved from "two coarse diagnostics, both null" to "vision-attention is a real,
+replicated, condition- and window-dependent effect that isn't yet a clean localization" — see §8.9-§8.15
+for the full trail and current blocker.
 
 ### 8.7 Qwen bowl-pointing probe, re-run with sampled (not greedy-only) decoding (2026-09-04)
 
-**Motivation.** Every Qwen run so far (§8.1-§8.4) drew exactly one greedy (`do_sample=False`)
-generation per query, so each condition's reported accuracy was a single point estimate over an
-already-small n (10 per task, 40-50 pooled) — no way to tell how much of a given number reflects a
-stable model tendency vs. one lucky/unlucky decode. Request: sample multiple responses per query
-instead, to see the trend rather than relying on greedy decoding alone.
+**Motivation.** Every Qwen run so far drew one greedy decode per query — no way to tell a stable
+tendency from a lucky/unlucky draw.
 
-**Method.** `probe_bowl_pointing_qwen.py` (`openvla` fork, uncommitted as of this write-up) changed
-to draw `num_samples=10` generations per query at `temperature=0.7` (`do_sample=True`, all 10 drawn
-in one `model.generate(..., num_return_sequences=10)` call rather than 10 separate calls). Each
-record now reports `sample_accuracy` (fraction of the 10 samples that name the correct bowl) and a
-majority-vote answer/correctness, alongside the full list of parsed answers and an `answer_counts`
-distribution — instead of a single `raw_model_output`/`correct` pair. `--num_samples 1 --temperature
-0` reproduces the exact old greedy behavior for compatibility. Smoke-tested on 1 task, 3 samples,
-before committing to the full battery. Full battery: same 5 conditions x 10 tasks as §8.3 (50
-queries x 10 samples = 500 generations), run on the Berkeley server's GPU 2 (idle at the time; GPUs
-0-1 were occupied by another user's unrelated job).
+**Method.** `probe_bowl_pointing_qwen.py` changed to draw 10 samples/query at temperature 0.7 (batched
+`num_return_sequences=10`), reporting per-query sample accuracy and majority vote. Same 5 conditions ×
+10 tasks as §8.3 (500 generations).
 
-**Result: zero within-query disagreement — the sampled "trend" is that there isn't one.** Across all
-50 queries, every single one of the 10 samples landed on the *same* bowl number — `sample_accuracy`
-is exactly 0.0 or 1.0 for all 50 records, never anything in between, and majority-vote answers are
-therefore identical to a per-query accuracy count. At `temperature=0.7`, this model's answer to this
-VQA probe is not meaningfully stochastic for this stimulus: sampling more doesn't surface a
-distribution to characterize, it just reproduces the same answer 10 times over.
+**Result — zero within-query disagreement: the sampled "trend" is that there isn't one.** All 50
+queries landed all 10 samples on the same bowl number (`sample_accuracy` exactly 0.0 or 1.0, never
+between).
 
-| Condition | Scene | Sample accuracy (mean over 10 samples/query) | Majority-vote accuracy | §8.3 greedy accuracy |
-|---|---|---|---|---|
-| `default` | `libero_spatial` (2 bowls) | 50.0% | 5/10 | 5/10 (50%) |
-| `negative_contrast` | `libero_spatial` (2 bowls) | 60.0% | 6/10 | 7/10 (70%) |
-| `positive_contrast` | `libero_spatial` (2 bowls) | 80.0% | 8/10 | 7/10 (70%) |
-| `hardneg_default` | `libero_spatial_3bowl_hardneg` (3 bowls) | 60.0% | 6/10 | 6/10 (60%) |
-| `hardneg` | `libero_spatial_3bowl_hardneg` (3 bowls) | 70.0% | 7/10 | 7/10 (70%) |
+| Condition | Sample-mean accuracy | §8.3 greedy accuracy |
+|---|--:|--:|
+| `default` | 50.0% | 50% |
+| `negative_contrast` | 60.0% | 70% |
+| `positive_contrast` | 80.0% | 70% |
+| `hardneg_default` | 60.0% | 60% |
+| `hardneg` | 70.0% | 70% |
 
-`default`, `hardneg`, and `hardneg_default` reproduce their §8.3 greedy numbers exactly, task-for-task
-(verified against the per-task JSONL, not just the aggregate). `negative_contrast` and
-`positive_contrast` each move by one task relative to §8.3/§8.4's greedy table: task 4 flips
-correct->incorrect for `negative_contrast` (was "1->1 ✓", now unanimously "1->2" across all 10
-samples), and task 8 flips incorrect->correct for `positive_contrast` (was "2->1 ✗", now unanimously
-"2->2" across all 10 samples). Both raw model outputs for the flipped queries are the bare digit with
-no explanation text (`'2'`), so this isn't a `parse_answer` mis-extraction from a differently-worded
-explanation — the model's realized top answer for these two queries genuinely differs from the old
-greedy run.
-
-**Reading.** Two things worth separating:
-
-1. **The trend confirms the greedy numbers, it doesn't undercut them.** 0 of 50 queries show any
-   split (e.g. 6/10, 8/10) that would indicate a close call resolved differently draw-to-draw — every
-   query is either fully consistent-correct or fully consistent-wrong across independent samples.
-   §8.1-§8.6's conclusions (every condition clears its chance baseline; distractor-mention phrasing
-   scores at or above its no-mention counterpart in both scenes) are unaffected and, if anything,
-   strengthened — the numbers were never one lucky decode away from looking different.
-2. **The 2 one-task deltas are a disclosed, unexplained caveat, not sampling noise.** Because each
-   flipped query is unanimous across 10 independent draws (not a 5/5 or 6/4 split), the mechanism
-   isn't "the model was genuinely torn and chance tipped it" — it's some other difference between the
-   old single-sequence `generate()` call and the new batched `num_return_sequences=10` call (bf16
-   batching-precision differences shifting a close top-2 logit gap is the natural suspect, but this
-   wasn't investigated and shouldn't be presumed). Effect size is small (1 task / 10 in each of 2
-   conditions) and doesn't change either condition's qualitative reading (`negative_contrast` and
-   `positive_contrast` both still comfortably clear chance and their `default` counterpart), but it
-   means these two conditions' exact numbers are not bit-for-bit reproducible between the greedy and
-   sampled code paths, and that gap is left open rather than papered over.
-
-Artifacts: `openvla/experiments/logs/probe_bowl_pointing_qwen/probe_bowl_pointing_qwen.jsonl`
-(overwritten in place — schema changed: `raw_model_output`/`correct` replaced by
-`raw_model_outputs`/`parsed_answers`/`sample_accuracy`/`answer_counts`/`majority_answer`/
-`majority_correct`; `num_samples`/`temperature` added). Code:
-`probe_bowl_pointing_qwen.py` (`openvla` fork, uncommitted as of this write-up).
+`default`/`hardneg`/`hardneg_default` reproduce §8.3 exactly, task-for-task. `negative_contrast` and
+`positive_contrast` each move by one task (unanimous across all 10 samples both times, not a close
+call) — an unexplained but small delta between the old single-sequence and new batched `generate()`
+call path (bf16 batching-precision is the natural suspect, not investigated). Effect size doesn't
+change either condition's qualitative reading. The main result — no query shows genuine draw-to-draw
+disagreement — confirms §8.1-8.6's conclusions rather than undercutting them.
 
 ### 8.8 Qwen3-VL-8B-Instruct re-run — does a newer/stronger VLM raise the ceiling? (2026-09-04)
 
-**Motivation.** §8.7's Qwen2-VL-7B-Instruct numbers (48-90% depending on condition, chance 33-50%)
-were judged still too low to be a satisfying "resolvable in principle" upper bound. Qwen3-VL is a
-newer model generation from the same family; this checks whether it raises the ceiling, holding the
-render/annotate/scoring pipeline (`bowl_pointing_common.py`) and every condition/task exactly fixed
-so the only changed variable is which model answers.
+**Motivation.** §8.7's numbers (48-90%, chance 33-50%) still looked low for a "resolvable in
+principle" upper bound. Same pipeline, same conditions/tasks, only the model swapped.
 
-**Method.** New script `probe_bowl_pointing_qwen3.py` (`openvla` fork, uncommitted) — same structure
-as `probe_bowl_pointing_qwen.py`, swapped to `Qwen3VLForConditionalGeneration` /
-`Qwen/Qwen3-VL-8B-Instruct` (8B chosen over the also-available 32B-Instruct as the closer scale match
-to the existing Qwen2-VL-7B-Instruct numbers, so "newer" isn't conflated with "bigger"). Two API
-differences from the Qwen2-VL script: (1) needs `transformers>=4.57.0` for `qwen3_vl` support — an
-open-ended `pip install -U transformers` pulled today's `5.16.1` instead and reproduced the exact
-failure mode §8.1 first documented for Qwen2-VL (removed `AutoModelForVision2Seq` breaks an unrelated
-transitive import through `libero_utils.py`→`robot_utils.py`→`openvla_utils.py` that
-`bowl_pointing_common.py` pulls in); pinning to `transformers==4.57.6` (the newest release still on
-the 4.x line) satisfies both constraints. (2) No `qwen_vl_utils` dependency needed —
-`processor.apply_chat_template(messages, tokenize=True, add_generation_prompt=True,
-return_dict=True, return_tensors="pt")` handles image encoding directly instead of the separate
-`process_vision_info()` + `processor(...)` two-step Qwen2-VL required (one output key,
-`token_type_ids`, isn't accepted by `generate()` and is popped before the call). Same sampling setup
-as §8.7 (10 samples/query, temperature 0.7, one batched `num_return_sequences=10` call). Smoke-tested
-(1 task, 3 samples) before the full battery — correctly answered task 0, which Qwen2-VL got wrong in
-*every* condition across every prior run (§8.3/§8.4/§8.7). Full battery: same 5 conditions x 10 tasks
-as §8.7 (500 generations), Berkeley server GPU 1 (GPUs 0/2/3 were occupied by another user's
-unrelated training job at the time; GPU 1 also had a small concurrent job from a sibling session of
-this same project, left running alongside since there was ample headroom — confirmed via
-`nvidia-smi`/`docker ps` before launching).
+**Result — large 2-bowl gains, a 3-bowl regression, not a uniform upgrade:**
 
-**Result: large gains on the 2-bowl scene, a regression on the 3-bowl scene — not a uniform upgrade.**
+| Condition | Scene | Qwen2-VL (§8.7) | Qwen3-VL-8B | Δ |
+|---|---|--:|--:|--:|
+| `default` | 2 bowls | 50.0% | **81.0%** | +31.0 |
+| `negative_contrast` | 2 bowls | 60.0% | **90.0%** | +30.0 |
+| `positive_contrast` | 2 bowls | 80.0% | **84.0%** | +4.0 |
+| `hardneg_default` | 3 bowls | 60.0% | **42.0%** | −18.0 |
+| `hardneg` | 3 bowls | 70.0% | **48.0%** | −22.0 |
 
-| Condition | Scene | Qwen2-VL (§8.7) | Qwen3-VL-8B | Δ | Chance |
-|---|---|---|---|---|---|
-| `default` | `libero_spatial` (2 bowls) | 50.0% | **81.0%** | +31.0 | 50% |
-| `negative_contrast` | `libero_spatial` (2 bowls) | 60.0% | **90.0%** | +30.0 | 50% |
-| `positive_contrast` | `libero_spatial` (2 bowls) | 80.0% | **84.0%** | +4.0 | 50% |
-| `hardneg_default` | `libero_spatial_3bowl_hardneg` (3 bowls) | 60.0% | **42.0%** | −18.0 | 33% |
-| `hardneg` | `libero_spatial_3bowl_hardneg` (3 bowls) | 70.0% | **48.0%** | −22.0 | 33% |
+Every condition still clears its chance baseline, so §8.6's core synthesis holds for Qwen3-VL too — but
+it isn't a strictly-better replacement: +30pt on the 2-bowl scene, −18/−22pt on the 3-bowl `hardneg`
+scene. Task 3 ("on the cookie box") flips correct→incorrect in **all 5 conditions**, unanimously — the
+clearest single-task regression, concentrated rather than diffuse. Genuine sample-to-sample
+disagreement appeared on 5/50 queries (vs. 0/50 for Qwen2-VL at the same temperature) — a real
+trend to characterize for the first time, task 1 (2-bowl scene) being the most consistently uncertain.
 
-(Sample-accuracy mean over 10 samples/query; majority-vote numbers track within 1pt of these in
-every row — e.g. `default` majority-vote is 80.0% vs. 81.0% sample-mean — so only one number per row
-is shown.) Every condition still clears its chance baseline on both models, so §8.6's core synthesis
-(a capable VLM resolves this referring expression above chance regardless of distractor-mention,
-unlike OpenVLA's action-decoding collapse) holds for Qwen3-VL too — but "is the newer model just
-better" doesn't have a clean yes: it gains 30+ points on the 2-bowl scene's `default`/
-`negative_contrast` cells, a smaller +4 on `positive_contrast`, and *loses* 18-22 points on both
-3-bowl `hardneg`/`hardneg_default` cells.
+Artifacts (§8.1-8.8): `openvla/experiments/logs/probe_bowl_pointing_qwen{,3}/*.jsonl` (gitignored,
+local only); images `openvla/experiments/figures/probe_bowl_pointing/`. Code:
+`bowl_pointing_common.py`, `probe_bowl_pointing{,_qwen,_qwen3}.py` (`openvla` fork; `bowl_pointing_common.py`
++ `probe_bowl_pointing.py`/`probe_bowl_pointing_qwen.py`/`probe_bowl_pointing_qwen3.py` at commit
+`1b27db3`, later changes uncommitted as of this write-up).
 
-**Within-query variance: real, for the first time.** §8.7 found zero within-query disagreement
-across all 50 Qwen2-VL queries at temperature 0.7 — every query's 10 samples were unanimous.
-Qwen3-VL shows genuine sample-to-sample disagreement on 5 of 50 queries:
+### 8.9 Mechanistic localization — logit lens + attention mass, first pass (run 2026-09-04, written up 2026-09-06)
 
-| Condition | Task | Target | Sample accuracy | Answer distribution |
-|---|--:|--:|--:|---|
-| `default` | 1 | 2 | 0.4 | `{2: 4, 1: 6}` |
-| `default` | 5 | 1 | 0.7 | `{1: 7, 2: 3}` |
-| `positive_contrast` | 1 | 2 | 0.4 | `{2: 4, 1: 6}` |
-| `hardneg` | 1 | 3 | 0.8 | `{3: 8, 1: 2}` |
-| `hardneg_default` | 6 | 2 | 0.2 | `{1: 8, 2: 2}` |
+**Question (§8.6 gap 3).** §8.5 shows *what the arm does*, not *where in the network* "never commits"
+originates — vision encoder, language projector, or action-token head could each independently produce
+it.
 
-This is itself an answer to the original request (sample instead of relying on one greedy decode):
-for Qwen2-VL the trend confirmed a fully deterministic model at this temperature; for Qwen3-VL there
-is an actual trend to characterize on a handful of queries, task 1 (2-bowl scene) being the most
-consistently uncertain one across two different conditions on the identical image.
+**Method.** `probe_mechanistic_localization.py` instruments real rollouts via `vla.generate(...,
+output_attentions=True, output_hidden_states=True, return_dict_in_generate=True)`, computing two
+diagnostics per action-token prediction: (1) **resolution layer** — the earliest LLM layer (0-32) whose
+logit-lens argmax already matches the final generated token; (2) **vision-attention mass** — fraction
+of attention (mean over heads) landing on the 256-patch vision span. Task 5, `default` vs.
+`negative_contrast`, 15 full-length episodes each.
 
-**Per-task detail: the 3-bowl regression is concentrated, not diffuse.** Comparing majority-vote
-correctness per (condition, task) against §8.7's Qwen2-VL numbers: task 3 ("on the cookie box")
-flips from correct to incorrect in **all 5 conditions**, unanimously (all 10/10 samples answer "1"
-instead of the correct "2" in every condition it's wrong in) — a clean, consistent miss, not noise
-from a close call. In the `hardneg`/`hardneg_default` 3-bowl cells specifically, tasks 3, 5, 6, 7 flip
-correct→incorrect while only tasks 1, 2 flip the other way — the regression is concentrated in
-specific tasks rather than spread evenly across the 3-bowl scene's 10 tasks. On the 2-bowl scene, the
-gains are broader: 6 of 10 tasks flip incorrect→correct across `default`/`negative_contrast`/
-`positive_contrast` combined, against only task 1 and task 3 flipping the other way.
+**Disclosed confound.** `center_crop` was accepted as a flag but never applied — 0/15 succeeded in
+*both* conditions (vs. the real eval's 92-94%/2-4%), so this run likely never contained the
+commits-vs-never-commits contrast the diagnostics need to see.
 
-**Reading.** Qwen3-VL-8B is a real improvement on the easier (2-bowl, no or single-clause
-distractor-mention) end of this probe, but not a strictly-better replacement for Qwen2-VL-7B on the
-harder 3-bowl `hardneg` scene specifically — whatever changed between model generations helped some
-tasks and hurt others, task 3 being the clearest single-task regression. The original complaint
-("accuracy is still too low") is only partly addressed: `negative_contrast` now reaches a genuinely
-strong 90%, but `hardneg`/`hardneg_default` are now *lower* than before, and no condition reaches
-what would read as a clean, uncontested ceiling (100% or near it). Not investigated further here:
-whether task 3's clean flip reflects something specific about that scene's render (worth an eyeball
-of `libero_spatial--*--t3.png` in the shared fig directory before trusting the number further), and
-whether Qwen3-VL-32B-Instruct (available, not run) would resolve the 3-bowl regression the 8B version
-didn't.
+**Result — no condition-level difference on either diagnostic** (mean resolution-layer frac 0.843 vs.
+0.856; vision-attn last-layer 0.116 vs. 0.101 — well under half a token-level stdev apart). Gripper
+resolves markedly earlier than the 6 continuous dims in both conditions alike; that pattern is
+consistent across conditions, the *level* isn't.
 
-Artifacts: `openvla/experiments/logs/probe_bowl_pointing_qwen3/probe_bowl_pointing_qwen3.jsonl` (new
-file, same schema as §8.7's Qwen2-VL output); annotated images shared with the other probe scripts
-(`openvla/experiments/figures/probe_bowl_pointing/`, unchanged — same render cache keyed by
-`(suite, task_id)`, independent of which model is being probed). Code:
-`probe_bowl_pointing_qwen3.py` (new, uncommitted in the `openvla` fork as of this write-up).
+**Reading.** A genuine null on these two diagnostics, but not conclusive: possibly washed out by
+per-token/per-condition averaging, possibly hidden by the missing-center-crop confound collapsing both
+conditions into a similar bad regime, and n=1 task. See §8.10 for the fix.
 
-### 8.9 Mechanistic localization probe — logit lens + attention mass (run 2026-09-04, written up 2026-09-06)
+Artifacts: `probe_mechanistic_localization/libero_spatial--t5--fullcompare1--2026_09_04-15_09_35.jsonl`.
+Code: `experiments/robot/libero/probe_mechanistic_localization.py`.
 
-**Motivation.** §8.6's gap #3: the bowl-attraction probe (§8.5) shows *what the arm does*
-(approaches the target, approaches nothing, or approaches then still fails) but not *where in the
-network* the "never commits" behavior originates — vision encoder, language projector, or action-token
-head could each independently produce it.
+### 8.10 Fixed: center-crop + teacher-forced diagnostics (2026-09-06)
 
-**Method.** `probe_mechanistic_localization.py` (`openvla` fork, uncommitted) instruments real action
-rollouts (not a VQA probe, same design choice as §8.5) by calling `vla.generate(...,
-output_attentions=True, output_hidden_states=True, return_dict_in_generate=True)` directly instead of
-`predict_action()` (which can't accept those kwargs), then replicating `predict_action`'s bin-decode
-tail itself. Two diagnostics computed at every one of the 7 action-token predictions per step:
+**Fix #1 (center-crop) — necessary but not sufficient.** Added, `default` success rose only to
+1/15 (6.7%) — a second, independent problem remained.
 
-1. **Logit lens / resolution layer** — apply the model's own final `norm` + `lm_head` to each
-   intermediate layer's hidden state for the token position feeding that prediction, and record the
-   earliest layer (0-32, this checkpoint's Llama-2-7B backbone) at which the layer-wise argmax first
-   matches the final, actually-generated token.
-2. **Attention mass** — fraction of each action-token's attention (mean over heads, per layer) landing
-   on the vision-patch span (256 patches, positions `[1, 257)` per `_get_num_vision_patches`) vs.
-   everything else.
+**Fix #2 — root cause: `output_attentions=True` changes which action gets executed, not just what's
+observed.** `sdpa` (the model's normal attention kernel) doesn't support returning attention weights,
+so HF silently falls back to numerically-different `eager` whenever diagnostics are requested. A
+controlled single-frame test found this flips the argmax on **4 of 7 action dims on the very first
+prediction of a fresh episode** — this bf16 checkpoint's continuous-dim decisions often have a small
+top-1/runner-up logit margin, and `sdpa` vs. `eager`'s different floating-point summation order is
+enough to flip it. Every §8.9 run had therefore been diagnosing a policy that wasn't the one actually
+evaluated, on top of the center-crop bug.
 
-Both come for free from a standard HF `generate()` call on this checkpoint (`OpenVLAForActionPrediction`
-only overrides `prepare_inputs_for_generation`); attentions/hidden-states themselves are not
-serialized (not JSON-safe, and 32 layers × per-head tensors over a 220-step rollout is large) — only
-the scalar summaries above are written per token.
+**Redesign — two-pass, teacher-forced.** Pass 1: plain `generate()` (matches `predict_action()`
+exactly) decides the real executed action. Pass 2: a separate, non-incremental forward pass,
+teacher-forced on those exact tokens, `output_attentions=True` purely to read diagnostics — `eager`'s
+own argmax is recorded but never used to act. Mathematically equivalent hidden-states/attentions to the
+old incremental loop, just computed in one shot.
 
-**This script was already run once, before today, without being logged or written up.** Two output
-files dated 2026-09-04 (`libero_spatial--t5--compare1--*.jsonl`, 5 episodes/condition at 30
-instrumented steps; superseded by `libero_spatial--t5--fullcompare1--*.jsonl`, 15 episodes/condition,
-**full-length episodes** — `--max_env_steps_to_instrument 220`, not the script's own default of 30)
-were found sitting in `experiments/logs/probe_mechanistic_localization/` when this write-up was
-requested, despite the script's own docstring still reading "DRAFT ... not yet run" and
-`benchmark_split_result.md`/`eval_log.md` still describing gap #3 as fully open. This section writes
-up that pre-existing `fullcompare1` run (the larger, full-episode one — 6,600 instrumented env-steps ×
-7 action-dims = 46,200 token-level diagnostic records total). Today's session additionally re-ran a
-1-episode/3-step smoke test and a fresh 6-episode default-config battery (30 steps/episode) purely to
-confirm the draft script still executes correctly end-to-end on the current image/checkpoint — both
-reproduced the same qualitative pattern below and are not separately analyzed here.
+**Validation — success now matches the real eval:** `default` 14/15 (93.3%) vs. real 92-94%;
+`negative_contrast` 0/15 (0%) vs. real 2-4%.
 
-**Disclosed confound — task success in this run is not comparable to the real eval.** The script's
-own comments flag that `get_action_with_diagnostics` omits center-crop preprocessing (`cfg.center_crop`
-is accepted but never applied, unlike `openvla_utils.get_vla_action`). Consistent with that, **0 of 15
-episodes succeeded in either condition** — sharply below the real 500-trial eval's task-5 numbers
-(`default` 92-94%, `negative_contrast` 2-4%; §2). Because both conditions ran under the identical
-(missing-center-crop) preprocessing, a *relative* comparison between them is still meaningful in
-principle, but neither condition's absolute behavior here should be read as representative of the real
-checkpoint, and — importantly — `negative_contrast`'s usual near-total failure and `default`'s usual
-near-total success are both washed out, so this run may simply not contain the behavioral contrast
-(commits vs. never-commits) the diagnostics were designed to distinguish.
+**Result on now-valid data — still no condition-level difference:** resolution-layer frac 0.8467 vs.
+0.8477; vision-attn last-layer 0.1163 vs. 0.0964. Same qualitative null as §8.9, but now unconfounded —
+93 points of real success separate the conditions and these two aggregate diagnostics still don't move.
 
-**Result: no condition-level difference on either diagnostic.**
+**A genuinely new finding: the sdpa/eager mismatch rate is large and tracks resolution-layer margin.**
+The 6 continuous action dims (late-resolving, ~0.83-0.90 frac) disagree between kernels on 12-48% of
+predictions; the gripper dim (early-resolving, ~0.66 frac) agrees ~88-90% of the time. Late resolution
+*is* a small decision margin, and a small margin is what makes a dimension sensitive to this kind of
+numerical perturbation — holds equally in both conditions, so it's a property of the checkpoint's
+general calibration, not something the failing condition induces.
 
-| Condition (n=23,100 token-records each) | Resolution layer (raw, /32) | Resolution layer (frac) | Vision-attn, last layer | Vision-attn, mean over layers |
-|---|--:|--:|--:|--:|
-| `default` | 26.97 ± 5.33 | 0.843 ± 0.167 | 0.116 ± 0.034 | 0.072 ± 0.015 |
-| `negative_contrast` | 27.40 ± 5.23 | 0.856 ± 0.164 | 0.101 ± 0.031 | 0.065 ± 0.014 |
+**Reading.** Gap 3 now has a real, unconfounded null on both diagnostics — most likely explanation:
+they're coarse, per-token, within-condition averages, and "never commits" may be a per-episode
+phenomenon that averaging washes out (tested next, §8.11). Any future probe on this checkpoint needing
+both real behavior *and* introspection needs this two-pass, teacher-forced structure — a bare
+`output_attentions=True` call is not a passive side-channel on this model at bf16.
 
-(± is population stdev across all instrumented tokens.) The gap between conditions on every column is
-well under half a standard deviation. Breaking down by action dimension (0-2 position, 3-5 orientation,
-6 gripper) or by episode phase (first 10 / next 10 / remaining instrumented steps) shows the same
-pattern within each slice — e.g. the gripper dimension (dim 6) resolves markedly earlier than the
-other six in both conditions alike (raw resolution layer ~0.62-0.67 frac vs. ~0.84-0.91 for the
-continuous dims, an expected artifact of the gripper's small, easily-separated bin vocabulary), but
-`default` and `negative_contrast` track each other closely on every dimension and every phase. Action-
-token identity resolving late (mean ~27/32 layers, i.e. in roughly the last 5 layers) and vision
-attention staying low (~7-12% of total attention mass on a 256-token vision span) are consistent
-findings across the whole run, but neither number moves between conditions.
+Artifacts: `probe_mechanistic_localization/libero_spatial--t5--tf_full--2026_09_06-10_14_08.jsonl`
+(validated run). Code: same file, both fixes documented inline.
 
-**Reading.** This is a genuine null result on the two specific diagnostics tried, not evidence against
-findings 17/18's action-collapse mechanism — three reasons to treat it as inconclusive rather than
-settling: (1) both diagnostics are coarse, per-token *averages*; if the mechanism is that some episodes
-commit early and others never do, aggregating within a condition could wash out exactly the contrast
-being sought (the bowl-attraction probe's per-episode approach/no-approach labels were never
-cross-referenced against this run's per-token diagnostics — that join hasn't been done). (2) the
-missing-center-crop confound (above) may have collapsed both conditions into a similar (bad) behavioral
-regime, removing the very commits-vs-never-commits contrast the probe needs to see a difference. (3)
-n=1 task (task 5) at 15 episodes/condition — no cross-task replication, unlike §8.5's full 10-task
-extension. Net: gap #3 has now had a first real attempt, but it should be read as "tried, came back
-null under a confound," not "checked, no mechanistic difference exists."
+### 8.11 Regrouping by §8.5's approach behavior instead of prompt condition (2026-09-06)
 
-**Recommended next step (not done here):** fix the missing center-crop step so task success in this
-probe matches the real eval's contrast, then re-run before drawing any conclusion from these
-diagnostics; separately, consider conditioning the diagnostics on §8.5's per-episode approach labels
-(task 3's "approached but still failed" cohort vs. the "never approached" cohort) rather than only on
-prompt condition, since that's the behavioral split the mechanism question is actually about. See §8.10
-for the fix and re-run — the recommendation above turned out to be necessary but not sufficient.
+**Motivation.** §8.9/§8.10's shared caveat: pooling by *condition* could wash out a per-episode effect.
+§8.5's per-episode label (`first_bowl_approached`: target/distractor/neither) tests that directly.
 
-Artifacts: `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--compare1--2026_09_04-13_57_46.jsonl`
-(5 episodes/condition, 30 steps, superseded) and
-`libero_spatial--t5--fullcompare1--2026_09_04-15_09_35.jsonl` (15 episodes/condition, full 220-step
-episodes, analyzed above); both gitignored, local only, no rollout videos (this script doesn't record
-them). Code: `openvla/experiments/robot/libero/probe_mechanistic_localization.py` (uncommitted in the
-`openvla` fork as of this write-up; its docstring's "DRAFT / not yet run" header is now stale and
-should be updated if the script is revisited). Launch history: `eval_log.md`'s 2026-09-04 (retroactive)
-and 2026-09-06 entries.
+**A separately-launched re-run of `probe_bowl_attraction.py` was not joinable.** Two process launches
+of nominally identical rollouts (same seed, same greedy decoding) diverged after a handful of steps —
+ordinary GPU run-to-run non-determinism (unseeded cuDNN/cuBLAS kernel selection), the same family of
+issue as the sdpa/eager finding, but between two runs of the *identical* code path. **Consequence for
+the whole project:** per-episode data from two separately-launched rollouts can't be assumed to match
+beyond the first few steps, even with matching seeds — any future cross-script join needs single-run
+instrumentation.
 
-### 8.10 Mechanistic localization probe, fixed — center-crop + teacher-forced diagnostics (2026-09-06)
+**Fix.** Added the same bowl-distance bookkeeping directly into `probe_mechanistic_localization.py`'s
+own rollout loop, so behavior label and diagnostics come from one trajectory by construction. Re-run
+reproduced §8.10's outcomes exactly, confirming this script's own rollouts *are* reproducible run-to-run.
 
-**Motivation.** §8.9's recommended next step: fix the disclosed missing center-crop bug and re-run,
-since 0% success in both conditions meant the run likely never contained the behavioral contrast
-(`default` succeeds, `negative_contrast` doesn't) the diagnostics were built to distinguish.
+**First pooled regroup looked promising, then turned out to be a confound:** pooling across *both*
+conditions by behavior, `target_first` (0.1137 vision-attn) looked higher than `distractor_first`/
+`neither` (0.0956/0.0980) — but `target_first` is 15/17 `default` episodes and only 2/17
+`negative_contrast`, so this mostly just restates the known *condition*-level gap. Confirmed directly:
+`default`'s `target_first` episodes average 0.1162; `negative_contrast`'s 2 `target_first` episodes
+average only 0.0946 — same label, wildly different level, tracking condition not behavior.
 
-**Fix #1 — center-crop, applied and confirmed necessary but not sufficient.** Added the same
-`crop_and_resize(image, crop_scale=0.9, batch_size=1)` step `openvla_utils.get_vla_action` uses,
-gated on `cfg.center_crop` exactly as originally intended. Re-ran the same battery (task 5,
-`default`/`negative_contrast`, 15 episodes each, full 220-step episodes): `default` success rose from
-0/15 to 1/15 (6.7%) — real but nowhere near the eval's 92-94% — so a second, independent problem
-remained.
+**The valid test — hold condition fixed, vary only behavior, within `negative_contrast`:**
 
-**Fix #2 — root cause found: `output_attentions=True` doesn't just add a side-channel, it changes
-which action gets executed.** A controlled single-frame test — same image, same prompt, decoded two
-ways — compared `predict_action()`'s fast path (`generate()`, whatever `attn_implementation` the model
-was loaded with, here `sdpa`) against the probe's diagnostic path (`generate(...,
-output_attentions=True, ...)`, which HF silently falls back to the numerically different `eager`
-kernel for, since `sdpa` doesn't support returning attention weights — a warning the probe's own log
-output had been printing all along without anyone connecting it to the success-rate gap). Result: **4
-of 7 action dimensions differed on the very first prediction of a fresh episode** — not a
-many-steps-later divergence from compounding error, a first-token disagreement. Root cause: this
-checkpoint runs in bf16 (~3 decimal digits) and discretizes continuous actions into many bins; wherever
-the top-1 and runner-up bin logits are close, the `sdpa`/`eager` kernels' different floating-point
-summation order is enough to flip the argmax. Every prior run in §8.9 had therefore been diagnosing a
-policy that wasn't the one actually being evaluated at 6/7 of its action dimensions, independent of and
-compounding the center-crop bug.
-
-**Redesign — two-pass, teacher-forced diagnostics.** `get_action_with_diagnostics` now: (1) runs the
-fast path first (`generate()`, no diagnostic flags — identical to `predict_action()`) to decide the
-actual executed action; (2) runs one *separate*, non-incremental forward pass, teacher-forced on those
-exact tokens (`vla(input_ids=prompt+generated_tokens, ..., output_attentions=True,
-output_hidden_states=True)`), purely to read off hidden-states/attentions. `eager` fallback still
-happens on pass 2, but its own argmax is recorded (`diag_argmax_matches_executed`) and discarded, never
-used to act — matching `modeling_prismatic.py`'s multimodal-embedding splice (patches inserted after
-position 0) means one full-sequence forward pass is mathematically equivalent to the old per-step
-incremental `generate()` loop's hidden-states/attentions, just computed in one shot instead of 7.
-
-**Validation: success rates now closely match the real eval.** Re-ran the same battery a third time:
-
-| Condition | This probe (15 episodes) | Real eval (§2, task 5) |
-|---|--:|--:|
-| `default` | **14/15 (93.3%)** | 92-94% |
-| `negative_contrast` | **0/15 (0%)** | 2-4% |
-
-Both numbers now land inside or essentially at the real eval's range — the probe is finally measuring
-the behavior it was built to measure.
-
-**Result, on now-valid behavioral data: still no condition-level difference on either diagnostic.**
-
-| Condition (n=10,871 / 23,100 token-records) | Resolution layer (frac) | Vision-attn, last layer |
-|---|--:|--:|
-| `default` (93.3% success) | 0.8467 ± 0.1660 | 0.1163 ± 0.0263 |
-| `negative_contrast` (0% success) | 0.8477 ± 0.1758 | 0.0964 ± 0.0258 |
-
-This is the same qualitative null as §8.9's confounded run, but now unconfounded: `default` and
-`negative_contrast` differ by 93 points of real success, yet these two aggregate diagnostics still
-don't move. That's a materially stronger null result than §8.9's — it's no longer explainable by "the
-run didn't contain the behavioral contrast," because now it demonstrably does.
-
-**A genuinely new finding: the `sdpa`/`eager` argmax mismatch rate itself is large, checkpoint-wide,
-and tracks resolution-layer margin.** Recording `diag_argmax_matches_executed` at scale (not just the
-single frame that first revealed it):
-
-| Action dim | `default` match rate | `negative_contrast` match rate | Resolution layer (frac) |
-|---|--:|--:|--:|
-| 0 (x) | 12.1% | 19.2% | ~0.89 |
-| 1 (y) | 23.2% | 29.7% | ~0.88 |
-| 2 (z) | 14.0% | 16.4% | ~0.90 |
-| 3 (roll) | 38.6% | 38.8% | ~0.88 |
-| 4 (pitch) | 35.7% | 48.0% | ~0.83 |
-| 5 (yaw) | 32.1% | 38.7% | ~0.88 |
-| 6 (gripper) | 90.1% | 87.6% | ~0.66 |
-
-The gripper dimension — whose logit-lens resolution layer is far earlier (~0.66 vs. ~0.83-0.90 for the
-continuous dims, a pattern already visible in §8.9) — is also the only dimension where the two kernels
-usually agree (~88-90%). The 6 continuous dims resolve very late (small top-1/runner-up margin, by
-construction of what "late resolution" means) *and* are exactly the ones where `sdpa` vs. `eager`
-disagree on 55-88% of predictions. These aren't two separate findings — late resolution *is* a small
-decision margin, and a small margin is what makes a dimension sensitive to a same-model,
-different-kernel numerical perturbation. This holds equally in both prompt conditions (match rates are
-close between `default` and `negative_contrast` on every dimension), so it's a property of the
-checkpoint's general decision calibration, not something the failing condition induces.
-
-**Reading — gap #3 (§8.6) is now genuinely, not tentatively, closed.** Unlike §8.9's attempt, this run
-has: (1) a valid behavioral contrast (93.3% vs. 0%, matching the real eval), (2) diagnostics computed
-from the policy that's actually being executed (teacher-forced, not a policy the eager kernel would
-have chosen on its own), and (3) the null result replicates the confounded run's qualitative shape,
-which is itself informative — it means the earlier confound wasn't accidentally hiding a real signal.
-The most defensible remaining explanation for *why* these two diagnostics see nothing: they're coarse,
-per-token, within-condition averages, and the "never commits" failure (§8.5) is plausibly a
-per-episode or per-moment phenomenon (some negative_contrast episodes might still show default-like
-attention/resolution patterns right up until the moment the arm gives up) that averaging over an entire
-condition would wash out — the same limitation §8.9 flagged, now on solid footing rather than
-confounded footing. §8.9's suggested next step (conditioning diagnostics on §8.5's per-episode
-approach/no-approach labels rather than on prompt condition alone) is the natural continuation, not yet
-done. Task 3's separate "approached but still failed" localization question is also still untouched.
-One task (task 5) at n=15/condition remains the scope here — no cross-task replication, unlike §8.5's
-full 10-task extension.
-
-**Methodological note for reuse.** Any future probe on this checkpoint that wants both (a) real,
-eval-matching behavior and (b) attention/hidden-state introspection needs this two-pass,
-teacher-forced structure — a single `generate(..., output_attentions=True)` call is not a passive
-side-channel on this model at bf16: it can silently substitute a different, worse-performing policy
-for the one actually being studied.
-
-Artifacts: `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--ccfix_full--2026_09_06-08_53_13.jsonl`
-(center-crop-only fix, still confounded by the eager-argmax issue, 1/15 `default` success — kept for
-the record, superseded by the run below) and
-`libero_spatial--t5--tf_full--2026_09_06-10_14_08.jsonl` (both fixes, the validated run analyzed
-above); smoke tests `*ccfix_smoketest*`/`*tf_smoketest*`; all gitignored, local only, no rollout videos.
-Code: `openvla/experiments/robot/libero/probe_mechanistic_localization.py` (uncommitted in the
-`openvla` fork as of this write-up; developed in an isolated worktree, then copied back to this
-canonical path — its docstring documents both 2026-09-06 fixes inline). Launch history: `eval_log.md`'s
-2026-09-06 entry.
-
-### 8.11 Regrouping §8.10's diagnostics by §8.5's approach behavior instead of prompt condition (2026-09-06)
-
-**Motivation.** §8.9/§8.10 both flagged the same caveat: pooling the diagnostics by *prompt condition*
-could wash out a real effect if the underlying mechanism is per-episode (some episodes commit to a
-bowl, others never do) rather than something that shifts uniformly across an entire condition. §8.5's
-bowl-attraction probe already has exactly this per-episode label (`first_bowl_approached`: target,
-distractor, or neither). This section conditions §8.10's diagnostics on that label instead.
-
-**First attempt (invalid) — separately re-running `probe_bowl_attraction.py` does not give a joinable
-label.** Re-ran it fresh on the same task/conditions/episodes/seed as §8.10's `tf_full` run, expecting
-identical trajectories (same checkpoint, same greedy decoding, same seed, same init states). It wasn't:
-`default` success was 14/15 in both runs but a *different* episode failed (ep 13 here vs. ep 10 in
-§8.10), and `negative_contrast` success was 1/15 here vs. 0/15 in §8.10. Two separate process launches
-of nominally the same computation diverged over the 220-step closed loop — the same family of issue
-§8.10 found between `sdpa` and `eager` (small floating-point differences compounding in closed-loop
-control), except this time between two runs of the *identical* code path, purely from ordinary
-run-to-run GPU non-determinism (unseeded cuDNN/cuBLAS kernel selection, no `torch.use_deterministic_algorithms`).
-**Methodological consequence for this whole project, not just this probe:** per-episode data from two
-separately-launched rollouts cannot be assumed to be the same trajectory beyond the first few steps,
-even with matching seeds and greedy decoding, on this checkpoint at this rollout length. Any future
-per-episode join across two probe scripts needs either single-run instrumentation (below) or an
-explicit trajectory check (e.g. matching `success` *and* the exact env-step of any recorded event).
-
-**Fix — instrument bowl-distance tracking directly into `probe_mechanistic_localization.py`.** Added
-the same per-step eef-to-bowl-center distance bookkeeping `probe_bowl_attraction.py` uses (identical
-`near_thresh_m=0.08`, identical "first bowl within threshold, by step order" derivation) directly into
-this script's own rollout loop, so the approach label and the mechanistic diagnostics now come from the
-same trajectory by construction — no cross-run join needed. Re-ran the same battery a fourth time
-(`--run_id_note dist_full`); episode outcomes reproduced §8.10's `tf_full` run exactly (`default` ep 10
-fails, `negative_contrast` 0/15) — confirming this script's own rollouts *are* reproducible run-to-run
-(the non-determinism above is specific to comparing across the two different scripts, not a property of
-re-running this one).
-
-**First pooled regroup looked promising, then turned out to be a confound.** Pooling every
-instrumented step across *both* prompt conditions by behavioral label instead of by condition:
-
-| Behavioral group | Episodes | Vision-attn, last layer |
-|---|--:|--:|
-| `target_first` | 17 (15 `default` + 2 `negative_contrast`) | 0.1137 |
-| `distractor_first` | 7 (`negative_contrast` only) | 0.0956 |
-| `neither` | 6 (`negative_contrast` only) | 0.0980 |
-
-This looked like a real, sizeable effect — until checking the group composition: `target_first` is 15/17
-`default` episodes and only 2/17 `negative_contrast` episodes, so a group-level average is almost
-entirely a restatement of §8.10's already-known *condition*-level difference (`default` 0.116 vs.
-`negative_contrast` 0.096 pooled), not a new *behavioral* signal. Confirmed directly: `default`'s
-`target_first` episodes average 0.1162; `negative_contrast`'s 2 `target_first` episodes average only
-0.0946 — the same behavioral label, wildly different vision-attention level, entirely tracking which
-condition the episode came from. The apparent 0.1137-vs-0.096 group gap was this confound, not the
-effect being looked for.
-
-**The valid test: hold prompt condition fixed, vary only behavior.** Restricting to `negative_contrast`
-episodes only (where all three behavioral outcomes actually occur) and comparing episode-level means:
-
-| Within `negative_contrast` | Episodes | Vision-attn, last layer | Resolution layer (frac) |
+| Behavior | Episodes | Vision-attn, last layer | Resolution layer (frac) |
 |---|--:|--:|--:|
 | `target_first` | 2 | 0.0946 | 0.859 |
 | `distractor_first` | 7 | 0.0956 | 0.836 |
 | `neither` | 6 | 0.0980 | 0.858 |
 
-Vision attention is indistinguishable across all three groups (0.0946-0.0980, well inside each group's
-own episode-to-episode spread). Resolution layer shows a small, suggestive gap (`distractor_first`
-~0.02-0.03 lower/earlier-resolving than the other two), but `target_first` has only 2 episodes — nowhere
-near enough to treat this as a finding rather than noise.
+Vision-attention indistinguishable across groups. Resolution-layer shows a small, suggestive gap
+(`distractor_first` earlier-resolving) but `target_first` has only 2 episodes — not enough to treat as
+a finding.
 
-**Reading — the null result survives the exact test §8.9/§8.10 recommended, at a cost the recommendation
-didn't anticipate (a confound, now caught and corrected).** Conditioning on approach behavior instead of
-prompt condition was the natural next step; done properly (holding condition fixed while comparing
-behavior, not pooling across both), it does not rescue a signal from either diagnostic on this task.
-Combined with §8.10's own condition-level null, gap #3 has now been tested at both the level §8.9
-originally used (by condition) and the level §8.9/§8.10 speculated might reveal something (by
-behavior) — neither shows a reliable difference. This makes "these two coarse diagnostics don't
-localize this failure mode" the best-supported reading to date, though still only on one task (n=15
-`negative_contrast` episodes, only 2 of which are `target_first` — underpowered for that specific
-comparison) and still only two diagnostics; it does not rule out that a different diagnostic, or more
-tasks, would find something these two don't.
+**Reading.** The null survives the exact test §8.9/§8.10 recommended, once done properly (a confound
+caught and corrected along the way). Gap 3 has now been tested at both the condition level and the
+per-episode-behavior level — neither shows a reliable difference on these two diagnostics, on this one
+task. Side note: 2/15 `negative_contrast` episodes reached the target first and still failed — the same
+"approached but still failed" pattern as task 3 (§8.5/§8.6), here at a lower rate (13%).
 
-**Side observation.** 2 of 15 `negative_contrast` episodes reached for the target bowl first and *still*
-failed the task — the same "approached correctly, still failed" pattern §8.5/§8.6 documented as task
-3's dominant failure mode (there, under multiple conditions), here appearing at a much lower rate (13%)
-on task 5. Not investigated further; consistent with that pattern being real but task-heterogeneous
-rather than task-3-specific.
+Artifacts: `probe_mechanistic_localization/libero_spatial--t5--dist_full--2026_09_06-11_40_47.jsonl`.
+Code: same file (now committed in `openvla`, `0bd16d9`/`360f56e`).
 
-Artifacts: `openvla/experiments/logs/probe_bowl_attraction/libero_spatial--t5--joinmechloc--2026_09_06-11_22_47.jsonl`
-(the separate, non-joinable re-run — kept for the record as a demonstration of the cross-run
-non-determinism finding, not used in the analysis above) and
-`openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--dist_full--2026_09_06-11_40_47.jsonl`
-(the combined, self-consistent run analyzed above; adds `dist_by_bowl`, `min_dist_by_bowl`,
-`first_near_step_by_bowl`, `first_bowl_approached`, `first_bowl_is_target` fields to each record,
-matching `probe_bowl_attraction.py`'s schema); both gitignored, local only. Code:
-`openvla/experiments/robot/libero/probe_mechanistic_localization.py` (now committed in the `openvla`
-fork — `0bd16d9`/`360f56e`, brought over from an isolated worktree on 2026-09-08 — its "DRAFT/not yet
-run" header updated to reflect this section's validated status at the same time).
+### 8.12 Episode-level reanalysis: vision-attention diagnostic isn't actually null (2026-09-08)
 
-### 8.12 Tier-0 reanalysis: episode-level statistics show the vision-attention diagnostic isn't actually null (2026-09-08)
+**Motivation.** §8.10/§8.11 compared each condition's mean against the pooled *per-token* population
+stdev — but steps within a 15-episode, up-to-220-step rollout are highly autocorrelated; the true
+independent unit is the episode (n=15/condition). Re-analyzed the existing `dist_full` JSONL at the
+correct level, purely by reanalysis (no new rollouts), plus two more angles.
 
-**Motivation.** §8.10/§8.11 called both diagnostics null by comparing each condition's mean against
-the **pooled per-token population stdev** (e.g. "well under half a standard deviation" in §8.10). That
-yardstick treats ~23,100 per-token records per condition as independent draws. They aren't: steps
-within a 15-episode, up-to-220-step rollout are highly autocorrelated, and the true independent unit is
-the episode (n=15/condition). This section redoes the comparison at the correct level, purely by
-re-analyzing the existing `dist_full` JSONL (no new rollouts) — plus two additional angles the
-existing write-ups hadn't tried on the corrected data.
+**Result 1 — vision-attention is a large, highly significant condition-level effect at the episode level; resolution-layer is not:**
 
-**Method.** For each diagnostic and each episode, average `per_token_diag` over all instrumented steps
-(continuous dims 0-5 and the gripper dim 6 reported separately, matching §8.10's own dimension split),
-giving one scalar per episode. Compare the 15-vs-15 episode-level distributions with a two-sided
-Mann-Whitney U test (tie-corrected normal approximation) and Cohen's d. Separately, redo the
-first-10/next-10/remaining-steps phase split (only ever run on §8.9's confounded, 0%-success data) on
-the valid `dist_full` data. Separately again, join each episode's per-step `dist_by_bowl` distance
-trajectory against its per-step diagnostics directly (rather than only the coarse episode-level
-`first_bowl_approached` label §8.11 used), via per-episode Pearson correlation between distance-to-target-bowl and vision-attention/resolution-layer.
-
-**Result 1 — vision-attention is a large, highly significant condition-level effect at the episode level; resolution-layer is not.**
-
-| Diagnostic (episode-level mean) | `default` (n=15) | `negative_contrast` (n=15) | Mann-Whitney p | Cohen's d |
+| Diagnostic (episode-level mean, cont. dims) | `default` (n=15) | `negative_contrast` (n=15) | p | Cohen's d |
 |---|--:|--:|--:|--:|
-| resolution_layer_frac, cont. dims (0-5) | 0.8752 ± 0.0064 | 0.8796 ± 0.0153 | 0.12 | -0.38 |
-| resolution_layer_frac, gripper (dim 6) | 0.6688 ± 0.0245 | 0.6565 ± 0.0480 | 0.22 | 0.33 |
-| vision_attn_last_layer, cont. dims (0-5) | 0.1140 ± 0.0028 | 0.0951 ± 0.0041 | **<0.0001** | **1.88** |
-| vision_attn_last_layer, gripper (dim 6) | 0.1295 ± 0.0033 | 0.1048 ± 0.0072 | **<0.0001** | **1.83** |
+| resolution_layer_frac | 0.8752 | 0.8796 | 0.12 | -0.38 (null) |
+| vision_attn_last_layer | 0.1140 | 0.0951 | **<0.0001** | **1.88** |
 
-Resolution-layer replicates §8.10's null (p=0.12/0.22, small/inverted d) — that part of the earlier
-claim holds. Vision-attention does not: episode-level variance is far tighter than token-level variance
-(each mean already averages over 88-220 autocorrelated steps), so the same ~0.019-0.025 raw gap that
-looked "under half a token-level stdev" is in fact a huge, highly significant effect (d≈1.8-1.9) by the
-statistically correct test. This is present from the very first instrumented steps too (episode-level
-Mann-Whitney restricted to steps 0-9 only: `default` 0.1065 vs. `negative_contrast` 0.0918, p<0.0001) —
-not something that only appears once the arm has already given up.
+Episode-level variance is far tighter than token-level variance (each mean already averages 88-220
+autocorrelated steps), so the same raw gap that looked "under half a token-level stdev" is a huge,
+highly significant effect by the correct test — present from steps 0-9 already, not just once the arm
+gives up.
 
-**This is very likely a prompt-length artifact, not a new mechanistic signal.** Attention weights are
-softmax-normalized over the whole sequence at each layer; `negative_contrast`'s task-5 instruction adds
-a whole extra clause (§8.6 gap 2: ~24 words vs. `default`'s ~15), so more text tokens compete in the
-same softmax row, mechanically diluting vision's *share* of attention regardless of any interesting
-target-selection mechanism. A large, clean, present-from-step-0 effect is exactly what pure token-count
-dilution would produce. `target_cue_landmark`/`target_cue_proximity_novel` are word-for-word the same
-length as `default` (§8.6 gap 2) and have never been run through this probe — a length-matched rerun on
-those conditions is the direct test of this hypothesis: if vision-attention still drops relative to
-`default` despite matched length, the effect is real and semantic; if it doesn't, it's the dilution
-confound. **Launched 2026-09-08 — see the next section once complete.**
+**This is very likely a prompt-length artifact, not a new mechanistic signal.** Attention is
+softmax-normalized over the whole sequence; `negative_contrast`'s instruction has a whole extra clause
+(~24 vs. ~15 words), so more text tokens compete for the same softmax mass regardless of any
+target-selection mechanism. `target_cue_landmark`/`target_cue_proximity_novel` are word-for-word the
+same length as `default` and had never been run through this probe — the direct test, launched next
+(§8.13).
 
-**Result 2 — phase breakdown redone on valid data: mostly reconfirms the null, one borderline early-phase signal.** Resolution-layer's episode-level early-phase-only (steps 0-9) comparison shows a
-small gap (`default` 0.8685 vs. `negative_contrast` 0.8537, p=0.034) that disappears once averaged over
-the whole episode (p=0.12 above) — consistent with §8.9/§8.10's own caveat that whole-episode averaging
-could wash out an early-window effect, but this is one borderline test among several run here, on n=15,
-and shouldn't be leaned on without replication.
+**Result 2 — phase breakdown, redone on valid data:** resolution-layer's early-phase-only (steps 0-9)
+comparison shows a small gap (p=0.034) that disappears whole-episode (p=0.12) — one borderline test,
+not leaned on without replication.
 
-**Result 3 — distance/attention time-course join: still inconclusive.** Per-episode Pearson correlation
-between distance-to-target-bowl and vision-attention is noisy and inconsistent within every behavioral
-group (`default`: -0.52 to +0.13, mean -0.24; `negative_contrast`/`neither`: -0.12 to +0.55, mean +0.30;
-`negative_contrast`/`distractor_first`: -0.65 to +0.13, mean -0.12; `negative_contrast`/`target_first`,
-n=2: -0.14, +0.10). No group shows a clean, consistent sign, and `target_first` remains underpowered at
-n=2. This confirms rather than resolves the existing "underpowered" caveat — no new signal here.
+**Result 3 — distance/attention time-course join: inconclusive.** Per-episode correlation between
+distance-to-target-bowl and vision-attention is noisy and inconsistent within every behavioral group,
+no clean sign in any — confirms rather than resolves the existing "underpowered" caveat.
 
-**Reading.** §8.6/§8.10/§8.11's headline conclusion needs a correction, not a reversal: resolution-layer
-is still null by any reasonable test, but "neither diagnostic shows a condition-level difference" was
-never true of vision-attention once measured at the right statistical level — it shows a large, robust
-one. Whether that reflects the failure mechanism this probe was built to find, or just reflects
-`negative_contrast`'s longer prompt, is exactly what the length-matched rerun below is designed to
-separate. Either answer revises gap #3's status in §8.6: a confirmed length-dilution artifact would
-mean resolution-layer and vision-attention are *both* uninformative about the "never commits"
-mechanism (just for different reasons — one washed out by averaging, one confounded by prompt length);
-a signal that survives length-matching would be the first positive mechanistic result this line of
-investigation has produced.
+Artifacts: pure re-analysis of §8.11's `dist_full` JSONL; ad hoc stdlib-only analysis script (not
+checked into either repo).
 
-Artifacts: no new rollouts — pure re-analysis of
-`openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--dist_full--2026_09_06-11_40_47.jsonl`
-(§8.11). Analysis script: ad hoc, not checked into either repo (stdlib-only Python — the host has
-neither `numpy` nor `scipy` installed outside the Docker image; Mann-Whitney implemented by hand with
-tie correction).
+### 8.13 Length-matched rerun: length-dilution ruled out, but both diagnostics track episode length/outcome generally (2026-09-08)
 
-### 8.13 Length-matched rerun: length-dilution ruled out, but both diagnostics turn out to track episode length/outcome generally (2026-09-08)
+**Method.** Same probe/task/battery size, `--conditions target_cue_landmark,target_cue_proximity_novel`
+(both word-for-word `default`'s length). Success: `target_cue_landmark` 1/15 (6.7%, vs. real 0/10);
+`target_cue_proximity_novel` 10/15 (66.7%, vs. real 5/10) — both consistent with small-n noise.
 
-**Motivation.** §8.12 flagged that `negative_contrast`'s large vision-attention gap could be pure
-prompt-length dilution (softmax attention share mechanically shrinks as more text tokens compete) and
-proposed the direct test: run the same probe on `target_cue_landmark`/`target_cue_proximity_novel`,
-both word-for-word the same length as `default` (§8.6 gap 2), and see whether the gap survives.
-
-**Method.** Same script, same task (5), same battery size (15 episodes/condition, full 220-step cap,
-teacher-forced two-pass diagnostics, `--conditions target_cue_landmark,target_cue_proximity_novel`).
-Smoke-tested first, then launched on GPU 0 (GPU 1 was occupied by an unrelated process on this shared
-server — left untouched). Success rates: `target_cue_landmark` 1/15 (6.7%, vs. the real eval's 0/10 for
-this task — consistent within small-n noise) and `target_cue_proximity_novel` 10/15 (66.7%, vs. the
-real eval's 5/10 — same direction, somewhat higher here, also plausible small-n noise). Analyzed
-alongside §8.11's `dist_full` (`default`/`negative_contrast`) using the same episode-level
-Mann-Whitney methodology as §8.12.
-
-**Result A — length-dilution is ruled out as a sufficient explanation.** `target_cue_landmark`, matched
-length to `default`, still shows a significant whole-episode vision-attention drop, and — unlike
-`negative_contrast` — a significant resolution-layer shift too:
+**Result A — length-dilution ruled out as a sufficient explanation.** `target_cue_landmark`, matched
+length to `default`, still shows a significant whole-episode vision-attention drop *and* (unlike
+`negative_contrast`) a significant resolution-layer shift:
 
 | vs. `default` (episode-level, cont. dims) | vision_attn_last_layer | resolution_layer_frac |
 |---|---|---|
-| `negative_contrast` (0/15 success, +12 words) | p<0.0001, d=1.88 | p=0.12, d=-0.38 (null) |
+| `negative_contrast` (0/15 success, +12 words) | p<0.0001, d=1.88 | p=0.12 (null) |
 | `target_cue_landmark` (1/15 success, same length) | **p=0.0023, d=1.15** | **p=0.0095, d=-0.62** |
-| `target_cue_proximity_novel` (10/15 success, same length) | p=0.69, d=0.12 (null) | p=0.25, d=0.37 (null) |
+| `target_cue_proximity_novel` (10/15 success, same length) | p=0.69 (null) | p=0.25 (null) |
 
-If the §8.12 gap were pure length dilution, a length-matched condition should never show it — but
-`target_cue_landmark` does, on both diagnostics (smaller effect than `negative_contrast`'s on
-vision-attention, but resolution-layer is significant here where it wasn't for `negative_contrast` at
-all). Length dilution is not sufficient to explain the pattern.
+A length-matched condition should never show the gap if it's pure dilution — but `target_cue_landmark`
+does, on both diagnostics.
 
-**Result B — but pooled across all 4 conditions (60 episodes), both diagnostics track episode
-length/success generally, not condition-specific content.** Ignoring which condition an episode came
-from: `corr(episode_length, mean vision_attn) = -0.675`; pooled success (n=25) vision-attn mean 0.1147
-vs. pooled failure (n=35) mean 0.1029 (Mann-Whitney p<0.0001). Resolution-layer shows the same pattern,
-weaker: `corr(episode_length, mean resolution_layer_frac) = +0.375`; pooled success mean 0.8721 vs.
-failure mean 0.8811 (p=0.0002). Because a failed episode runs to the 220-step cap while a successful one
-ends the moment the task completes (~85-135 steps here), whole-episode averages are structurally
-weighted toward whichever condition/episode fails — success and episode length are mechanically coupled
-by the closed-loop termination rule itself, independent of anything specific to *why* a given prompt
-causes failure. This means a real part of §8.12's "condition-level difference" is better described as
-"failing episodes run long, and long tails of these coarse per-token averages pull the whole-episode
-mean down (vision-attn) or up (resolution-layer)" rather than a distinct signature of each condition's
-language content.
+**Result B — but pooled across all 4 conditions, both diagnostics track episode length/success
+generally, not condition-specific content.** `corr(episode_length, vision_attn) = -0.675`; pooled
+success (n=25) vision-attn mean 0.1147 vs. failure (n=35) 0.1029 (p<0.0001); resolution-layer the same
+pattern, weaker. Because a failed episode runs to the 220-step cap while a success ends early, whole-
+episode averages are structurally weighted toward whichever condition/episode fails — success and
+episode length are mechanically coupled by the closed-loop termination rule itself, independent of
+*why* a given prompt causes failure.
 
-**Result C — the one test immune to the length/outcome confound still shows a small, condition-specific
-signal, but it's borderline.** Restricting to a fixed early window (steps 0-9, present identically in
-every episode regardless of eventual length or outcome) removes the length-coupling by construction.
-There, `target_cue_landmark` still differs from `default` on vision-attention (early-phase means 0.1040
-vs. 0.1065, p=0.029) while `target_cue_proximity_novel` does not (0.1087 vs. 0.1065, p=0.19). This is
-suggestively consistent with finding 18 ("template *binding*, not template *matching*"):
-`target_cue_landmark` reuses "next to X," a phrase natively bound to *other* tasks at fine-tuning time,
-while `target_cue_proximity_novel`'s "close to X" has no such binding — and only the former shows even
-this small early deficit. But it is one borderline p-value (0.029) among many comparisons run across
-§8.9-§8.13, on n=15 episodes; it should be read as a hint worth targeted replication, not a finding.
+**Result C — the one test immune to that confound by construction still shows a small,
+condition-specific signal, but borderline.** Restricted to a fixed early window (steps 0-9, present
+identically regardless of outcome): `target_cue_landmark` still differs from `default` on
+vision-attention (p=0.029) while `target_cue_proximity_novel` does not (p=0.19) — suggestive of finding
+18 (`target_cue_landmark` reuses "next to X," a phrase bound to *other* tasks; `target_cue_proximity_novel`'s
+"close to X" has no such binding), but one borderline p-value among many tests on n=15 — a hint, not a
+finding.
 
-**Reading — gap #3 needs a second, more careful revision.** §8.12's "vision-attention isn't null" stands,
-but its likely cause is now more mundane than either "distractor pull" or "target-selection collapse":
-these whole-episode diagnostics are substantially proxies for episode length/success, which is itself
-determined by the closed-loop termination rule, not a clean window into *why* the underlying policy
-failed. The one signal that survives controlling for that (Result C) is small, condition-specific to
-`target_cue_landmark` over `target_cue_proximity_novel`, and not yet strong enough to call a finding.
-Net effect on the project's mechanistic-localization question: still no diagnostic here cleanly
-localizes the "never commits to a target" mechanism from §8.5/§8.6; the clearest remaining lead is
-Result C's early-window, template-binding-consistent hint, which would need either more episodes (n=15
-is thin for a p=0.029 result) or a diagnostic specifically designed to avoid the length/outcome coupling
-(e.g. a fixed number of *pre-outcome* steps counted backward from episode end, rather than forward from
-episode start, so both successful and failed episodes contribute a comparable "final approach" window).
+**Reading.** These whole-episode diagnostics are substantially proxies for episode length/success,
+itself determined by the closed-loop termination rule, not a clean window into *why* the policy failed.
+Result C's early-window hint is the clearest remaining lead, needing either more episodes or (better) a
+design that avoids the length/outcome coupling by construction — pursued next (§8.14).
 
-Artifacts: `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--lenmatch_smoketest--2026_09_08-*.jsonl`
-(smoke test, deleted after passing) and
-`libero_spatial--t5--lenmatch_full--2026_09_08-04_11_24.jsonl` (the analyzed run: 15 episodes ×
-2 conditions, full 220-step cap); both gitignored, local only, no rollout videos. Launch: this
-session's background job, GPU 0 on the same GCP server as §8.9-§8.11 (`config/server.env`,
-`openvla-libero:blackwell`). Code: `probe_mechanistic_localization.py`, unchanged from §8.11's
-committed version.
+Artifacts: `probe_mechanistic_localization/libero_spatial--t5--lenmatch_full--2026_09_08-04_11_24.jsonl`
+(15 episodes × 2 conditions, full 220-step cap).
 
-### 8.14 Early-window replication at n=50: signal confirmed, but not clean (2026-09-08)
+### 8.14 Early-window replication at n=50: signal confirmed, but more complicated (2026-09-08)
 
-**Motivation.** §8.13's Result C (a `target_cue_landmark`-specific early-window vision-attention
-deficit, p=0.029) was flagged as one borderline test at n=15, needing either more episodes or a design
-immune to the length/outcome coupling *by construction* rather than by post hoc restriction to steps
-0-9 of a variable-length rollout.
+**Method.** Instead of post hoc restriction to steps 0-9 of a variable-length rollout, cap the rollout
+there directly (`--max_env_steps_to_instrument 10`) — every episode is now exactly 10 steps, making the
+length/outcome coupling structurally impossible rather than merely avoided, and >20x cheaper, so all 50
+pre-sampled init states/task could be used. Ran `default`, `target_cue_landmark`,
+`target_cue_proximity_novel` (task 5) at n=50.
 
-**Method — the early window only needs steps 0-9, so cap the rollout there directly.** Result C's window
-is env_step 10-19 (the first 10 real steps after the 10-step warmup). Setting
-`--max_env_steps_to_instrument 10` makes every episode end exactly there — over 20x cheaper per episode
-than the up-to-220-step runs, and, unlike §8.13's post hoc restriction, this makes the length/outcome
-coupling from Result B structurally impossible rather than merely avoided: every episode is exactly 10
-instrumented steps, full stop, so there is no variable episode length left to correlate with anything.
-This let the full 50 pre-sampled init states/task be used per condition instead of 15. Ran `default`,
-`target_cue_landmark`, `target_cue_proximity_novel` (task 5) at `--num_trials 50
---max_env_steps_to_instrument 10` — smoke-tested (2 episodes) then the full battery, which completed in
-under a minute given the tiny per-episode cost.
+**Result — both comparisons are now non-borderline, but more complicated than §8.13 suggested:**
 
-**Result — both comparisons are now non-borderline, but the picture is more complicated than §8.13 suggested.**
-
-| vs. `default` (episode-level, cont. dims, n=50/condition) | vision_attn_last_layer | resolution_layer_frac |
+| vs. `default` (episode-level, cont. dims, n=50) | vision_attn_last_layer | resolution_layer_frac |
 |---|---|---|
-| `target_cue_landmark` | mean 0.1045 vs. 0.1083, **p=0.0009, d=0.62** | mean 0.8606 vs. 0.8693, **p=0.019, d=0.45** |
-| `target_cue_proximity_novel` | mean 0.1109 vs. 0.1083, **p=0.039, d=-0.42** | mean 0.8623 vs. 0.8693, p=0.19 (null) |
+| `target_cue_landmark` | **p=0.0009, d=0.62** | **p=0.019, d=0.45** |
+| `target_cue_proximity_novel` | p=0.039, d=-0.42 | p=0.19 (null) |
 
-**Reading.**
+1. **§8.13's headline result replicates and strengthens** — `target_cue_landmark`'s early-window
+   vision-attention deficit goes from borderline (p=0.029, n=15) to clearly significant (p=0.0009,
+   n=50, d=0.62) under a design that rules out the length/outcome confound by construction.
+2. **But `target_cue_proximity_novel` is not the clean null control §8.13 expected** — at n=50 it's
+   nominally significant (p=0.039), in the *opposite* direction (higher, not lower, vision-attention).
+   Both off-template conditions differ from `default` in the early window, with different signs and
+   magnitudes; `target_cue_landmark`'s effect is the more robust of the two.
+3. **Resolution-layer's direction flips between whole-episode (§8.13: resolves *later*, d=-0.62) and
+   early-window (resolves *earlier*, d=+0.45)** — since the early-window design can't be contaminated
+   by length coupling, this means the two measurements pick up genuinely different phenomena, not a
+   diluted/concentrated version of one. Tentative reading: `target_cue_landmark` reuses "next to X" (a
+   phrase bound to *other* tasks) — an earlier, more decisive resolution could reflect the policy
+   confidently committing to that other task's motion pattern (**confident misexecution**) rather than
+   hesitating, with the later whole-episode average instead reflecting the long failure tail once that
+   misexecution doesn't complete the task. Plausible, not confirmed — no diagnostic here directly
+   measures "is the policy executing a different task's motion."
 
-1. **§8.13's headline result replicates and strengthens.** `target_cue_landmark`'s early-window
-   vision-attention deficit goes from a borderline p=0.029 (n=15) to a clearly significant p=0.0009
-   (n=50, medium effect d=0.62) under a design that rules out the length/outcome confound by
-   construction, not just by restricting the analysis window post hoc. This is now a real, replicated
-   result, not a single borderline test.
-2. **But `target_cue_proximity_novel` is not the clean null control §8.13 expected.** At n=15 it looked
-   indistinguishable from `default` (p=0.19); at n=50 it's nominally significant (p=0.039) — in the
-   *opposite* direction from `target_cue_landmark` (higher, not lower, vision-attention than `default`).
-   So the story isn't "only the template-bound phrase shows an early deficit, novel phrasing is
-   unaffected" — both off-template conditions differ measurably from `default` in the early window, with
-   different signs and different magnitudes (d=0.62 vs. d=-0.42). `target_cue_landmark`'s effect is the
-   more robust of the two.
-3. **Resolution-layer's direction flips between the whole-episode (§8.13) and early-window-only
-   measurement — itself informative.** Over the full episode (§8.13), `target_cue_landmark` resolves
-   *later* than `default` (d=-0.62). Restricted to the true early window with the length confound
-   structurally removed, it resolves *earlier* (d=+0.45, this section). Since this early-window design
-   cannot be contaminated by episode-length coupling by construction, the sign flip means the
-   whole-episode average and the early window are picking up genuinely different phenomena, not a
-   diluted/concentrated version of the same one. A tentative reading: `target_cue_landmark` reuses
-   "next to X," a phrase natively bound to *other* tasks (finding 18) — an *earlier*, more decisive
-   resolution early on could reflect the policy confidently committing to that other task's motion
-   pattern (confident misexecution) rather than hesitating, with the *later* whole-episode average
-   instead reflecting the long failure tail once that misexecution doesn't complete the actual task
-   (consistent with Result B's finding that whole-episode diagnostics substantially track episode
-   length/outcome). This is a plausible story, not a confirmed one — no diagnostic here directly measures
-   "is the policy executing a different task's motion," only logit-lens/attention proxies.
-4. **Multiple-comparisons caution.** This is one of many tests run across §8.9-§8.14; `target_cue_landmark`'s
-   two results (p=0.0009, p=0.019) are comfortably significant even under a conservative correction,
-   but `target_cue_proximity_novel`'s vision-attention result (p=0.039) is more marginal and should be
-   weighted accordingly.
+**Net effect on gap 3.** Still no diagnostic here cleanly, monotonically separates "will fail" from
+"will succeed" by condition — but this upgrades the early-window signal from an unreplicated hint to a
+real, replicated, more complicated pattern, and establishes a cheap, confound-free method (truncate to
+the window of interest) for testing it further. Next step: a diagnostic that can distinguish
+"confidently executing the wrong motion" from "confidently executing the right one," which
+resolution-layer/attention-mass alone can't do — pursued in §8.15.
 
-**Net effect on gap #3.** Still no diagnostic here cleanly, monotonically separates "will fail" from
-"will succeed" by condition — but this replication upgrades the early-window signal from "an
-unreplicated hint" to "a real, replicated, but more complicated pattern than first thought," and
-establishes a cheap, confound-free method (truncate to the window of interest, not the whole episode) for
-testing it further. The natural next step is a diagnostic that can distinguish "confidently executing
-the wrong motion" from "confidently executing the right one," rather than resolution-layer/attention-mass
-alone, which can't tell those apart.
-
-Artifacts: `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--earlywin_smoketest--2026_09_08-*.jsonl`
-(smoke test, deleted after passing) and
-`libero_spatial--t5--earlywin_n50--2026_09_08-04_46_21.jsonl` (the analyzed run: 50 episodes × 3
-conditions × exactly 10 instrumented steps each, 1,500 records); gitignored, local only. Launch: this
-session's background job, GPU 0, same server/image as §8.9-§8.13. Code:
-`probe_mechanistic_localization.py`, unchanged — only `--max_env_steps_to_instrument`/`--num_trials`
-CLI values differ from prior runs.
+Artifacts: `probe_mechanistic_localization/libero_spatial--t5--earlywin_n50--2026_09_08-04_46_21.jsonl`
+(50 episodes × 3 conditions × 10 steps, 1,500 records).
 
 ### 8.15 Confidence diagnostic added (code only): distinguishing confident-correct from confident-wrong motion (2026-09-09)
 
-**Motivation.** §8.14's "natural next step": resolution-layer and vision-attention-share are both
-blind to whether the eventually-chosen action token was actually a *good* choice — neither can tell
-"the policy hesitated" apart from "the policy confidently committed to the wrong motion" (§8.14's
-tentative "confident misexecution" reading for `target_cue_landmark`'s early-window signal). A direct
-test needs a per-step confidence measure crossed against a per-step correctness/direction measure.
+**Motivation.** §8.14's flagged next step: resolution-layer and vision-attention-share are both blind
+to whether the eventually-chosen action token was actually a *good* choice.
 
-**Method — two additions, one new field, one already-available.** `get_action_with_diagnostics`'s
-existing logit-lens loop already computes each action-token's final-layer logits (to find the
-resolution layer); this adds two cheap derived scalars from that same tensor at zero extra forward
-passes: `final_layer_margin` (top1-top2 logit gap — how decisively the model committed) and
-`final_layer_entropy` (full-vocab softmax entropy). The "was it the right direction" half needs no new
-instrumentation at all: `dist_by_bowl` has been recorded every step since §8.11 and already gives
-distance-to-target-bowl and distance-to-every-distractor-bowl at each env_step, so a per-step movement
-direction (toward target vs. toward a distractor, via consecutive-step deltas) is derivable purely by
-re-analyzing existing or new JSONL — no script change needed for that half. Planned cross-tab: bucket
-each instrumented step by (confidence: high-margin/low-entropy vs. low-margin/high-entropy) x
-(direction: toward-target vs. toward-distractor vs. neither), per condition, using the same
-episode-level Mann-Whitney methodology as §8.12-§8.14 (steps are still autocorrelated within an
-episode; episode-level or fixed-early-window aggregation, not raw per-step pooling, per §8.12's
-correction).
+**Method.** Two cheap additions to `get_action_with_diagnostics`'s existing logit-lens pass, at zero
+extra forward-pass cost: `final_layer_margin` (top1-top2 logit gap — how decisively the model
+committed) and `final_layer_entropy` (full-vocab softmax entropy). Crossed against the already-recorded
+`dist_by_bowl` trajectory (no rerun needed for that half — it's been logged since §8.11), this lets
+analysis bucket steps by (confidence) × (movement toward target vs. distractor), which neither prior
+diagnostic could do.
 
-**Status — implemented, `py_compile`-verified, not yet run.** No rollout has been launched with this
-change. This machine (laptop, RTX 5060, 8GB VRAM, compute cap 12.0) cannot fit the bf16 checkpoint
-that every §8.9-§8.14 result was measured on (~15GB) — only 4-bit quantization fits (`config/laptop.env`
-default), and this specific diagnostic is a worse candidate than any prior one for that substitution:
+**Status — implemented, `py_compile`-verified, not yet run.** This laptop (RTX 5060, 8GB VRAM) can't
+fit the bf16 checkpoint every §8.9-§8.14 result was measured on — only 4-bit quantization fits, and
 `final_layer_margin`/`final_layer_entropy` are first-order functions of the logit values themselves,
-which is exactly what quantization perturbs, whereas §8.9-§8.10 already found this checkpoint's
-continuous-action argmax sensitive to far smaller numerical perturbations (sdpa-vs-eager) than 4-bit
-quantization introduces. The GCP server used for §8.9-§8.14 (bf16, `config/server.env`) was
-unreachable from this session (`ssh berkeley` timed out) — running there is the direct continuation;
-running under 4-bit here would produce a first data point for this diagnostic with no bf16 baseline to
-judge its comparability against, which is worse than not running it yet. Left for the next session with
-server access (or explicit sign-off to run 4-bit anyway with that caveat attached to every number).
+exactly what quantization perturbs (worse than any prior diagnostic here, given this checkpoint's
+already-demonstrated sensitivity to far smaller numerical perturbations, §8.10). The GCP server used
+for §8.9-§8.14 was unreachable from this session (`ssh berkeley` timed out). Left for the next session
+with server access, or explicit sign-off to run 4-bit with that caveat attached to every number.
 
-Artifacts: none (no rollout). Code: `probe_mechanistic_localization.py`
-(`experiments/robot/libero/`), committed in the `openvla` fork.
+Artifacts: none (no rollout). Code: `probe_mechanistic_localization.py`, committed in the `openvla`
+fork (PR [#1](https://github.com/Qian-0203/openvla/pull/1), not yet merged to main).
