@@ -50,7 +50,7 @@ Applies to every condition below unless a section says otherwise.
 | 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b/4c fully run — 4c's `target_cue_proximity_novel` (53.0% pooled, tasks 3/5/7/9) came in *above* `target_cue_landmark` (30.5%), the opposite of the plan's predicted direction; full three-way synthesis in §5.4 |
 | VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
 | Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02/03/04, all 10 `libero_spatial` tasks for `default`+`negative_contrast` (280 rollouts); `target_cue_landmark` + `target_cue_proximity_novel` on the 4-task surface cohort (80 more). Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): pooled at full scale, "arm never approaches either bowl" is the *majority* failure mode (58.1% of `negative_contrast` failures) — success rates closely match the real 500/200-trial evals. `target_cue_proximity_novel` (no distractor, no misleading template) fails the same way as `target_cue_landmark` despite a much higher success rate — a second line of evidence against distractor-pull. Task 3 shows a persistent second mode (correct approach, still fails). See §8.6 for the synthesis and open gaps |
-| Mechanistic Localization Probe (§8.9-§8.15, not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`, committed in `openvla`) | Run 2026-09-04 (task 5, `default`+`negative_contrast`, 15 full-length episodes each), confounded (0% success both conditions, missing center-crop). Fixed 2026-09-06: added center-crop, then found and fixed a second bug (`output_attentions=True` forces `eager` attention, flipping the argmax on 55-88% of continuous-action-dim predictions on this bf16 checkpoint — teacher-forced redesign decouples diagnosis from action-selection). Re-run success matches the real eval (93.3%/0% vs. 92-94%/2-4%). §8.10/§8.11's token-level test called both diagnostics null, but §8.12 found that was the wrong statistical unit: at the correct episode level (n=15), vision-attention is a large, highly significant condition-level effect (d≈1.8-1.9) — resolution-layer stays null. §8.13 ruled out prompt-length dilution as a sufficient explanation but found both diagnostics substantially track episode length/success (a structural artifact of the closed-loop termination rule) rather than condition content specifically; a fixed early window (steps 0-9, immune to that confound by construction) still showed a small `target_cue_landmark`-specific signal. §8.14 replicated that at n=50: non-borderline (p=0.0009, d=0.62), but `target_cue_proximity_novel` also diverges (opposite sign) and resolution-layer's direction flips between whole-episode and early-window measurement — informative, not yet a clean localization. §8.15 adds a third diagnostic (final-layer logit margin/entropy, crossed against the already-recorded bowl-distance trajectory) able to distinguish confident-correct from confident-wrong motion, the gap §8.14 flagged as the next step — implemented and `py_compile`-verified, **not yet run** as of §8.15's write-up: blocked on GPU access matching the established bf16 protocol. A new GCP server matching that protocol was stood up 2026-09-10 (`eval_log.md`) — the blocker is resolved, the diagnostic itself has not yet been launched. See §8.9-§8.15 |
+| Mechanistic Localization Probe (§8.9-§8.15, not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`, committed in `openvla`) | Run 2026-09-04 (task 5, `default`+`negative_contrast`, 15 full-length episodes each), confounded (0% success both conditions, missing center-crop). Fixed 2026-09-06: added center-crop, then found and fixed a second bug (`output_attentions=True` forces `eager` attention, flipping the argmax on 55-88% of continuous-action-dim predictions on this bf16 checkpoint — teacher-forced redesign decouples diagnosis from action-selection). Re-run success matches the real eval (93.3%/0% vs. 92-94%/2-4%). §8.10/§8.11's token-level test called both diagnostics null, but §8.12 found that was the wrong statistical unit: at the correct episode level (n=15), vision-attention is a large, highly significant condition-level effect (d≈1.8-1.9) — resolution-layer stays null. §8.13 ruled out prompt-length dilution as a sufficient explanation but found both diagnostics substantially track episode length/success (a structural artifact of the closed-loop termination rule) rather than condition content specifically; a fixed early window (steps 0-9, immune to that confound by construction) still showed a small `target_cue_landmark`-specific signal. §8.14 replicated that at n=50: non-borderline (p=0.0009, d=0.62), but `target_cue_proximity_novel` also diverges (opposite sign) and resolution-layer's direction flips between whole-episode and early-window measurement — informative, not yet a clean localization. §8.15 adds a third diagnostic (final-layer logit margin/entropy, crossed against the already-recorded bowl-distance trajectory) able to distinguish confident-correct from confident-wrong motion, the gap §8.14 flagged as the next step — run 2026-09-10 on a new GCP server matching the established bf16 protocol (`eval_log.md`): task 5, same cheap confound-free early-window design as §8.14 (n=50), episode-level analysis. **Clean null** — neither raw decision confidence (`final_layer_margin`/`final_layer_entropy`) nor its per-episode correlation with progress-toward-target differs by condition, and where there's any separation it runs opposite the "confident misexecution" hypothesis §8.14 floated. See §8.9-§8.15 |
 
 ---
 
@@ -946,6 +946,17 @@ because novelty itself is safe).
     survives the specific rescue hypothesis §8.9/§8.10 proposed for it. Full detail and next steps in
     §8.9-§8.11.
 
+    **[2026-09-08/09/10 update, see §8.12-§8.15]** The token-level null above turned out to be the
+    wrong statistical unit — redone at the episode level, vision-attention *is* a large, significant
+    condition-level effect (§8.12), and a fixed early window (immune to a length/outcome confound found
+    along the way) shows a real, n=50-replicated `target_cue_landmark`-specific signal on both
+    vision-attention and resolution-layer (§8.13-§8.14). A purpose-built diagnostic to test whether that
+    reflects *confident* misexecution rather than hesitation (final-layer logit margin/entropy, crossed
+    against progress-toward-target) comes back null (§8.15) — neither raw confidence nor its
+    correlation with correctness differs by condition. Net: real, replicated effects exist in *where*
+    the network attends and *how fast* it resolves, but not (by this test) in *how decisively wrong* it
+    is — gap #3 is narrowed, not closed.
+
 ## 7. Render / contact-sheet check log
 
 Every new or previously-unchecked scene gets its init-state contact sheet rendered
@@ -1602,9 +1613,62 @@ with server access, or explicit sign-off to run 4-bit with that caveat attached 
 **Update (2026-09-10).** A new GCP server (`ssh berkeley`, repointed to a fresh instance) was stood up
 and validated — same hardware profile as §8.9-§8.14's box (4x RTX PRO 6000 Blackwell, bf16, full
 precision), `spatial/default` re-run confirms it reproduces the documented baseline (§2 replication
-note, `eval_log.md` 2026-09-10). The blocker above is resolved; this diagnostic itself has not yet
-been launched.
+note, `eval_log.md` 2026-09-10). The blocker above is resolved, and the diagnostic was launched.
 
-Artifacts: none (no rollout yet). Code: `probe_mechanistic_localization.py`, committed in the `openvla`
-fork (PR [#1](https://github.com/Qian-0203/openvla/pull/1), not yet merged to main; fast-forwarded into
-the new server's local `main` 2026-09-10).
+**Method for this run.** Same cheap, confound-free early-window design as §8.14
+(`--max_env_steps_to_instrument 10 --num_trials 50`, task 5, `default`/`target_cue_landmark`/
+`target_cue_proximity_novel`) — every episode truncated to exactly 10 instrumented steps, so
+episode-length/outcome coupling (§8.13 Result B) is structurally impossible, matching the design that
+already found a real vision-attention/resolution-layer signal at this n. Two analyses, both at the
+episode level (matching §8.12's correction — steps within an episode are autocorrelated, episode is
+the valid independent unit): (1) episode-level mean `final_layer_margin`/`final_layer_entropy` over the
+6 continuous action dims, replicating §8.14's table format with the new diagnostic in place of
+vision-attention/resolution-layer; (2) the test this diagnostic was actually built for — per-episode
+Pearson correlation between each step's mean continuous-dim `final_layer_margin` and that step's
+resulting change in distance-to-target-bowl (negative = the action moved the arm closer; this is the
+direct operationalization of "was a confident step also a *correct* one").
+
+**Result — clean null on both tests; no support for the "confident misexecution" hypothesis.**
+
+| vs. `default` (episode-level, cont. dims, n=50) | `final_layer_margin` | `final_layer_entropy` |
+|---|---|---|
+| `target_cue_landmark` | p=0.15, d=0.31 (null) | p=0.15, d=-0.25 (null) |
+| `target_cue_proximity_novel` | p=0.22, d=0.28 (null) | p=0.65, d=-0.00 (null) |
+
+Raw decision confidence in this window doesn't differ by condition — unlike vision-attention/
+resolution-layer at the same n (§8.14, both significant), margin/entropy show no condition-level
+effect here.
+
+| Per-episode Pearson(margin, Δdist-to-target) | mean r | % episodes r<0 (confidence tracks closing in) |
+|---|--:|--:|
+| `default` | −0.108 | 58.0% |
+| `target_cue_landmark` | −0.070 | 52.0% |
+| `target_cue_proximity_novel` | −0.218 | 76.0% |
+
+vs. `default`: `target_cue_landmark` p=0.54, d=0.086 (null); `target_cue_proximity_novel` p=0.29,
+d=-0.238 (null). All three conditions trend the same direction (confidence modestly tracks closing in
+on the target, as it should under normal operation) with no significant condition-level difference —
+and where there's any numeric separation, it runs *opposite* the "confident misexecution" hypothesis:
+`target_cue_landmark` (the condition §8.14 flagged as possibly confidently executing the wrong motion)
+has the *weakest* confidence-tracks-correctness relationship of the three, not a reversed one, and the
+gap from `default` is tiny and non-significant.
+
+**Reading.** This diagnostic does what §8.14 asked for — it can, in principle, tell confident-correct
+from confident-wrong motion apart — and finds no evidence for it here: neither raw confidence nor the
+confidence/correctness relationship differs by condition in this window, at n=50. Combined with §8.14's
+real vision-attention/resolution-layer effects, the fullest current picture is that `target_cue_landmark`'s
+early-window difference is about *where the network looks and how quickly it resolves*, not about
+*whether it's more decisively wrong* — the "confident misexecution" reading from §8.14 was a plausible
+story, not a confirmed one, and this is the first diagnostic built to test it directly rather than by
+inference; it comes back null. Caveat: each episode's own correlation is estimated from only 9
+within-episode step-pairs (sd≈0.41-0.48 across episodes), so this is a real but noisy per-episode
+signal — a longer instrumented window (trading off against the length/outcome coupling §8.13 warned
+about) or more episodes would sharpen it further, not yet done.
+
+Artifacts: `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--confdiag_earlywin_n50--2026_09_10-09_52_30.jsonl`
+(50 episodes × 3 conditions × 10 steps, 1,500 records; server-local, gitignored); smoketest jsonl
+deleted after passing. Code: `probe_mechanistic_localization.py`, committed in the `openvla` fork (PR
+[#1](https://github.com/Qian-0203/openvla/pull/1), not yet merged to main; fast-forwarded into the new
+server's local `main` 2026-09-10). Analysis: ad hoc stdlib-only Python (hand-implemented Mann-Whitney
+U with tie correction, Pearson correlation, Cohen's d — same convention as §8.12), not checked into
+either repo.

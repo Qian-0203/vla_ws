@@ -922,6 +922,35 @@ available).
 
 ---
 
+## 2026-09-10 — §8.15 confidence diagnostic launched on the new server (diagnostic, not a `run_eval.sh --split` launch)
+
+- **Trigger:** new server validated (previous entry); ran the confidence diagnostic (`final_layer_margin`/
+  `final_layer_entropy`) that had been implemented and blocked on GPU access since PR #1.
+- **Method:** manual `docker run` (not `run_eval.sh`, which only drives `run_libero_eval.py`) invoking
+  `probe_mechanistic_localization.py` directly with the same mounts/env as `run_eval.sh`. Same cheap,
+  confound-free design as the 2026-09-08 early-window run: `--max_env_steps_to_instrument 10
+  --num_trials 50`, task 5, `default`/`target_cue_landmark`/`target_cue_proximity_novel`, GPU 0 (server
+  idle, confirmed via `docker ps`). Smoke-tested (2 episodes, confirmed `final_layer_margin`/
+  `final_layer_entropy` present and sane) then the full 150-episode battery, which completed in under a
+  minute.
+- **Outcome:** clean null on both tests this diagnostic was built for — episode-level mean confidence
+  (margin/entropy) doesn't differ by condition (p=0.15-0.65, small/null effect sizes), and the
+  per-episode correlation between confidence and progress-toward-target doesn't either (p=0.29-0.54) —
+  where there's any separation, it runs opposite §8.14's tentative "confident misexecution" hypothesis
+  (`target_cue_landmark` has the *weakest* confidence-tracks-correctness relationship of the three, not
+  a reversed one). Full detail in `benchmark_split_result.md` §8.15.
+- **Artifacts:** `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--confdiag_earlywin_n50--2026_09_10-09_52_30.jsonl`
+  (1,500 records; server-local, gitignored); smoketest jsonl deleted after passing.
+
+**Status:** closed. §8.15's diagnostic is the first in this line of investigation built to directly test
+"confident-correct vs. confident-wrong motion" rather than infer it, and it comes back null — narrows
+gap #3 (§8.6) further without resolving it. Remaining leads: the real, replicated vision-attention/
+resolution-layer early-window effects (§8.14) still lack a mechanistic explanation of *why* they occur;
+a longer instrumented window or more episodes could sharpen this diagnostic's noisy per-episode
+correlation estimate (sd≈0.41-0.48 on n=9 within-episode points) further.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
