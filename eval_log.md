@@ -883,6 +883,45 @@ mass alone cannot do.
 
 ---
 
+## 2026-09-10 — New GCP server stood up; `spatial/default` re-run as environment validation
+
+- **Trigger:** old `berkeley` GCP instance (`g4-flex-20260824`) was replaced by a fresh instance at a
+  new IP (`ssh` alias `berkeley` repointed); needed a full environment rebuild plus one real eval to
+  confirm the new box reproduces known results before trusting it for further work (incl. the §8.15
+  diagnostic this was blocked on).
+- **Environment setup:** fresh Ubuntu 22.04 instance, 4x RTX PRO 6000 Blackwell Server Edition (98GB
+  VRAM each, driver 580.178.04) — `nvidia-container-toolkit` was present but Docker Engine was not;
+  installed Docker CE + configured the nvidia runtime. Hit the "fresh server missing MuJoCo's EGL
+  libs" pitfall (`CLAUDE.md` "Known pitfalls") on first render smoke test — `libnvidia-gl-580-server`
+  wasn't installed despite the compute driver being present; installed it and regenerated the CDI spec
+  (`nvidia-ctk cdi generate`), confirmed with a manual EGL render smoke test before touching the real
+  eval pipeline. Built `openvla-libero:blackwell` from the current `Dockerfile.blackwell` (clean
+  build, ~2 min given the server's own fast network). Cloned all three repos (`vla_ws` public HTTPS;
+  `openvla`/`LIBERO` private, via SSH agent forwarding to this session's local GitHub key). Checkpoint
+  (~15GB) transferred laptop-to-server over `rsync`, bottlenecked by the laptop's home upload
+  bandwidth (~300-900kB/s, degrading over the transfer) — took ~4.5 hours; confirmed via a parallel-
+  stream test that this was genuine raw uplink capacity, not a fixable per-connection limit, so no
+  faster alternative was available this session. `preflight.py` clean on completion. Server's local
+  `openvla` `main` fast-forwarded (not pushed upstream) to include the not-yet-merged confidence-
+  diagnostic commit from PR #1 (§8.15), so that diagnostic can now actually be run here.
+- **Smoke test:** task 5, 1 trial — success, confirming the full pipeline (Docker, GPU passthrough,
+  EGL rendering, checkpoint load, action decoding, video/JSONL logging) end-to-end.
+- **Outcome — full `spatial/default` re-run (500 rollouts, all 4 GPUs sharded) reproduces the
+  documented baseline:** 84.4% (422/500) vs. the original 84.0% (420/500) — within the documented
+  ±3.3pt pooled noise band (`benchmark_split_result.md` §0). Per-task numbers move by up to ±6-10pts in
+  either direction (task 9: 72%→66%, task 6: 90%→96%), consistent with ordinary run-to-run GPU
+  non-determinism already documented (§8.11) rather than anything server-specific.
+- **Outcome:** full detail in `benchmark_split_result.md` §2 (`default` setting, replication note
+  added). Results: `openvla/experiments/logs/results/libero_spatial--default--newserver_validation--shard{0..3}of4.jsonl`
+  (server-local, gitignored); rollout videos `openvla/rollouts/2026_09_10/` (server-local).
+
+**Status:** closed. New server validated as a drop-in replacement for the retired `berkeley` instance —
+`config/server.env`'s existing settings (GPUs, image name, precision) needed no changes, since the new
+box matches the same hardware profile. Unblocks §8.15's confidence diagnostic (bf16 GPU access now
+available).
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
