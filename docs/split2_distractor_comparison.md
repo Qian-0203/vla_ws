@@ -59,10 +59,10 @@ place it on the plate"*
 
 | Condition | 3rd bowl placement | Render | SR |
 |---|---|---|--:|
-| `default` | — (2 bowls only) | ![default t0](openvla/experiments/figures/per_task_render/default_full_t0.png) | 92% |
-| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t0](openvla/experiments/figures/per_task_render/irrelevant_v2_t0.png) | 88% |
-| `semantic` | next to the cookie box | ![semantic t0](openvla/experiments/figures/per_task_render/semantic_v2_t0.png) | 86% |
-| `landmark` | in front of the plate/ramekin pair (same landmark family as the target, farther from it) | ![landmark t0](openvla/experiments/figures/per_task_render/landmark_full_t0.png) | **48%** |
+| `default` | — (2 bowls only) | ![default t0](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_full_t0.png) | 92% |
+| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t0](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_t0.png) | 88% |
+| `semantic` | next to the cookie box | ![semantic t0](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_t0.png) | 86% |
+| `landmark` | in front of the plate/ramekin pair (same landmark family as the target, farther from it) | ![landmark t0](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/landmark_full_t0.png) | **48%** |
 
 ## Task 1 — next to the ramekin
 
@@ -71,10 +71,10 @@ plate"*
 
 | Condition | 3rd bowl placement | Render | SR |
 |---|---|---|--:|
-| `default` | — (2 bowls only) | ![default t1](openvla/experiments/figures/per_task_render/default_full_t1.png) | 84% |
-| `irrelevant` | table center (`table_center` fallback — `table_front` sits too close to this task's own bowl_2) | ![irrelevant t1](openvla/experiments/figures/per_task_render/irrelevant_v2_t1.png) | 84% |
-| `semantic` | next to the plate | ![semantic t1](openvla/experiments/figures/per_task_render/semantic_v2_t1.png) | 72% |
-| `landmark` | near the ramekin, farther from it than the target | ![landmark t1](openvla/experiments/figures/per_task_render/landmark_full_t1.png) | 92% |
+| `default` | — (2 bowls only) | ![default t1](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_full_t1.png) | 84% |
+| `irrelevant` | table center (`table_center` fallback — `table_front` sits too close to this task's own bowl_2) | ![irrelevant t1](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_t1.png) | 84% |
+| `semantic` | next to the plate | ![semantic t1](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_t1.png) | 72% |
+| `landmark` | near the ramekin, farther from it than the target | ![landmark t1](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/landmark_full_t1.png) | 92% |
 
 ## Task 2 — from table center
 
@@ -83,10 +83,10 @@ plate"*
 
 | Condition | 3rd bowl placement | Render | SR |
 |---|---|---|--:|
-| `default` | — (2 bowls only) | ![default t2](openvla/experiments/figures/per_task_render/default_full_t2.png) | 92% |
-| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t2](openvla/experiments/figures/per_task_render/irrelevant_v2_t2.png) | 94% |
-| `semantic` | next to the ramekin | ![semantic t2](openvla/experiments/figures/per_task_render/semantic_v2_t2.png) | 96% |
-| `landmark` | off to the side of table center | ![landmark t2](openvla/experiments/figures/per_task_render/landmark_full_t2.png) | 98% |
+| `default` | — (2 bowls only) | ![default t2](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_full_t2.png) | 92% |
+| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t2](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_t2.png) | 94% |
+| `semantic` | next to the ramekin | ![semantic t2](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_t2.png) | 96% |
+| `landmark` | off to the side of table center | ![landmark t2](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/landmark_full_t2.png) | 98% |
 
 ## Task 3 — on the cookie box
 
@@ -95,10 +95,10 @@ plate"*
 
 | Condition | 3rd bowl placement | Render | SR |
 |---|---|---|--:|
-| `default` | — (2 bowls only) | ![default t3](openvla/experiments/figures/per_task_render/default_full_t3.png) | 84% |
-| `irrelevant` | table center (`table_center` fallback — `table_front` overlapped here at first verify) | ![irrelevant t3](openvla/experiments/figures/per_task_render/irrelevant_v2_t3.png) | 96% |
-| `semantic` | next to the ramekin | ![semantic t3](openvla/experiments/figures/per_task_render/semantic_v2_t3.png) | 90% |
-| `landmark` | on the table next to the cookie box | ![landmark t3](openvla/experiments/figures/per_task_render/landmark_full_t3.png) | 88% |
+| `default` | — (2 bowls only) | ![default t3](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_full_t3.png) | 84% |
+| `irrelevant` | table center (`table_center` fallback — `table_front` overlapped here at first verify) | ![irrelevant t3](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_t3.png) | 96% |
+| `semantic` | next to the ramekin | ![semantic t3](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_t3.png) | 90% |
+| `landmark` | on the table next to the cookie box | ![landmark t3](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/landmark_full_t3.png) | 88% |
 
 ## Task 4 — in the top drawer of the wooden cabinet
 
@@ -107,10 +107,10 @@ and place it on the plate"*
 
 | Condition | 3rd bowl placement | Render | SR |
 |---|---|---|--:|
-| `default` | — (2 bowls only) | ![default t4](openvla/experiments/figures/per_task_render/default_full_t4.png) | 76% |
-| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t4](openvla/experiments/figures/per_task_render/irrelevant_v2_t4.png) | 88% |
-| `semantic` | between the plate and the ramekin (moved here from a too-far, out-of-band spot — see `benchmark_split_plan.md` "Second redefinition") | ![semantic t4](openvla/experiments/figures/per_task_render/semantic_v2_t4.png) | 92% |
-| `landmark` | on the table in front of the cabinet | ![landmark t4](openvla/experiments/figures/per_task_render/landmark_full_t4.png) | 84% |
+| `default` | — (2 bowls only) | ![default t4](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_full_t4.png) | 76% |
+| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t4](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_t4.png) | 88% |
+| `semantic` | between the plate and the ramekin (moved here from a too-far, out-of-band spot — see `benchmark_split_plan.md` "Second redefinition") | ![semantic t4](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_t4.png) | 92% |
+| `landmark` | on the table in front of the cabinet | ![landmark t4](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/landmark_full_t4.png) | 84% |
 
 ## Task 5 — on the ramekin
 
@@ -119,10 +119,10 @@ plate"*
 
 | Condition | 3rd bowl placement | Render | SR |
 |---|---|---|--:|
-| `default` | — (2 bowls only) | ![default t5](openvla/experiments/figures/per_task_render/default_full_t5.png) | 94% |
-| `irrelevant` | table center (`table_center` fallback — `table_front` overlapped here at first verify) | ![irrelevant t5](openvla/experiments/figures/per_task_render/irrelevant_v2_t5.png) | 86% |
-| `semantic` | next to the plate | ![semantic t5](openvla/experiments/figures/per_task_render/semantic_v2_t5.png) | 86% |
-| `landmark` | on the table next to the ramekin | ![landmark t5](openvla/experiments/figures/per_task_render/landmark_full_t5.png) | 92% |
+| `default` | — (2 bowls only) | ![default t5](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_full_t5.png) | 94% |
+| `irrelevant` | table center (`table_center` fallback — `table_front` overlapped here at first verify) | ![irrelevant t5](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_t5.png) | 86% |
+| `semantic` | next to the plate | ![semantic t5](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_t5.png) | 86% |
+| `landmark` | on the table next to the ramekin | ![landmark t5](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/landmark_full_t5.png) | 92% |
 
 ## Task 6 — next to the cookie box
 
@@ -131,10 +131,10 @@ the plate"*
 
 | Condition | 3rd bowl placement | Render | SR |
 |---|---|---|--:|
-| `default` | — (2 bowls only) | ![default t6](openvla/experiments/figures/per_task_render/default_full_t6.png) | 90% |
-| `irrelevant` | table center (`table_center` fallback — this task's own target sits too close to `table_front`) | ![irrelevant t6](openvla/experiments/figures/per_task_render/irrelevant_v2_t6.png) | **76%** |
-| `semantic` | next to the ramekin | ![semantic t6](openvla/experiments/figures/per_task_render/semantic_v2_t6.png) | 94% |
-| `landmark` | near the cookie box, farther from it than the target | ![landmark t6](openvla/experiments/figures/per_task_render/landmark_full_t6.png) | 80% |
+| `default` | — (2 bowls only) | ![default t6](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_full_t6.png) | 90% |
+| `irrelevant` | table center (`table_center` fallback — this task's own target sits too close to `table_front`) | ![irrelevant t6](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_t6.png) | **76%** |
+| `semantic` | next to the ramekin | ![semantic t6](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_t6.png) | 94% |
+| `landmark` | near the cookie box, farther from it than the target | ![landmark t6](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/landmark_full_t6.png) | 80% |
 
 `irrelevant`'s weakest task (−14 pts vs. `default`) — worth watching if this condition is ever
 redefined again.
@@ -145,10 +145,10 @@ Instruction (all 4 conditions): *"pick the akita black bowl on the stove and pla
 
 | Condition | 3rd bowl placement | Render | SR |
 |---|---|---|--:|
-| `default` | — (2 bowls only) | ![default t7](openvla/experiments/figures/per_task_render/default_full_t7.png) | 72% |
-| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t7](openvla/experiments/figures/per_task_render/irrelevant_v2_t7.png) | 92% |
-| `semantic` | next to the cookie box | ![semantic t7](openvla/experiments/figures/per_task_render/semantic_v2_t7.png) | 88% |
-| `landmark` | on the table in front of the stove | ![landmark t7](openvla/experiments/figures/per_task_render/landmark_full_t7.png) | 86% |
+| `default` | — (2 bowls only) | ![default t7](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_full_t7.png) | 72% |
+| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t7](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_t7.png) | 92% |
+| `semantic` | next to the cookie box | ![semantic t7](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_t7.png) | 88% |
+| `landmark` | on the table in front of the stove | ![landmark t7](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/landmark_full_t7.png) | 86% |
 
 ## Task 8 — next to the plate
 
@@ -157,10 +157,10 @@ plate"*
 
 | Condition | 3rd bowl placement | Render | SR |
 |---|---|---|--:|
-| `default` | — (2 bowls only) | ![default t8](openvla/experiments/figures/per_task_render/default_full_t8.png) | 84% |
-| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t8](openvla/experiments/figures/per_task_render/irrelevant_v2_t8.png) | 80% |
-| `semantic` | next to the cookie box | ![semantic t8](openvla/experiments/figures/per_task_render/semantic_v2_t8.png) | 80% |
-| `landmark` | near the plate, farther from it than the target | ![landmark t8](openvla/experiments/figures/per_task_render/landmark_full_t8.png) | 84% |
+| `default` | — (2 bowls only) | ![default t8](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_full_t8.png) | 84% |
+| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t8](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_t8.png) | 80% |
+| `semantic` | next to the cookie box | ![semantic t8](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_t8.png) | 80% |
+| `landmark` | near the plate, farther from it than the target | ![landmark t8](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/landmark_full_t8.png) | 84% |
 
 ## Task 9 — on the wooden cabinet
 
@@ -169,10 +169,10 @@ the plate"*
 
 | Condition | 3rd bowl placement | Render | SR |
 |---|---|---|--:|
-| `default` | — (2 bowls only) | ![default t9](openvla/experiments/figures/per_task_render/default_full_t9.png) | 72% |
-| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t9](openvla/experiments/figures/per_task_render/irrelevant_v2_t9.png) | 68% |
-| `semantic` | next to the ramekin | ![semantic t9](openvla/experiments/figures/per_task_render/semantic_v2_t9.png) | 68% |
-| `landmark` | on the table in front of the cabinet | ![landmark t9](openvla/experiments/figures/per_task_render/landmark_full_t9.png) | **54%** |
+| `default` | — (2 bowls only) | ![default t9](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_full_t9.png) | 72% |
+| `irrelevant` | front edge of the table (`table_front`) | ![irrelevant t9](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_t9.png) | 68% |
+| `semantic` | next to the ramekin | ![semantic t9](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_t9.png) | 68% |
+| `landmark` | on the table in front of the cabinet | ![landmark t9](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/landmark_full_t9.png) | **54%** |
 
 `landmark`'s second-largest single-task drop (−18 pts vs. `default`), alongside task 0 — see
 `benchmark_split_result.md` finding 7.

@@ -197,16 +197,16 @@ dirs are scratch and can be overwritten by a future pass.
 
 | id | target | `default` | `irrelevant` | `semantic` | `hardneg` |
 |--:|---|---|---|---|---|
-| 0 | between the plate and the ramekin | ![](openvla/experiments/figures/per_task_render/default_t0.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t0.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t0.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t0.png) |
-| 1 | next to the ramekin | ![](openvla/experiments/figures/per_task_render/default_t1.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t1.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t1.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t1.png) |
-| 2 | table center | ![](openvla/experiments/figures/per_task_render/default_t2.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t2.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t2.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t2.png) |
-| 3 | on the cookie box | ![](openvla/experiments/figures/per_task_render/default_t3.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t3.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t3.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t3.png) |
-| 4 | in the top drawer of the wooden cabinet | ![](openvla/experiments/figures/per_task_render/default_t4.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t4.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t4.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t4.png) |
-| 5 | on the ramekin | ![](openvla/experiments/figures/per_task_render/default_t5.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t5.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t5.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t5.png) |
-| 6 | next to the cookie box | ![](openvla/experiments/figures/per_task_render/default_t6.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t6.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t6.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t6.png) |
-| 7 | on the stove | ![](openvla/experiments/figures/per_task_render/default_t7.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t7.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t7.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t7.png) |
-| 8 | next to the plate | ![](openvla/experiments/figures/per_task_render/default_t8.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t8.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t8.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t8.png) |
-| 9 | on the wooden cabinet | ![](openvla/experiments/figures/per_task_render/default_t9.png) | ![](openvla/experiments/figures/per_task_render/irrelevant_v2_thumb_t9.png) | ![](openvla/experiments/figures/per_task_render/semantic_v2_thumb_t9.png) | ![](openvla/experiments/figures/per_task_render/hardneg_t9.png) |
+| 0 | between the plate and the ramekin | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_t0.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_thumb_t0.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_thumb_t0.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/hardneg_t0.png) |
+| 1 | next to the ramekin | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_t1.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_thumb_t1.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_thumb_t1.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/hardneg_t1.png) |
+| 2 | table center | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_t2.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_thumb_t2.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_thumb_t2.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/hardneg_t2.png) |
+| 3 | on the cookie box | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_t3.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_thumb_t3.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_thumb_t3.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/hardneg_t3.png) |
+| 4 | in the top drawer of the wooden cabinet | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_t4.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_thumb_t4.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_thumb_t4.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/hardneg_t4.png) |
+| 5 | on the ramekin | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_t5.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_thumb_t5.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_thumb_t5.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/hardneg_t5.png) |
+| 6 | next to the cookie box | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_t6.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_thumb_t6.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_thumb_t6.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/hardneg_t6.png) |
+| 7 | on the stove | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_t7.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_thumb_t7.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_thumb_t7.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/hardneg_t7.png) |
+| 8 | next to the plate | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_t8.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_thumb_t8.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_thumb_t8.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/hardneg_t8.png) |
+| 9 | on the wooden cabinet | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/default_t9.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/irrelevant_v2_thumb_t9.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/semantic_v2_thumb_t9.png) | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/per_task_render/hardneg_t9.png) |
 
 **Split's implemented conditions are fully run; only the unauthored `path` condition remains.**
 
@@ -433,7 +433,7 @@ the cabinet model; only its position changes.
 **Render compare** (left = drawer closed `libero_spatial_3bowl`, right = drawer open
 `libero_spatial_3bowl_open`; rows = task ids 0–9):
 
-![3-bowl: drawer closed vs open](openvla/experiments/figures/compare_3bowl_closed_vs_open_grid.png)
+![3-bowl: drawer closed vs open](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/compare_3bowl_closed_vs_open_grid.png)
 
 **Analysis.** The raw −20.2 pt drop overstates the policy effect: nearly half of it comes from the
 three blocked tasks (3, 6, 7), where no policy could succeed because the open drawer occupies the
@@ -1096,31 +1096,31 @@ verdict (✓ = correct). Marker color: **1**=red, **2**=green, **3**=blue (shuff
 
 | id | task | scene | `default` | `negative_contrast` | `positive_contrast` |
 |--:|---|---|---|---|---|
-| 0 | between the plate and the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t0.png) | 1→2 ✗ | 1→2 ✗ | 1→2 ✗ |
-| 1 | next to the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t1.png) | 2→2 ✓ | 2→2 ✓ | 2→2 ✓ |
-| 2 | from table center | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t2.png) | 1→1 ✓ | 1→1 ✓ | 1→1 ✓ |
-| 3 | on the cookie box | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t3.png) | 2→2 ✓ | 2→2 ✓ | 2→2 ✓ |
-| 4 | in the top drawer of the wooden cabinet | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t4.png) | 1→2 ✗ | 1→1 ✓ | 1→1 ✓ |
-| 5 | on the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t5.png) | 1→2 ✗ | 1→1 ✓ | 1→1 ✓ |
-| 6 | next to the cookie box | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t6.png) | 1→1 ✓ | 1→1 ✓ | 1→1 ✓ |
-| 7 | on the stove | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t7.png) | 1→1 ✓ | 1→1 ✓ | 1→1 ✓ |
-| 8 | next to the plate | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t8.png) | 2→1 ✗ | 2→1 ✗ | 2→1 ✗ |
-| 9 | on the wooden cabinet | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t9.png) | 1→2 ✗ | 1→2 ✗ | 1→2 ✗ |
+| 0 | between the plate and the ramekin | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t0.png) | 1→2 ✗ | 1→2 ✗ | 1→2 ✗ |
+| 1 | next to the ramekin | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t1.png) | 2→2 ✓ | 2→2 ✓ | 2→2 ✓ |
+| 2 | from table center | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t2.png) | 1→1 ✓ | 1→1 ✓ | 1→1 ✓ |
+| 3 | on the cookie box | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t3.png) | 2→2 ✓ | 2→2 ✓ | 2→2 ✓ |
+| 4 | in the top drawer of the wooden cabinet | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t4.png) | 1→2 ✗ | 1→1 ✓ | 1→1 ✓ |
+| 5 | on the ramekin | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t5.png) | 1→2 ✗ | 1→1 ✓ | 1→1 ✓ |
+| 6 | next to the cookie box | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t6.png) | 1→1 ✓ | 1→1 ✓ | 1→1 ✓ |
+| 7 | on the stove | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t7.png) | 1→1 ✓ | 1→1 ✓ | 1→1 ✓ |
+| 8 | next to the plate | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t8.png) | 2→1 ✗ | 2→1 ✗ | 2→1 ✗ |
+| 9 | on the wooden cabinet | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial--negative_contrast--t9.png) | 1→2 ✗ | 1→2 ✗ | 1→2 ✗ |
 
 **3-bowl scenes (`libero_spatial_3bowl_hardneg`) — `hardneg_default`/`hardneg` show the identical image per task:**
 
 | id | task | scene | `hardneg_default` | `hardneg` |
 |--:|---|---|---|---|
-| 0 | between the plate and the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t0.png) | 1→2 ✗ | 1→2 ✗ |
-| 1 | next to the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t1.png) | 3→2 ✗ | 3→1 ✗ |
-| 2 | from table center | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t2.png) | 2→3 ✗ | 2→3 ✗ |
-| 3 | on the cookie box | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t3.png) | 2→2 ✓ | 2→2 ✓ |
-| 4 | in the top drawer of the wooden cabinet | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t4.png) | 2→2 ✓ | 2→2 ✓ |
-| 5 | on the ramekin | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t5.png) | 3→2 ✗ | 3→3 ✓ |
-| 6 | next to the cookie box | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t6.png) | 2→2 ✓ | 2→2 ✓ |
-| 7 | on the stove | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t7.png) | 2→2 ✓ | 2→2 ✓ |
-| 8 | next to the plate | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t8.png) | 2→2 ✓ | 2→2 ✓ |
-| 9 | on the wooden cabinet | ![](openvla/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t9.png) | 3→3 ✓ | 3→3 ✓ |
+| 0 | between the plate and the ramekin | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t0.png) | 1→2 ✗ | 1→2 ✗ |
+| 1 | next to the ramekin | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t1.png) | 3→2 ✗ | 3→1 ✗ |
+| 2 | from table center | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t2.png) | 2→3 ✗ | 2→3 ✗ |
+| 3 | on the cookie box | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t3.png) | 2→2 ✓ | 2→2 ✓ |
+| 4 | in the top drawer of the wooden cabinet | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t4.png) | 2→2 ✓ | 2→2 ✓ |
+| 5 | on the ramekin | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t5.png) | 3→2 ✗ | 3→3 ✓ |
+| 6 | next to the cookie box | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t6.png) | 2→2 ✓ | 2→2 ✓ |
+| 7 | on the stove | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t7.png) | 2→2 ✓ | 2→2 ✓ |
+| 8 | next to the plate | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t8.png) | 2→2 ✓ | 2→2 ✓ |
+| 9 | on the wooden cabinet | ![](https://raw.githubusercontent.com/Qian-0203/openvla/main/experiments/figures/probe_bowl_pointing/libero_spatial_3bowl_hardneg--hardneg--t9.png) | 3→3 ✓ | 3→3 ✓ |
 
 Source images: `openvla/experiments/figures/probe_bowl_pointing/` (`openvla` commit `1b27db3`).
 

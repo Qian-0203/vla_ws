@@ -53,7 +53,7 @@ Open, but substantially narrowed.
 | Episodes | 15/condition over whole episodes (§8.9–§8.13); 50/condition truncated to 10 instrumented steps (`--max_env_steps_to_instrument 10`, §8.14–§8.15) |
 | Statistical unit | The episode, not the token (§8.12). Tests: Mann–Whitney U with tie correction and Cohen's d |
 | Precision | bf16 only. 4-bit perturbs exactly the logits being measured (§8.15) |
-| Code | `probe_mechanistic_localization.py` in the `openvla` fork. The §8.15 confidence diagnostic is on PR [#1](https://github.com/Qian-0203/openvla/pull/1) and not yet merged to `main` |
+| Code | `probe_mechanistic_localization.py` in the `openvla` fork, including the §8.15 confidence diagnostic (PR [#1](https://github.com/Qian-0203/openvla/pull/1), merged to `main` 2026-09-29) |
 
 ## 4. Methodological lessons (apply to any future probe on this checkpoint)
 
@@ -382,7 +382,7 @@ about) or more episodes would sharpen it further, not yet done.
 Artifacts: `openvla/experiments/logs/probe_mechanistic_localization/libero_spatial--t5--confdiag_earlywin_n50--2026_09_10-09_52_30.jsonl`
 (50 episodes × 3 conditions × 10 steps, 1,500 records; server-local, gitignored); smoketest jsonl
 deleted after passing. Code: `probe_mechanistic_localization.py`, committed in the `openvla` fork (PR
-[#1](https://github.com/Qian-0203/openvla/pull/1), not yet merged to main; fast-forwarded into the new
-server's local `main` 2026-09-10). Analysis: ad hoc stdlib-only Python (hand-implemented Mann-Whitney
+[#1](https://github.com/Qian-0203/openvla/pull/1), merged to `main` 2026-09-29; before that it was
+fast-forwarded only into the server's local `main`, on 2026-09-10). Analysis: ad hoc stdlib-only Python (hand-implemented Mann-Whitney
 U with tie correction, Pearson correlation, Cohen's d — same convention as §8.12), not checked into
 either repo.

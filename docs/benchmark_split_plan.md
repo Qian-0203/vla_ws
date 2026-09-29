@@ -29,7 +29,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented |
 | 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` and `semantic` each redefined a second time (see Split 2 below) -- both current suites run 2026-08-27, 85.2% each |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
-| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`), not yet run |
+| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`); 4c: `grounding/target_cue_proximity_novel`. All run |
 | VLM Bowl-Pointing / Bowl-Attraction Probes (§11, not a `SPLITS` entry) | Is the distractor-mention collapse (Splits 1/2) a grounding failure or an action-decoding failure? | Standalone diagnostic scripts, run directly — not registered in `eval_registry.py`. Both probes run to completion on their respective batteries; open gaps listed in §11.3 |
 
 "Implemented" = task suite + prompts exist in the registry and can be run with one `run_eval.sh`
@@ -339,11 +339,11 @@ Trials: 50/task/condition, seed 7, same protocol as every other split — reuses
 existing per-task numbers as the "native cue" baseline for both metrics (no re-run of that
 condition needed, same pattern as 4a's 4 reused cells).
 
-**Registry: implemented, not yet run.** The two instruction dicts
+**Registry: implemented and run** (results: `benchmark_split_result.md` §5.2). The two instruction dicts
 (`LIBERO_SPATIAL_TARGET_CUE_REGION_INSTRUCTIONS`, `LIBERO_SPATIAL_TARGET_CUE_LANDMARK_INSTRUCTIONS`)
 and the two `eval_registry.SPLITS`/`CONDITIONS` entries (`grounding/target_cue_region`,
-`grounding/target_cue_landmark`) exist on `openvla` branch `worktree-split4-target-cue-probe`
-(pushed to origin, not yet merged to `main`) — both on suite `libero_spatial`, no new BDDL, no new
+`grounding/target_cue_landmark`) exist on `openvla` `main` (originally developed on branch
+`worktree-split4-target-cue-probe`) — both on suite `libero_spatial`, no new BDDL, no new
 init states, no new contact-sheet check needed. Verified: `python3 -m py_compile` on both files,
 plus a runtime check that `CONDITIONS['target_cue_region']`/`CONDITIONS['target_cue_landmark']`
 resolve to dicts of exactly 8 and 4 task names respectively, matching the table above. Both
@@ -403,10 +403,10 @@ Familiarity Gap    = SR(target_cue_landmark) - SR(target_cue_proximity_novel)
 A `Familiarity Gap` near 0 supports the relation-type reading; a `Familiarity Gap` clearly outside
 the ~±7pt single-condition noise band (§5) supports the template-familiarity reading.
 
-**Registry: implemented, not yet run.** `LIBERO_SPATIAL_TARGET_CUE_PROXIMITY_NOVEL_INSTRUCTIONS` in
+**Registry: implemented and run** (results: `benchmark_split_result.md` §5.3). `LIBERO_SPATIAL_TARGET_CUE_PROXIMITY_NOVEL_INSTRUCTIONS` in
 `openvla/experiments/robot/libero/instructions.py` and the `target_cue_proximity_novel` entries in
 `eval_registry.CONDITIONS`/`SPLITS` (split id `grounding/target_cue_proximity_novel`) are on
-`openvla`'s `main` branch (not yet pushed to a feature branch — small enough to land directly).
+`openvla`'s `main` branch.
 Verified: `python3 -m py_compile` on both files, plus a runtime check that
 `CONDITIONS['target_cue_proximity_novel']` resolves to a dict of exactly 4 task names matching the
 table above and `resolve_split('grounding/target_cue_proximity_novel')` returns
@@ -484,14 +484,14 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
    approach: midpoint between the target's region center and `plate_region`, verified via
    `LIBERO/scripts/gen_suite_init_states.py` + `verify_suite_init_states.py`'s overlap check
    before trusting it. Deferred rather than rushed without enough render/verify iterations.
-2. **Split 4b cue-phrasing matrix — resolved and implemented, not yet run.** Decision: drop the
+2. **Split 4b cue-phrasing matrix — resolved, implemented, and run** (`benchmark_split_result.md` §5.2). Decision: drop the
    distractor-mention axis (confounded with Split 1's already-established mention penalty — see
    Split 4's 4b section above), keep only a target-cue-type axis (landmark/surface/region
    rephrasing of the same unmentioned target), and use relaxed/disclosed truthfulness (option (b))
    rather than new scene geometry for that axis. Full design — conditions, per-task prompts,
    metrics — is written up in Split 4's 4b section above; the two instruction dicts and two
-   `SPLITS`/`CONDITIONS` entries are implemented on `openvla` branch
-   `worktree-split4-target-cue-probe` (pushed, not yet merged). Remaining before it's "run": (i)
+   `SPLITS`/`CONDITIONS` entries are implemented on `openvla` `main`
+   (merged from `worktree-split4-target-cue-probe`). The pre-run checklist, kept for the record: (i)
    sanity-check the inferred region-zone directional wording (back-left, front-right, etc.)
    against `libero_spatial`'s existing contact sheet (`LIBERO/scratch_render/libero_spatial/`) —
    those phrasings were derived from BDDL coordinate signs, not confirmed visually; (ii) merge the
