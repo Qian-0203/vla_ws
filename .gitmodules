@@ -1,0 +1,6 @@
+[submodule "openvla"]
+	path = openvla
+	url = https://github.com/Qian-0203/openvla.git
+[submodule "LIBERO"]
+	path = LIBERO
+	url = https://github.com/Qian-0203/LIBERO.git

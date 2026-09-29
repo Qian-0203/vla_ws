@@ -1,8 +1,8 @@
 # CLAUDE.md
 
 Operating guide for working in this repo. For the research spec (splits, hypotheses, process), see
-`benchmark_split_plan.md`; for detailed per-condition settings/results/analysis, see
-`benchmark_split_result.md`; for the chronological record of eval launches, see `eval_log.md` — this
+`docs/benchmark_split_plan.md`; for detailed per-condition settings/results/analysis, see
+`docs/benchmark_split_result.md`; for the chronological record of eval launches, see `docs/eval_log.md` — this
 file is operational only; don't duplicate that content here.
 
 ## What this is
@@ -15,21 +15,23 @@ separate real spatial/language grounding from overfitting to the training distri
 
 ```
 vla_ws/                    <- THIS repo. Docs, config, docker orchestration. No model/eval code.
-  benchmark_split_plan.md      plan & process: splits, hypotheses, scene design, execution
+  README.md                    external-facing quickstart for evaluating another checkpoint on the
+                                benchmark (split table + reference SRs; keep in sync with docs/)
+  docs/benchmark_split_plan.md     plan & process: splits, hypotheses, scene design, execution
                                 checklist (update when a split's definition changes)
-  benchmark_split_result.md    detailed record: per-condition setting (instruction/prompt text,
+  docs/benchmark_split_result.md   detailed record: per-condition setting (instruction/prompt text,
                                 render scene, distractor placement), render compare figures, full
                                 per-task results, analysis, status dashboard, cross-experiment
                                 findings (update after every real eval run)
-  eval_log.md                  launch log: what ran, in what order, on what hardware/config,
+  docs/eval_log.md             launch log: what ran, in what order, on what hardware/config,
                                 where outputs landed (append-only, never overwrite; update after
                                 every real eval run)
   config/                      machine profiles (laptop.env, server.env.example)
   docker/openvla_libero/       Dockerfiles + run_eval.sh (the one eval launcher)
-  scripts/                     aggregate_results.py, preflight.py
+  scripts/                     run_benchmark.sh (all current splits), aggregate_results.py, preflight.py
 
-  openvla/                  <- SEPARATE git repo (fork github.com/Qian-0203/openvla), gitignored
-                                here. Owns all eval CODE.
+  openvla/                  <- SEPARATE git repo (fork github.com/Qian-0203/openvla), a git
+                                submodule here. Owns all eval CODE.
     experiments/robot/libero/
       run_libero_eval.py         THE canonical eval entry point
       eval_registry.py           THE canonical benchmark registry (splits -> suite/condition)
@@ -39,8 +41,8 @@ vla_ws/                    <- THIS repo. Docs, config, docker orchestration. No 
     checkpoint/                  LoRA checkpoint (~15GB, gitignored, not in git history)
     experiments/logs/            eval outputs (gitignored)
 
-  LIBERO/                   <- SEPARATE git repo (fork github.com/Qian-0203/LIBERO), gitignored
-                                here. Owns all SCENE/TASK definitions.
+  LIBERO/                   <- SEPARATE git repo (fork github.com/Qian-0203/LIBERO), a git
+                                submodule here. Owns all SCENE/TASK definitions.
     libero/libero/benchmark/{__init__.py,libero_suite_task_map.py}   suite registry
     libero/libero/bddl_files/<suite>/                                scene definitions
     libero/libero/init_files/<suite>/                                pre-sampled init states
@@ -49,7 +51,10 @@ vla_ws/                    <- THIS repo. Docs, config, docker orchestration. No 
 **Why three repos:** `openvla/` and `LIBERO/` are your own forks with their own commit history and
 remotes — changes to eval code or scenes belong in those repos' git history, not this one. This
 repo only orchestrates: it mounts both into a Docker container and runs one script. When editing
-eval logic or scenes, `cd` into the relevant fork and commit there separately.
+eval logic or scenes, `cd` into the relevant fork and commit there separately, push it, then
+commit the bumped submodule pointer here (`git add openvla LIBERO`) -- that pointer is what a
+fresh `git clone --recursive` of this repo checks out, so an un-bumped pointer hands external
+users stale scenes/code.
 
 ## Canonical sources of truth
 
@@ -59,11 +64,11 @@ eval logic or scenes, `cd` into the relevant fork and commit there separately.
 - **Task suites / scenes:** `LIBERO/libero/libero/benchmark/__init__.py` (registration) +
   `libero_suite_task_map.py` (task lists) + `bddl_files/<suite>/*.bddl` (scene geometry)
 - **Research semantics (hypotheses, metrics, scene design, what's implemented vs. open):**
-  `benchmark_split_plan.md`
+  `docs/benchmark_split_plan.md`
 - **Per-condition setting, results, and analysis (instruction text, render scene, distractor
   placement, render compare, full per-task results, status dashboard, cross-experiment findings):**
-  `benchmark_split_result.md` — the authoritative source for any number
-- **When something was launched (batch order, hardware/config, results-file paths):** `eval_log.md`
+  `docs/benchmark_split_result.md` — the authoritative source for any number
+- **When something was launched (batch order, hardware/config, results-file paths):** `docs/eval_log.md`
   (append-only, never edit old entries)
 
 ## Environment setup
@@ -92,6 +97,9 @@ MACHINE_CONFIG=config/laptop.env bash docker/openvla_libero/run_eval.sh --split 
 # Server, multiple GPUs (sharded round-robin across the suite's tasks):
 MACHINE_CONFIG=config/server.env GPUS=0,1,2,3,4 bash docker/openvla_libero/run_eval.sh --split spatial_3bowl/irrelevant
 
+# Every current (non-legacy) split for one checkpoint, then aggregate (what README.md hands out):
+CHECKPOINT=/path/to/ckpt bash scripts/run_benchmark.sh
+
 # Quick smoke test (1 task, 1 trial):
 MACHINE_CONFIG=config/laptop.env bash docker/openvla_libero/run_eval.sh --split spatial/default --task_ids 0 --num_trials_per_task 1
 
@@ -115,15 +123,15 @@ Any flag not consumed by `run_eval.sh` (`--split`, `--resume`, ...) forwards str
 - Run metadata (config, checkpoint, git commit, python/torch/GPU, timestamp): sibling `*.meta.json`
 - Rollout videos: `openvla/rollouts/{date}/`
 - Aggregate: `python scripts/aggregate_results.py [--filter <suite substring>]` — per-task +
-  suite-wide success rate (mean of per-task rates, matching `benchmark_split_result.md`'s convention).
+  suite-wide success rate (mean of per-task rates, matching `docs/benchmark_split_result.md`'s convention).
 - After a real run, update the docs by hand (none are auto-generated):
-  1. Append an entry to `eval_log.md` — batch date, hardware/image/checkpoint, launch order, one-line
+  1. Append an entry to `docs/eval_log.md` — batch date, hardware/image/checkpoint, launch order, one-line
      headline + rollouts per condition, results-file paths. Never overwrite existing entries.
-  2. Update `benchmark_split_result.md` — add/extend the condition's detail section (setting,
+  2. Update `docs/benchmark_split_result.md` — add/extend the condition's detail section (setting,
      render compare, full per-task table, analysis), the status table row (SR/rollouts), any
      computed drop metric, and the cross-experiment findings list if this run changes the picture.
      This is the file to update on *every* run, without exception.
-  3. Update `benchmark_split_plan.md` only if the run changed a split's *definition* (e.g. a scene
+  3. Update `docs/benchmark_split_plan.md` only if the run changed a split's *definition* (e.g. a scene
      redefinition, a newly authored condition) — most runs don't touch this file.
 
 ## Hardware constraints
@@ -152,8 +160,9 @@ Any flag not consumed by `run_eval.sh` (`--split`, `--resume`, ...) forwards str
   without `--user "$(id -u):$(id -g)"` (run_eval.sh always sets this). If you hit permission
   errors writing there, that's why — fix ownership rather than deleting, since `.cache/huggingface`
   may hold downloaded weights.
-- Both `openvla/` and `LIBERO/` are gitignored from this repo *by design* — don't try to `git add`
-  them here; `cd` in and commit there.
+- `openvla/` and `LIBERO/` are submodules — `git add openvla` here only records which fork commit
+  to check out; edit and commit their files from inside the fork. Push the fork *before* pushing a
+  pointer bump here, or `git clone --recursive` fails on an unknown commit.
 - **A fresh GPU server can be missing MuJoCo's EGL rendering libs even though `nvidia-smi` works
   fine.** Cloud images (e.g. GCP's `nvidia-driver-*-server` package) ship a compute-only driver
   with no `libEGL_nvidia.so.0`/GLX libs — MuJoCo then fails with `RuntimeError: The
@@ -208,16 +217,18 @@ Any flag not consumed by `run_eval.sh` (`--split`, `--resume`, ...) forwards str
    keyed by `task.name`.
 3. Add one entry to `eval_registry.SPLITS` (and `CONDITIONS` if it's a new condition, not just a
    new suite).
-4. Add a row to `benchmark_split_plan.md` (§3) describing the hypothesis/metrics — code and doc
-   must agree. Add the new condition to `benchmark_split_result.md`'s status table too (as
-   not-yet-run) so it isn't dropped from tracking, and to `eval_log.md`'s "still queued" list.
-5. Commit scene changes in `LIBERO/`, code changes in `openvla/`, and doc changes here —
-   separately, in their own repos.
+4. Add a row to `docs/benchmark_split_plan.md` (§3) describing the hypothesis/metrics — code and doc
+   must agree. Add the new condition to `docs/benchmark_split_result.md`'s status table too (as
+   not-yet-run) so it isn't dropped from tracking, and to `docs/eval_log.md`'s "still queued" list.
+5. Add it to `scripts/run_benchmark.sh`'s `DEFAULT_SPLITS` (plus `TASK_IDS` if it only covers a
+   task subset) and to `README.md`'s split table once it has a reference number.
+6. Commit scene changes in `LIBERO/`, code changes in `openvla/`, and doc changes here —
+   separately, in their own repos — then bump the submodule pointers here.
 
 ## Protected files
 
-- `eval_log.md` — append-only, historical launch record. Never edit or delete existing entries.
-- `benchmark_split_result.md` — never delete an existing condition's detail section; extend or
+- `docs/eval_log.md` — append-only, historical launch record. Never edit or delete existing entries.
+- `docs/benchmark_split_result.md` — never delete an existing condition's detail section; extend or
   append instead.
 - `openvla/checkpoint/`, `openvla/libero_spatial/` (training data, not read at eval time) — large,
   gitignored, never delete without explicit instruction.
@@ -226,13 +237,13 @@ Any flag not consumed by `run_eval.sh` (`--split`, `--resume`, ...) forwards str
 
 ## Pre-change / completion checklist
 
-Before: read `benchmark_split_plan.md` for the split you're touching (and `benchmark_split_result.md`
+Before: read `docs/benchmark_split_plan.md` for the split you're touching (and `docs/benchmark_split_result.md`
 for its current status); check `git status` in whichever repo(s) you're about to edit — don't
 clobber uncommitted work in `openvla/`/`LIBERO/`.
 
 After: `python3 -m py_compile` on any touched `.py`; if you touched scene BDDLs, re-run
 `verify_suite_init_states.py` and eyeball the contact sheet (log the check in
-`benchmark_split_result.md` §7); if you touched `eval_registry.py`, confirm `benchmark_split_plan.md`
-still matches; after any real eval run, update `benchmark_split_result.md` and `eval_log.md`
+`docs/benchmark_split_result.md` §7); if you touched `eval_registry.py`, confirm `docs/benchmark_split_plan.md`
+still matches; after any real eval run, update `docs/benchmark_split_result.md` and `docs/eval_log.md`
 (see "Results & logs" above); run `python scripts/preflight.py` before claiming a new machine is
 eval-ready.

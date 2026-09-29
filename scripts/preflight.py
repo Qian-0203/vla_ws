@@ -60,6 +60,22 @@ def check_checkpoint(checkpoint, gpus, load_in_4bit, load_in_8bit):
         print(f"[WARN] checkpoint path does not exist locally: {checkpoint}")
         print("       (fine if it only exists on the server -- this check is host-side)")
         return
+    if os.path.isfile(os.path.join(checkpoint, "adapter_config.json")) and not os.path.isfile(
+        os.path.join(checkpoint, "config.json")
+    ):
+        print("[FAIL] checkpoint is a bare LoRA adapter -- merge it into openvla-7b first (eval loads a full HF model).")
+
+    # Every split un-normalizes actions with the libero_spatial stats (eval_registry.SPLITS); a
+    # missing key is a hard error at load time, but a key from a different dataset would not be.
+    stats_path = os.path.join(checkpoint, "dataset_statistics.json")
+    if os.path.isfile(stats_path):
+        with open(stats_path) as f:
+            keys = sorted(json.load(f))
+        ok = any(k in keys for k in ("libero_spatial", "libero_spatial_no_noops"))
+        print(f"[{'OK' if ok else 'FAIL'}] dataset_statistics.json keys: {keys} (need libero_spatial[_no_noops]).")
+    else:
+        print("[WARN] no dataset_statistics.json in checkpoint; action un-normalization will fail.")
+
     index_path = os.path.join(checkpoint, "model.safetensors.index.json")
     if not os.path.isfile(index_path):
         print(f"[WARN] no model.safetensors.index.json under {checkpoint}; can't verify shard completeness.")

@@ -4,9 +4,9 @@
 .cache/
 .libero/
 
-# External repositories cloned into this workspace
-openvla/
-LIBERO/
+# Machine-specific profiles (copy config/server.env.example)
+config/*.env
+!config/laptop.env
 
 # Python caches and build output
 __pycache__/

@@ -40,6 +40,9 @@ CHECKPOINT="${CHECKPOINT:-${WORKSPACE_ROOT}/openvla/checkpoint/baseline_lora_lib
 GPUS="${GPUS:-0}"
 LOAD_IN_4BIT="${LOAD_IN_4BIT:-False}"
 LOAD_IN_8BIT="${LOAD_IN_8BIT:-False}"
+# Must match training: True iff the checkpoint was fine-tuned with random-crop image
+# augmentation (OpenVLA's --image_aug). A mismatch silently costs a lot of success rate.
+CENTER_CROP="${CENTER_CROP:-True}"
 OPENVLA_ATTN_IMPLEMENTATION="${OPENVLA_ATTN_IMPLEMENTATION:-flash_attention_2}"
 NUM_TRIALS_PER_TASK="${NUM_TRIALS_PER_TASK:-50}"
 SEED="${SEED:-7}"
@@ -81,6 +84,10 @@ DOCKER_TTY_ARGS=()
 # (the nvidia container runtime injects libEGL_nvidia.so.0 when graphics caps are on).
 DOCKER_MOUNTS=(-v "${WORKSPACE_ROOT}:/workspace")
 [[ -n "${SERVER_ROOT}" && -d "${SERVER_ROOT}" ]] && DOCKER_MOUNTS+=(-v "${SERVER_ROOT}:${SERVER_ROOT}:ro")
+# A checkpoint anywhere else on the host is identity-mounted read-only on its own.
+if [[ "${CHECKPOINT}" != "${WORKSPACE_ROOT}"/* && ( -z "${SERVER_ROOT}" || "${CHECKPOINT}" != "${SERVER_ROOT}"/* ) ]]; then
+  DOCKER_MOUNTS+=(-v "${CHECKPOINT}:${CHECKPOINT}:ro")
+fi
 DOCKER_MOUNTS+=(-v "${SCRIPT_DIR}/10_nvidia_egl.json:/etc/glvnd/egl_vendor.d/10_nvidia.json:ro")
 
 DOCKER_ENV_COMMON=(
@@ -103,6 +110,9 @@ DOCKER_ENV_COMMON=(
   -e HOME=/workspace/.cache/home
   -e MPLCONFIGDIR=/workspace/.cache/matplotlib
   -e XDG_CACHE_HOME=/workspace/.cache
+  # HOME is a directory shared by every container on this machine; ignore any
+  # `pip install --user` packages there so the image's pinned versions always win.
+  -e PYTHONNOUSERSITE=1
 )
 
 DOCKER_USER_ARGS=(--user "$(id -u):$(id -g)")
@@ -130,7 +140,7 @@ run_shard() {
     --pretrained_checkpoint "${CONTAINER_CHECKPOINT}" \
     --load_in_4bit "${LOAD_IN_4BIT}" \
     --load_in_8bit "${LOAD_IN_8BIT}" \
-    --center_crop True \
+    --center_crop "${CENTER_CROP}" \
     --num_trials_per_task "${NUM_TRIALS_PER_TASK}" \
     --seed "${SEED}" \
     --local_log_dir /workspace/openvla/experiments/logs \
