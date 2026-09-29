@@ -10,7 +10,9 @@ placement, render comparisons, full per-task results, and analysis all live in
 `benchmark_split_result.md`. Not the design doc — hypotheses, split rationale, and scene geometry live
 in `benchmark_split_plan.md`. This file only needs a new entry when a real GPU eval is launched;
 never edit or delete a prior entry, append instead (if a run is redone, add a new entry and note what
-it supersedes).
+it supersedes). The reference sections at the end ("Servers & environments reference", "Config
+reference") are maintained in place: they are the one home for machine/server setup, which the
+benchmark docs deliberately don't carry.
 
 **Update rule:** every time a real GPU eval finishes, append an entry here (batch date, hardware,
 launch order, one-line result headline + rollouts per condition, results-file paths) **and** update
@@ -955,6 +957,67 @@ correlation estimate (sd≈0.41-0.48 on n=9 within-episode points) further.
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.
+
+---
+
+## Servers & environments reference
+
+This section records where each batch above ran and how to stand up a new machine. It is maintained
+in place: update it when a machine is added or retired, and leave the dated entries above unchanged.
+
+### Machines
+
+| Machine | GPUs | Image / attention | Precision | Used for |
+|---|---|---|---|---|
+| Original H200 server (`SERVER_ROOT=/home/ec2-user/wenhan`, checkpoint outside the workspace) — retired | 5× H200 (GPUs 0–4) | `openvla-libero:cuda12.1` / FlashAttention-2 | bf16 | 2026-08-1x baseline batch |
+| 4× Blackwell server (instance name not recorded) | 4× RTX PRO 6000 Blackwell | `openvla-libero:blackwell` / sdpa | bf16 | 2026-08-19 and 2026-08-20 batches |
+| GCP `g4-flex-20260824`, ssh alias `berkeley` — replaced 2026-09-10 | 4× RTX PRO 6000 Blackwell Server Edition, 98 GB each, compute cap 12.0 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-08-25 → 2026-09-08 entries |
+| GCP replacement instance, same `berkeley` alias — current | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-10 onward |
+| Laptop | 1× RTX 5060 Laptop, 8 GB, compute cap 12.0 | `openvla-libero:blackwell` / sdpa | 4-bit only | scene authoring, init states, contact sheets, smoke tests (no reported number comes from here) |
+
+Entries above that cite `config/berkeley.env` or `config/server.env` both refer to the 4× Blackwell
+GCP profile.
+
+### Machine profiles
+
+Since 2026-09-29, machine-specific `config/*.env` files are no longer tracked in git. The settings
+they held:
+
+- **4× Blackwell GCP (`berkeley.env` / `server.env`):** `GPUS=0,1,2,3`,
+  `IMAGE_NAME=openvla-libero:blackwell`, `OPENVLA_ATTN_IMPLEMENTATION=sdpa`, `LOAD_IN_4BIT=False`,
+  `NUM_TRIALS_PER_TASK=50`, `SEED=7`. The workspace is deployed at `/home/qian/vla_ws` with the
+  checkpoint inside it (`openvla/checkpoint/...`), so no `SERVER_ROOT` is needed.
+- **H200 server:** see `config/server.env.example` (tracked).
+- **Laptop:** see `config/laptop.env` (tracked).
+
+The 84.0% baseline reproduces across hardware and attention kernels: 84.0% on H200 with
+FlashAttention-2 (2026-08-1x) vs. 84.4% on Blackwell with sdpa (2026-09-10).
+
+### Standing up a new server (procedure used on 2026-09-10)
+
+1. Install Docker CE and `nvidia-container-toolkit`, and configure the NVIDIA runtime.
+2. Check that MuJoCo's EGL rendering libraries are present. Compute-only cloud drivers ship without
+   them, and the failure looks like
+   `MUJOCO_EGL_DEVICE_ID ... must be an integer between 0 and -1`. To fix it, install
+   `libnvidia-gl-<driver version>-server` and run
+   `sudo nvidia-ctk cdi generate --output=/var/run/cdi/nvidia.yaml`. No Docker restart is needed.
+   Confirm with a manual EGL render before touching the eval pipeline.
+3. Run `git clone --recursive https://github.com/Qian-0203/vla_ws.git`. Since 2026-09-29, `openvla`
+   and `LIBERO` are submodules; before that date, each was cloned separately over SSH.
+4. Build the image that matches the GPU's compute capability: `Dockerfile.blackwell` for 12.0, and
+   `Dockerfile` below that. The build takes about 2 minutes on a server network. Build fresh rather
+   than trusting an existing tag, because a tagged image once drifted to `mujoco==3.10.0` and broke
+   all env stepping.
+5. Transfer the checkpoint (about 15 GB). Using `rsync` from the laptop took about 4.5 hours, limited
+   by the home uplink. Use a better-connected source if one is available.
+6. Run `python3 scripts/preflight.py`.
+7. Smoke test: `run_eval.sh --split spatial/default --task_ids 5 --num_trials_per_task 1`.
+8. Validation: run the full `spatial/default` split. It must land within about ±3.3 pts of 84.0%
+   before the machine is trusted.
+
+Containers on one machine share `.cache/home` as `HOME`. A `pip install --user` from any session
+therefore leaks into all of them. `run_eval.sh` has set `PYTHONNOUSERSITE=1` since 2026-09-29 to
+prevent this; ad hoc `docker run` probes need the same flag.
 
 ---
 

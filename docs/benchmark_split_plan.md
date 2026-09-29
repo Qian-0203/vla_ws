@@ -517,7 +517,8 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
 3. If the scene is new or its render hasn't been eyeballed yet, render its contact sheet and check
    it before spending GPU time (`LIBERO/scripts/render_suite_contact_sheet.py <suite>` — see
    `CLAUDE.md`'s "how to add a benchmark split").
-4. `MACHINE_CONFIG=config/<machine>.env bash docker/openvla_libero/run_eval.sh --split <id>`
+4. `MACHINE_CONFIG=config/<machine>.env bash docker/openvla_libero/run_eval.sh --split <id>` (machine
+   profiles and server setup: `eval_log.md` "Servers & environments reference")
 5. `python scripts/aggregate_results.py --filter <suite name>` to get the per-task/overall table.
 6. Compare against the baseline/formulas in the relevant split's row above.
 7. Append an entry to `eval_log.md` (launch batch, hardware, order, results-file paths) **and**
@@ -585,7 +586,8 @@ Carried forward from `benchmark_split_result.md` §8.6's revised synthesis:
    *where in the network* it goes wrong — vision encoder, language projector, or action-token head
    could each independently produce "never commits to a target," and task 3's approach-then-fail
    pattern is a separate, untested localization question (likely downstream, in grasp/lift/place
-   control, but not confirmed). Unaddressed by the sample-size extension.
+   control, but not confirmed). **Pursued as its own probe (2026-09-04 → 2026-09-10): narrowed, not
+   closed.** Design, runs, and current conclusion live in `mechanistic_localization.md`.
 4. **Narrow condition sweep (task sweep now closed for 2 of 3 conditions).** `default`/
    `negative_contrast` now cover all 10 tasks, but `target_cue_landmark` is still 4-task only (see
    §11.2's Tasks row for why it can't be trivially extended), and `positive_contrast`,

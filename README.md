@@ -119,4 +119,8 @@ To run a single split by hand:
   coordinates.
 - `docs/benchmark_split_result.md`: exact prompt text, renders, full per-task results, and analysis
   for every condition.
-- `docs/eval_log.md`: chronological launch log for the reference numbers above.
+- `docs/eval_log.md`: chronological launch log for the reference numbers above, plus the
+  hardware and server-setup reference.
+- `docs/mechanistic_localization.md`: an optional diagnostic that probes *where* in the network the
+  prompt-induced failures originate (logit lens, attention mass, decision confidence). It is not
+  needed to run the benchmark.

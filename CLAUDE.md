@@ -25,7 +25,10 @@ vla_ws/                    <- THIS repo. Docs, config, docker orchestration. No 
                                 findings (update after every real eval run)
   docs/eval_log.md             launch log: what ran, in what order, on what hardware/config,
                                 where outputs landed (append-only, never overwrite; update after
-                                every real eval run)
+                                every real eval run) + the one home for server/machine setup
+                                ("Servers & environments reference", maintained in place)
+  docs/mechanistic_localization.md   mechanistic-localization probe: design, runs §8.9+, current
+                                conclusion (update after every probe run)
   config/                      machine profiles (laptop.env, server.env.example)
   docker/openvla_libero/       Dockerfiles + run_eval.sh (the one eval launcher)
   scripts/                     run_benchmark.sh (all current splits), aggregate_results.py, preflight.py
@@ -70,6 +73,9 @@ users stale scenes/code.
   `docs/benchmark_split_result.md` — the authoritative source for any number
 - **When something was launched (batch order, hardware/config, results-file paths):** `docs/eval_log.md`
   (append-only, never edit old entries)
+- **Machines, machine profiles, standing up a new server:** `docs/eval_log.md` "Servers & environments
+  reference". Keep server/hardware detail out of the plan/result docs, which stay benchmark-only.
+- **Mechanistic-localization probe (design, results, conclusion):** `docs/mechanistic_localization.md`
 
 ## Environment setup
 
@@ -133,6 +139,8 @@ Any flag not consumed by `run_eval.sh` (`--split`, `--resume`, ...) forwards str
      This is the file to update on *every* run, without exception.
   3. Update `docs/benchmark_split_plan.md` only if the run changed a split's *definition* (e.g. a scene
      redefinition, a newly authored condition) — most runs don't touch this file.
+  A mechanistic-localization probe run updates `docs/mechanistic_localization.md` (new §8.x + §2
+  conclusion) instead of step 2, plus the `docs/eval_log.md` entry.
 
 ## Hardware constraints
 
