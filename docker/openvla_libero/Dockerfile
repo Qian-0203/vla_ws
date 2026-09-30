@@ -68,6 +68,10 @@ RUN python -m pip install --no-deps "tensorflow-metadata==1.16.1"
 # isn't -- see CLAUDE.md "Known pitfalls"). Force the pinned version as the last word.
 RUN python -m pip install --no-deps --force-reinstall "mujoco==2.3.2"
 
+# Websocket client for openpi policy servers (MODEL_FAMILY=openpi in run_eval.sh). Pure Python;
+# pinned to a commit because the package is not on PyPI.
+RUN python -m pip install "openpi-client @ git+https://github.com/Physical-Intelligence/openpi.git@215abfb217dbac7d5f1273282331b9b1866c0479#subdirectory=packages/openpi-client"
+
 # The base image ships only the Mesa (software) GLVND EGL vendor ICD, so libEGL
 # falls back to swrast and headless MuJoCo rendering fails. Register the NVIDIA
 # EGL ICD (libEGL_nvidia.so.0 is injected by the nvidia container runtime when

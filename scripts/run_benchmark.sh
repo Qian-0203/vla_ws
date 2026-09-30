@@ -8,6 +8,9 @@
 #   CHECKPOINT=/path/to/merged/openvla/ckpt bash scripts/run_benchmark.sh
 #   CHECKPOINT=... GPUS=0,1,2,3 bash scripts/run_benchmark.sh --resume True   # continue after a crash
 #   CHECKPOINT=... SPLITS="spatial/default" bash scripts/run_benchmark.sh        # just the sanity gate
+#   CHECKPOINT=... SPLITS=new bash scripts/run_benchmark.sh                      # the 2026-10-01 conditions
+#   MODEL_FAMILY=openpi CHECKPOINT=gs://openpi-assets/checkpoints/pi05_libero RUN_NOTE=pi05_libero \
+#     bash scripts/run_benchmark.sh                  # an openpi policy; start scripts/serve_openpi.sh first
 #
 # Extra args are forwarded to every run_eval.sh call. Results land in
 # openvla/experiments/logs/results/{suite}--{condition}--{RUN_NOTE}*.jsonl.
@@ -25,6 +28,18 @@ declare -A TASK_IDS=(
   [grounding/target_cue_region]=0,1,3,5,6,7,8,9
   [grounding/target_cue_landmark]=3,5,7,9
   [grounding/target_cue_proximity_novel]=3,5,7,9
+  [grounding/target_cue_region_v2]=0,1,3,5,6,7,8,9
+  [grounding/target_cue_region_v3]=0,1,3,5,6,7,8,9
+  [grounding/target_cue_proximity_beside]=3,5,7,9
+  [grounding/target_cue_proximity_near]=3,5,7,9
+  [grounding/target_cue_proximity_adjacent]=3,5,7,9
+)
+# Authored 2026-10-01, not yet in DEFAULT_SPLITS (no reference number yet); run with SPLITS="...".
+NEW_SPLITS=(
+  spatial/length_control_infix spatial/length_control_suffix
+  grounding/paraphrase_lexical grounding/paraphrase_syntactic
+  grounding/target_cue_region_v2 grounding/target_cue_region_v3
+  grounding/target_cue_proximity_beside grounding/target_cue_proximity_near grounding/target_cue_proximity_adjacent
 )
 DEFAULT_SPLITS=(
   spatial/default                             # Split 1 baseline -- sanity gate
@@ -41,7 +56,8 @@ DEFAULT_SPLITS=(
   grounding/surface_landmark                  # Split 4a gap-fill cell
   grounding/region_surface                    # Split 4a gap-fill cell
 )
-if [[ -n "${SPLITS:-}" ]]; then read -r -a RUN_SPLITS <<<"${SPLITS}"; else RUN_SPLITS=("${DEFAULT_SPLITS[@]}"); fi
+if [[ "${SPLITS:-}" == new ]]; then RUN_SPLITS=("${NEW_SPLITS[@]}")
+elif [[ -n "${SPLITS:-}" ]]; then read -r -a RUN_SPLITS <<<"${SPLITS}"; else RUN_SPLITS=("${DEFAULT_SPLITS[@]}"); fi
 
 export CHECKPOINT
 for split in "${RUN_SPLITS[@]}"; do
