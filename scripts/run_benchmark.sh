@@ -15,6 +15,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 : "${CHECKPOINT:?Set CHECKPOINT=/path/to/your/merged/openvla/checkpoint}"
+# Per-split launcher. QwenVLA checkpoints use the host runner instead of Docker:
+#   EVAL_RUNNER=scripts/run_eval_qwenvla.sh RESULTS_DIR=/var/tmp/$USER/vla_ws_runs/logs/results
+EVAL_RUNNER="${EVAL_RUNNER:-${ROOT}/docker/openvla_libero/run_eval.sh}"
+RESULTS_DIR="${RESULTS_DIR:-${ROOT}/openvla/experiments/logs/results}"
 # Tags every results file with the checkpoint so runs of different models never collide.
 RUN_NOTE="${RUN_NOTE:-$(basename "${CHECKPOINT}" | tr -c 'A-Za-z0-9._\n-' '_' | cut -c1-80)}"
 
@@ -48,8 +52,8 @@ for split in "${RUN_SPLITS[@]}"; do
   echo "=== ${split} (run note: ${RUN_NOTE}) ==="
   task_args=()
   [[ -n "${TASK_IDS[${split}]:-}" ]] && task_args=(--task_ids "${TASK_IDS[${split}]}")
-  bash "${ROOT}/docker/openvla_libero/run_eval.sh" --split "${split}" --run_id_note "${RUN_NOTE}" \
+  bash "${EVAL_RUNNER}" --split "${split}" --run_id_note "${RUN_NOTE}" \
     "${task_args[@]}" "$@"
 done
 
-python3 "${ROOT}/scripts/aggregate_results.py" --filter="--${RUN_NOTE}"
+python3 "${ROOT}/scripts/aggregate_results.py" --results-dir "${RESULTS_DIR}" --filter="--${RUN_NOTE}"
