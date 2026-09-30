@@ -955,6 +955,12 @@ correlation estimate (sd≈0.41-0.48 on n=9 within-episode points) further.
 
 ## Still queued (registry-ready, not yet launched)
 
+**Registry-ready (authored 2026-10-01), 3,400 rollouts total:**
+- `spatial/length_control_infix`, `spatial/length_control_suffix`: all 10 tasks, 500 each.
+- `grounding/paraphrase_lexical`, `grounding/paraphrase_syntactic`: all 10 tasks, 500 each.
+- `grounding/target_cue_region_v2`, `grounding/target_cue_region_v3`: `--task_ids 0 1 3 5 6 7 8 9`, 400 each.
+- `grounding/target_cue_proximity_beside`, `_near`, `_adjacent`: `--task_ids 3 5 7 9`, 200 each.
+
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.
 
@@ -1009,7 +1015,14 @@ FlashAttention-2 (2026-08-1x) vs. 84.4% on Blackwell with sdpa (2026-09-10).
    than trusting an existing tag, because a tagged image once drifted to `mujoco==3.10.0` and broke
    all env stepping.
 5. Transfer the checkpoint (about 15 GB). Using `rsync` from the laptop took about 4.5 hours, limited
-   by the home uplink. Use a better-connected source if one is available.
+   by the home uplink. Since 2026-10-01 the checkpoint is meant to go through a private Hugging Face
+   model repo instead. The laptop uploads it once with
+   `bash scripts/hf_checkpoint.sh upload <merged ckpt dir> <hf_user>/<repo>`. Each new server then
+   runs `bash scripts/hf_checkpoint.sh download <hf_user>/<repo>`, which lands it under
+   `openvla/checkpoint/<repo>`. Both ends need `uv` and a one-time
+   `uvx --from huggingface_hub hf auth login`. The reference checkpoint is uploaded as the private
+   repo `Qian0203/openvla-7b-libero-spatial-lora-r32`, which took about 5 minutes from the laptop on
+   2026-10-01. So the 4.5-hour `rsync` was limited by the single connection, not by the home uplink.
 6. Run `python3 scripts/preflight.py`.
 7. Smoke test: `run_eval.sh --split spatial/default --task_ids 5 --num_trials_per_task 1`.
 8. Validation: run the full `spatial/default` split. It must land within about ±3.3 pts of 84.0%
