@@ -177,7 +177,8 @@ if ((NUM_SHARDS == 1)); then
   run_shard "${GPU_ARR[0]}" 0 1
 else
   echo "Sharding across ${NUM_SHARDS} GPUs: ${GPUS}"
-  STAMP="$(date +%Y_%m_%d-%H_%M_%S)"
+  # Model family + PID too: two launches in the same second must not share shard log files.
+  STAMP="$(date +%Y_%m_%d-%H_%M_%S)-${MODEL_FAMILY}-$$"
   pids=()
   for idx in "${!GPU_ARR[@]}"; do
     gpu="${GPU_ARR[$idx]}"
