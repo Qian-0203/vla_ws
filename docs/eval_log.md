@@ -953,13 +953,98 @@ correlation estimate (sd≈0.41-0.48 on n=9 within-episode points) further.
 
 ---
 
+## 2026-09-30 → 2026-10-01 — `pi05_libero` on the whole benchmark (22 conditions, first non-OpenVLA policy)
+
+- **Trigger:** first cross-model run. `run_libero_eval.py` gained `--model_family openpi`
+  (openvla `07e34ec`, keepalive fix `a5f9a97`), so an openpi policy can be driven through the same
+  registry, scenes, init states, and seed as the OpenVLA reference. Run metadata records `07e34ec`
+  for `spatial/default`, `positive_contrast`, and `negative_contrast`, and `a5f9a97` for the rest.
+- **Hardware:** `berkeley` (GCP host `g4-flexstart-mig-uswest1-9dxc`, 4× RTX PRO 6000 Blackwell,
+  driver 580.178.04; see "Machines" below), `openvla-libero:blackwell`, `config/server.env`. The GPUs
+  were shared with another user's training containers for the whole run, and with the OpenVLA batch
+  in the next entry.
+- **Policy:** `gs://openpi-assets/checkpoints/pi05_libero`, served by 4 openpi policy servers on the
+  host (`scripts/serve_openpi.sh`, GPU *i* → port 8000+*i*); shard *i* of each split talks to server
+  *i*. Differences from the OpenVLA path: agentview + wrist images, resize-with-pad, proprio state,
+  replan every 5 steps. `env.seed(0)`, seed 7, 50 trials/task, and init states are unchanged.
+  **`pi05_libero` was trained on all four LIBERO suites (40 tasks), not only `libero_spatial`.**
+- **Launched** (tmux, `~/pipeline_pi05.sh`, run note `pi05_libero`, every call `--resume True`):
+  1. Smoke test, `spatial/default --task_ids 5 --num_trials_per_task 2` (run note `pi05_smoke`): 2/2.
+  2. `MODEL_FAMILY=openpi CHECKPOINT=gs://openpi-assets/checkpoints/pi05_libero RUN_NOTE=pi05_libero
+     bash scripts/run_benchmark.sh --resume True` — the 13 `DEFAULT_SPLITS`, in script order
+     (2026-09-30 18:29 → 2026-10-01 02:46 UTC).
+  3. The same with `SPLITS=new` — the 9 conditions authored 2026-10-01 (02:46 → 07:42 UTC).
+- **An earlier attempt was stopped and is superseded by this one:** the first `pi05` pipeline
+  (`~/pipe_pi05.log`) was stopped because the websocket keepalive dropped the first query while the
+  server JIT-compiled. The client now runs with `ping_interval=None`.
+- **Outcome:** 22 conditions, 8,300/8,300 rollouts, no errors in the pipeline log.
+
+  | Split | SR | Rollouts | | Split | SR | Rollouts |
+  |---|--:|--:|---|---|--:|--:|
+  | `spatial/default` | 98.4% | 492/500 | | `spatial/length_control_infix` | 99.2% | 496/500 |
+  | `spatial/positive_contrast` | 92.2% | 461/500 | | `spatial/length_control_suffix` | 99.0% | 495/500 |
+  | `spatial/negative_contrast` | 87.0% | 435/500 | | `grounding/paraphrase_lexical` | 97.2% | 486/500 |
+  | `grounding/target_cue_region` | 75.5% | 302/400 | | `grounding/paraphrase_syntactic` | 97.8% | 489/500 |
+  | `grounding/target_cue_landmark` | 87.0% | 174/200 | | `grounding/target_cue_region_v2` | 77.5% | 310/400 |
+  | `grounding/target_cue_proximity_novel` | 96.0% | 192/200 | | `grounding/target_cue_region_v3` | 74.8% | 299/400 |
+  | `spatial_3bowl/landmark_with_hardneg_prompt` | 66.2% | 331/500 | | `grounding/target_cue_proximity_beside` | 97.0% | 194/200 |
+  | `spatial_3bowl/drawer_open` | 43.4% | 217/500 | | `grounding/target_cue_proximity_near` | 96.0% | 192/200 |
+  | `spatial_3bowl/landmark` | 72.0% | 360/500 | | `grounding/target_cue_proximity_adjacent` | 97.0% | 194/200 |
+  | `spatial_3bowl/irrelevant` | 80.6% | 403/500 | | | | |
+  | `spatial_3bowl/semantic` | 91.0% | 455/500 | | | | |
+  | `grounding/surface_landmark` | 100.0% | 50/50 | | | | |
+  | `grounding/region_surface` | 100.0% | 50/50 | | | | |
+
+  Full per-task tables and metrics: `benchmark_split_result.md` §9.
+- **Results:** `openvla/experiments/logs/results/*--pi05_libero--shard{0..3}of4.jsonl` + `.meta.json`
+  (server-local, gitignored), mirrored every 30 min to the private HF dataset
+  `Qian0203/vla_ws-eval-results` by `~/sync_results_hf.sh`. Pipeline log: `~/pipe_pi05_v2.log`.
+
+**Status:** closed. The 4 openpi policy servers were still up when this entry was written (2026-10-01
+12:00 UTC); stop them with `bash scripts/serve_openpi.sh stop`.
+
+---
+
+## 2026-09-30 → 2026-10-01 — OpenVLA on the 9 conditions authored 2026-10-01 (in progress when logged: 3/9 finished)
+
+- **Hardware / checkpoint:** same host and image as the previous entry, bf16, sdpa. Checkpoint
+  `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32` (fetched from the private HF repo
+  `Qian0203/openvla-7b-libero-spatial-lora-r32` with `scripts/hf_checkpoint.sh download`). Run
+  metadata records openvla commit `7f3884d` for `length_control_infix` and `a5f9a97` for the splits
+  after it.
+- **Launched** (tmux `eval`, `~/pipeline_2026_10_01.sh`, 2026-09-30 18:26 UTC):
+  `CHECKPOINT=... SPLITS=new bash scripts/run_benchmark.sh --resume True`, run note
+  `openvla-7b-libero-spatial-lora-r32`, 4 GPUs sharded. It ran concurrently with the pi05 batch above
+  until 07:42 UTC and with another user's jobs throughout, so each 500-rollout split took about
+  5 hours.
+- **Outcome so far** (as of 2026-10-01 12:00 UTC):
+
+  | Split | SR | Rollouts | Finished (UTC) |
+  |---|--:|--:|---|
+  | `spatial/length_control_infix` | 62.8% | 314/500 | 2026-10-01 00:01 |
+  | `spatial/length_control_suffix` | 53.6% | 268/500 | 2026-10-01 05:33 |
+  | `grounding/paraphrase_lexical` | 72.4% | 362/500 | 2026-10-01 10:20 |
+  | `grounding/paraphrase_syntactic` | running | — | started 10:20 |
+  | `grounding/target_cue_region_v2`, `_v3` | queued in the same pipeline | — | — |
+  | `grounding/target_cue_proximity_beside`, `_near`, `_adjacent` | queued in the same pipeline | — | — |
+
+  Detail for the three finished splits: `benchmark_split_result.md` §2 (length controls) and §5.5
+  (`paraphrase_lexical`).
+- **Results:** `openvla/experiments/logs/results/libero_spatial--{condition}--openvla-7b-libero-spatial-lora-r32--shard{0..3}of4.jsonl`
+  (server-local, gitignored; mirrored to `Qian0203/vla_ws-eval-results`). Pipeline log:
+  `~/pipe_openvla.log`.
+
+**Status:** open. The remaining 6 splits get their own entry when the pipeline finishes.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
-**Registry-ready (authored 2026-10-01), 3,400 rollouts total:**
-- `spatial/length_control_infix`, `spatial/length_control_suffix`: all 10 tasks, 500 each.
-- `grounding/paraphrase_lexical`, `grounding/paraphrase_syntactic`: all 10 tasks, 500 each.
-- `grounding/target_cue_region_v2`, `grounding/target_cue_region_v3`: `--task_ids 0 1 3 5 6 7 8 9`, 400 each.
-- `grounding/target_cue_proximity_beside`, `_near`, `_adjacent`: `--task_ids 3 5 7 9`, 200 each.
+**Nothing is waiting to be launched.** All 9 conditions authored 2026-10-01 were launched on
+2026-09-30 (entries above). For OpenVLA, 3 are finished and 6 are still running or queued inside that
+pipeline: `grounding/paraphrase_syntactic` (all 10 tasks, 500), `grounding/target_cue_region_v2` /
+`_v3` (`--task_ids 0 1 3 5 6 7 8 9`, 400 each), and `grounding/target_cue_proximity_beside` /
+`_near` / `_adjacent` (`--task_ids 3 5 7 9`, 200 each). For `pi05_libero`, all 22 are finished.
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.
@@ -978,7 +1063,8 @@ in place: update it when a machine is added or retired, and leave the dated entr
 | Original H200 server (`SERVER_ROOT=/home/ec2-user/wenhan`, checkpoint outside the workspace) — retired | 5× H200 (GPUs 0–4) | `openvla-libero:cuda12.1` / FlashAttention-2 | bf16 | 2026-08-1x baseline batch |
 | 4× Blackwell server (instance name not recorded) | 4× RTX PRO 6000 Blackwell | `openvla-libero:blackwell` / sdpa | bf16 | 2026-08-19 and 2026-08-20 batches |
 | GCP `g4-flex-20260824`, ssh alias `berkeley` — replaced 2026-09-10 | 4× RTX PRO 6000 Blackwell Server Edition, 98 GB each, compute cap 12.0 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-08-25 → 2026-09-08 entries |
-| GCP replacement instance, same `berkeley` alias — current | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-10 onward |
+| GCP replacement instance, same `berkeley` alias — replaced by 2026-09-30 | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-10 entries |
+| GCP `g4-flexstart-mig-uswest1-9dxc`, same `berkeley` alias — current. Shared host: other users' jobs run on the same GPUs. Workspace `/home/qian/vla_ws`, checkpoint `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32`, openpi checkout `/home/qian/openpi` | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-30 onward |
 | Laptop | 1× RTX 5060 Laptop, 8 GB, compute cap 12.0 | `openvla-libero:blackwell` / sdpa | 4-bit only | scene authoring, init states, contact sheets, smoke tests (no reported number comes from here) |
 
 Entries above that cite `config/berkeley.env` or `config/server.env` both refer to the 4× Blackwell

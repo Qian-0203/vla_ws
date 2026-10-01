@@ -44,12 +44,13 @@ Applies to every condition below unless a section says otherwise.
 
 | Split | Registry status | Data status |
 |---|---|---|
-| 1. Prompt Sensitivity | 3/3 conditions implemented + 2 length controls (`length_control_infix`/`_suffix`, authored 2026-10-01) | 3/3 run (`default`, `negative_contrast`, `positive_contrast`); length controls not yet run |
+| 1. Prompt Sensitivity | 3/3 conditions implemented + 2 length controls (`length_control_infix`/`_suffix`, authored 2026-10-01) | 3/3 run (`default`, `negative_contrast`, `positive_contrast`); both length controls run 2026-10-01 — `length_control_infix` 62.8%, `length_control_suffix` 53.6% (500/500 each): a content-free clause alone costs 21–30 pts (§2) |
 | 2. Distractor Placement | 3/4 conditions implemented (`path` not authored) | All implemented conditions run. `irrelevant` and `semantic` each redefined a second time (see §3) — current suites (`libero_spatial_3bowl_front` 85.2%, `libero_spatial_3bowl_semantic2` 85.2%, both 500/500) now run; prior data survives relabeled `irrelevant_v1_legacy` (88.8%) / `semantic_v1_legacy` (84.8%); original fixed-coordinate data survives as `center_fixed_legacy`. Only unauthored `path` remains beyond that |
 | 3. Scene Complexity | Implemented | Run (both conditions) |
-| 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b/4c fully run — 4c's `target_cue_proximity_novel` (53.0% pooled, tasks 3/5/7/9) came in *above* `target_cue_landmark` (30.5%), the opposite of the plan's predicted direction; full three-way synthesis in §5.4. 4b/4c paraphrase controls (`paraphrase_lexical`/`_syntactic`, `target_cue_region_v2`/`_v3`, `target_cue_proximity_beside`/`_near`/`_adjacent`) authored 2026-10-01, not yet run |
+| 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b/4c fully run — 4c's `target_cue_proximity_novel` (53.0% pooled, tasks 3/5/7/9) came in *above* `target_cue_landmark` (30.5%), the opposite of the plan's predicted direction; full three-way synthesis in §5.4. 4b/4c paraphrase controls (`paraphrase_lexical`/`_syntactic`, `target_cue_region_v2`/`_v3`, `target_cue_proximity_beside`/`_near`/`_adjacent`) authored 2026-10-01: `paraphrase_lexical` run (72.4%, 500/500); the other six were still running or queued when this was written (§5.5) |
 | VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
 | Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02/03/04, all 10 `libero_spatial` tasks for `default`+`negative_contrast` (280 rollouts); `target_cue_landmark` + `target_cue_proximity_novel` on the 4-task surface cohort (80 more). Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): pooled at full scale, "arm never approaches either bowl" is the *majority* failure mode (58.1% of `negative_contrast` failures) — success rates closely match the real 500/200-trial evals. `target_cue_proximity_novel` (no distractor, no misleading template) fails the same way as `target_cue_landmark` despite a much higher success rate — a second line of evidence against distractor-pull. Task 3 shows a persistent second mode (correct approach, still fails). See §8.6 for the synthesis and open gaps |
+| Cross-model reference: `pi05_libero` (§9) | Runs through the same registry via `--model_family openpi` | All 22 current conditions run 2026-09-30 → 2026-10-01 (8,300 rollouts). `spatial/default` 98.4%; prompt-only conditions 87–99% except the region cue (75–78%); 3-bowl scene conditions 43–91% |
 | Mechanistic Localization Probe (not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`) | Run 2026-09-04 → 2026-09-10 on task 5. Real, n=50-replicated early-window vision-attention/resolution-layer effects for `target_cue_landmark`; no layer/module localized; confidence diagnostic null. Full record: `mechanistic_localization.md` |
 
 ---
@@ -65,10 +66,18 @@ string** changes across conditions; scene and init states are identical.
 | `default` — names only the target | ✅ run | **84.0%** | 420/500 |
 | `positive_contrast` — states distractor's location as fact, no negation | ✅ run | **32.4%** | 162/500 |
 | `negative_contrast` — names + negates distractor ("…not the one…") | ✅ run | **36.8%** | 184/500 |
+| `length_control_infix` — native wording + content-free clause mid-sentence (+11 tokens) | ✅ run | **62.8%** | 314/500 |
+| `length_control_suffix` — native wording + content-free clause at the end (+13 tokens) | ✅ run | **53.6%** | 268/500 |
 
 Computed: `Negative Contrast Drop = 84.0 − 36.8 = 47.2 pts`. `Distractor Mention Drop = 84.0 − 32.4 =
 51.6 pts`. `Negation-specific Drop = 32.4 − 36.8 = −4.4 pts` — negative, meaning the negation clause
 is not the source of the damage; bare mention of a second location does effectively all of it alone.
+
+`Length-only Drop = 84.0 − 62.8 = 21.2 pts` (infix) and `84.0 − 53.6 = 30.4 pts` (suffix);
+`Content Drop = 62.8 − 36.8 = 26.0 pts` (negative) and `53.6 − 32.4 = 21.2 pts` (positive). So about
+half of each contrast drop is reproduced by content-free text of the same length, and "bare mention
+does effectively all of it" above holds only for the half that remains (see the length-control
+setting below).
 
 **Split fully run.**
 
@@ -150,6 +159,59 @@ fine-tuned on target-only prompts and has no practice grounding a second referen
 Task-level pattern matches `negative_contrast` closely (tasks 1, 2, 5, 9 hit hardest in both).
 
 Results: `results/libero_spatial--positive_contrast--shard{0..3}of4.jsonl`.
+
+### Setting: `length_control_infix` / `length_control_suffix` (run 2026-10-01)
+
+- **What changes:** every task keeps its native wording verbatim and gains one content-free
+  politeness clause (no object, no location, no second referent), sized to the contrast clauses' mean
+  length in the checkpoint's own Llama-2 tokens (`benchmark_split_plan.md` Split 1, "Length control").
+  - `length_control_infix` (+11 tokens, stands in for `negative_contrast`): *"pick up the black bowl
+    on the ramekin, if it is not too much trouble for you, and place it on the plate"*.
+  - `length_control_suffix` (+13 tokens, stands in for `positive_contrast`): *"pick up the black bowl
+    on the ramekin and place it on the plate; thank you so very much in advance for your help with
+    this"*.
+- Prompts: `instructions.py::LIBERO_SPATIAL_LENGTH_CONTROL_INFIX_INSTRUCTIONS` /
+  `LIBERO_SPATIAL_LENGTH_CONTROL_SUFFIX_INSTRUCTIONS`.
+- Scene: stock `libero_spatial` (2 bowls), unmodified — no render check needed.
+
+| id | target | Default | Infix | Δ (infix − default) | Negative contrast | Suffix | Δ (suffix − default) | Positive contrast |
+|--:|---|--:|--:|--:|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin | 92% | 90% | −2 | 94% | 86% | −6 | 92% |
+| 1 | next to the ramekin | 84% | 70% | −14 | 32% | 60% | −24 | 8% |
+| 2 | table center | 92% | 62% | −30 | 2% | 66% | −26 | 14% |
+| 3 | on the cookie box | 84% | 96% | +12 | 52% | 78% | −6 | 38% |
+| 4 | in the top drawer | 76% | 52% | −24 | 64% | 56% | −20 | 50% |
+| 5 | on the ramekin | 94% | 88% | −6 | 4% | 84% | −10 | 2% |
+| 6 | next to the cookie box | 90% | 72% | −18 | 72% | 48% | −42 | 40% |
+| 7 | on the stove | 72% | 22% | **−50** | 4% | 22% | **−50** | 12% |
+| 8 | next to the plate | 84% | 66% | −18 | 36% | 34% | **−50** | 68% |
+| 9 | on the wooden cabinet | 72% | 10% | **−62** | 8% | 2% | **−70** | 0% |
+| **Overall** | | **84.0%** | **62.8%** | **−21.2** | 36.8% | **53.6%** | **−30.4** | 32.4% |
+
+```
+Length-only Drop (infix)  = SR(default: 84.0%) − SR(length_control_infix: 62.8%)  = 21.2 pts
+Length-only Drop (suffix) = SR(default: 84.0%) − SR(length_control_suffix: 53.6%) = 30.4 pts
+Content Drop (negative)   = SR(length_control_infix: 62.8%)  − SR(negative_contrast: 36.8%) = 26.0 pts
+Content Drop (positive)   = SR(length_control_suffix: 53.6%) − SR(positive_contrast: 32.4%) = 21.2 pts
+```
+
+**Analysis.**
+
+1. **The length-only drop is far outside the ±3.3 pt noise band.** A clause that names no object and
+   no location costs 21.2 pts (infix) and 30.4 pts (suffix). By the plan's reading, prompt length or
+   generic off-template text is by itself a sufficient cause of a large drop.
+2. **It does not account for the whole contrast drop.** A further 26.0 pts (negative) and 21.2 pts
+   (positive) remain after subtracting the matched length control. So roughly 45% of
+   `negative_contrast`'s 47.2 pt drop and 59% of `positive_contrast`'s 51.6 pt drop is reproduced by
+   content-free text of the same length, and the rest is tied to what the contrast clause says.
+3. **The per-task profile differs from the contrast conditions.** The length controls hit tasks 7 and
+   9 hardest (22% / 2–10%) and leave task 5 nearly intact (84–88%), whereas both contrast conditions
+   take task 5 to 2–4%. Task 5's collapse under the contrast prompts is therefore content-specific,
+   while tasks 7 and 9 are fragile to any added text.
+4. **Caveat.** One filler wording per position. The two controls also differ from each other by
+   9.2 pts, so position, the 2 extra tokens, and the specific wording are not separated here.
+
+Results: `results/libero_spatial--length_control_{infix,suffix}--openvla-7b-libero-spatial-lora-r32--shard{0..3}of4.jsonl`.
 
 ---
 
@@ -735,6 +797,66 @@ because novelty itself is safe).
 
 ---
 
+### 5.5 — 4b/4c paraphrase controls (in progress: 1 of 7 conditions run for OpenVLA)
+
+**Question.** Every 4b/4c number above rests on one hand-written phrasing per task, and 4b only
+measured *cross*-cue rewordings. These controls describe the target in its **own** native cue type,
+truthfully, in different words, and add extra wordings for the region cue and the novel proximity
+cue. Design: `benchmark_split_plan.md` Split 4, "4b/4c paraphrase controls". Scene and init states
+are identical to `spatial/default`; the distractor is never mentioned.
+
+| Condition | Tasks | Status (OpenVLA) | Overall SR | Rollouts |
+|---|---|---|--:|--:|
+| `paraphrase_lexical` | 0–9 | ✅ run 2026-10-01 | **72.4%** | 362/500 |
+| `paraphrase_syntactic` | 0–9 | ⏳ running when this was written | — | — |
+| `target_cue_region_v2` | 0,1,3,5–9 | ⏳ queued | — | — |
+| `target_cue_region_v3` | 0,1,3,5–9 | ⏳ queued | — | — |
+| `target_cue_proximity_beside` | 3,5,7,9 | ⏳ queued | — | — |
+| `target_cue_proximity_near` | 3,5,7,9 | ⏳ queued | — | — |
+| `target_cue_proximity_adjacent` | 3,5,7,9 | ⏳ queued | — | — |
+
+`pi05_libero` has run all seven; see §9.
+
+#### `paraphrase_lexical`
+
+One synonym swap or argument reorder per task, same cue type
+(`instructions.py::LIBERO_SPATIAL_PARAPHRASE_LEXICAL_INSTRUCTIONS`).
+
+| id | native → lexical paraphrase | Default | `paraphrase_lexical` | Δ |
+|--:|---|--:|--:|--:|
+| 0 | "between the plate and the ramekin" → "between the ramekin and the plate" | 92% | 98% | +6 |
+| 1 | "next to the ramekin" → "beside the ramekin" | 84% | 78% | −6 |
+| 2 | "from table center" → "from the middle of the table" | 92% | 44% | **−48** |
+| 3 | "on the cookie box" → "on top of the cookie box" | 84% | 76% | −8 |
+| 4 | "in the top drawer" → "inside the top drawer" | 76% | 58% | −18 |
+| 5 | "on the ramekin" → "on top of the ramekin" | 94% | 76% | −18 |
+| 6 | "next to the cookie box" → "beside the cookie box" | 90% | 92% | +2 |
+| 7 | "on the stove" → "on top of the stove" | 72% | 66% | −6 |
+| 8 | "next to the plate" → "beside the plate" | 84% | 84% | 0 |
+| 9 | "on the wooden cabinet" → "on top of the wooden cabinet" | 72% | 52% | −20 |
+| **Overall** | | **84.0%** | **72.4%** | **−11.6** |
+
+```
+Same-cue Paraphrase Drop (lexical) = SR(default: 84.0%) − SR(paraphrase_lexical: 72.4%) = 11.6 pts
+Cue-type Drop (excess), 8 tasks    = SR(paraphrase_lexical: 77.8%) − SR(target_cue_region: 17.0%) = 60.8 pts
+```
+
+**Analysis (provisional until the other six conditions finish).**
+
+1. **A same-cue rewording costs 11.6 pts, against 50–67 pts for 4b's cross-cue rewordings.** Most of
+   4b's collapse is therefore about the cue type and not about any surface-form change: on the same
+   8 tasks, `paraphrase_lexical` scores 77.8% and `target_cue_region` 17.0%.
+2. **The drop is concentrated.** Task 2 alone ("the middle of the table") loses 48 pts. Without it
+   the other nine tasks go from 83.1% to 75.6% (−7.6). The three "beside" tasks (1, 6, 8) are
+   essentially flat (−6, +2, 0).
+3. **Bound on `negative_contrast`'s target rewording.** `negative_contrast` rewords tasks 3/5/9's
+   target the same way ("on" → "on top of"). That rewording alone gives 76% / 76% / 52% here, against
+   52% / 4% / 8% under `negative_contrast`, so it explains little of that drop on these tasks.
+
+Results: `results/libero_spatial--paraphrase_lexical--openvla-7b-libero-spatial-lora-r32--shard{0..3}of4.jsonl`.
+
+---
+
 ## 6. Cross-experiment findings
 
 1. **Negative-contrast prompts badly hurt** the policy (-47.2 pts overall; up to -90 on some
@@ -916,6 +1038,25 @@ because novelty itself is safe).
     wrong* it is. Gap 3 (`benchmark_split_plan.md` §11.3) is narrowed, not closed. The full trail,
     including two instrumentation bugs that invalidated earlier runs, is in
     `mechanistic_localization.md`.
+
+20. **Prompt length / off-template filler is itself a large cause of OpenVLA's contrast drop, but
+    not all of it** (2026-10-01). A content-free politeness clause of the contrast clause's length
+    costs 21.2 pts mid-sentence and 30.4 pts at the end (§2). That is 45% of `negative_contrast`'s
+    drop and 59% of `positive_contrast`'s; the remaining 26.0 / 21.2 pts depend on the clause's
+    content. This revises finding 1 and the "bare mention does all of it" reading of Split 1: the
+    damage is part generic off-template text, part distractor mention. The per-task profile also
+    differs — filler hits tasks 7 and 9, the contrast clauses additionally collapse task 5.
+21. **A same-cue lexical paraphrase costs OpenVLA 11.6 pts, far less than a cross-cue rewording**
+    (2026-10-01, §5.5). On the same 8 tasks, `paraphrase_lexical` is 77.8% and `target_cue_region`
+    17.0%, so most of 4b's collapse is about cue type. Provisional: `paraphrase_syntactic` and the
+    region / proximity re-wordings were still running.
+22. **`pi05_libero` is far more robust to prompts and less robust to an extra bowl** (2026-10-01,
+    §9). Length controls and same-cue paraphrases cost it about 0–1 pt and the contrast prompts
+    6–11 pts, where OpenVLA loses 12–52. The region cue is its one clear prompt weakness (75–78%
+    across three wordings). On the 3-bowl scenes it scores below OpenVLA on `irrelevant`,
+    `landmark`, and `drawer_open`, with single tasks dropping to 0–22%. The two models differ in
+    training data (40 LIBERO tasks vs. `libero_spatial` only), camera inputs, and control loop, so
+    this is a reference point, not a controlled comparison.
 
 ## 7. Render / contact-sheet check log
 
@@ -1304,3 +1445,147 @@ own file, `mechanistic_localization.md`, with its original section numbers (8.9�
 Current conclusion, in one line: early-window vision-attention and resolution-layer effects for
 `target_cue_landmark` are real and replicated (n=50), but no layer or module has been localized, and
 final-layer decision confidence does not differ by condition.
+
+---
+
+## 9. Cross-model reference: `pi05_libero` on the whole benchmark (2026-10-01)
+
+**What this is.** The first non-OpenVLA policy run through the benchmark: openpi's `pi05_libero`
+checkpoint on all 13 current splits plus the 9 conditions authored 2026-10-01 — 22 conditions,
+8,300 rollouts. Same registry, scenes, init states, seed (7), `env.seed(0)`, and 50 trials/task as
+the OpenVLA reference. Launch details: `eval_log.md`, 2026-09-30 → 2026-10-01.
+
+**Read these caveats before comparing the two columns.**
+
+- **Training data differs.** `pi05_libero` was trained on all four LIBERO suites (40 tasks). The
+  OpenVLA reference was fine-tuned on `libero_spatial` only.
+- **Observation and control differ.** pi05 sees agentview + wrist images (resize-with-pad) and
+  proprio state, and replans every 5 steps. OpenVLA sees one center-cropped agentview image and
+  acts every step.
+- **One run per condition.** The noise bands from §0 apply: ±3.3 pts pooled over 500, ±5–7 pts on a
+  single task.
+
+### 9.1 — Overall, against the OpenVLA reference
+
+| Split | Probe | Tasks | OpenVLA | pi05_libero | Rollouts (pi05) |
+|---|---|---|--:|--:|--:|
+| `spatial/default` | 1 · Prompt | 0–9 | 84.0% | **98.4%** | 492/500 |
+| `spatial/positive_contrast` | 1 · Prompt | 0–9 | 32.4% | **92.2%** | 461/500 |
+| `spatial/negative_contrast` | 1 · Prompt | 0–9 | 36.8% | **87.0%** | 435/500 |
+| `spatial/length_control_infix` | 1 · Length control | 0–9 | 62.8% | **99.2%** | 496/500 |
+| `spatial/length_control_suffix` | 1 · Length control | 0–9 | 53.6% | **99.0%** | 495/500 |
+| `grounding/paraphrase_lexical` | 4 · Same-cue paraphrase | 0–9 | 72.4% | **97.2%** | 486/500 |
+| `grounding/paraphrase_syntactic` | 4 · Same-cue paraphrase | 0–9 | pending | **97.8%** | 489/500 |
+| `grounding/target_cue_region` | 4b · Cue type | 0,1,3,5–9 | 17.0% | **75.5%** | 302/400 |
+| `grounding/target_cue_region_v2` | 4b · Cue type | 0,1,3,5–9 | pending | **77.5%** | 310/400 |
+| `grounding/target_cue_region_v3` | 4b · Cue type | 0,1,3,5–9 | pending | **74.8%** | 299/400 |
+| `grounding/target_cue_landmark` | 4b · Cue type | 3,5,7,9 | 30.5% | **87.0%** | 174/200 |
+| `grounding/target_cue_proximity_novel` | 4c · "close to" | 3,5,7,9 | 53.0% | **96.0%** | 192/200 |
+| `grounding/target_cue_proximity_beside` | 4c · "beside" | 3,5,7,9 | pending | **97.0%** | 194/200 |
+| `grounding/target_cue_proximity_near` | 4c · "near" | 3,5,7,9 | pending | **96.0%** | 192/200 |
+| `grounding/target_cue_proximity_adjacent` | 4c · "adjacent to" | 3,5,7,9 | pending | **97.0%** | 194/200 |
+| `spatial_3bowl/irrelevant` | 2 · Distractor | 0–9 | 85.2% | **80.6%** | 403/500 |
+| `spatial_3bowl/semantic` | 2 · Distractor | 0–9 | 85.2% | **91.0%** | 455/500 |
+| `spatial_3bowl/landmark` | 2 · Distractor | 0–9 | 80.6% | **72.0%** | 360/500 |
+| `spatial_3bowl/landmark_with_hardneg_prompt` | 1×2 | 0–9 | 41.2% | **66.2%** | 331/500 |
+| `spatial_3bowl/drawer_open` | 3 · Clutter | 0–9 | 60.0% | **43.4%** | 217/500 |
+| `grounding/surface_landmark` | 4a · Scene | 0 | 88.0% | **100.0%** | 50/50 |
+| `grounding/region_surface` | 4a · Scene | 0 | 92.0% | **100.0%** | 50/50 |
+
+"pending" = the OpenVLA run of that condition had not finished when this was written (§5.5).
+
+### 9.2 — Per-task: prompt-only conditions (stock 2-bowl scene)
+
+| id | target | Default | Pos. contrast | Neg. contrast | Len. infix | Len. suffix | Para. lexical | Para. syntactic |
+|--:|---|--:|--:|--:|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin | 100% | 100% | 100% | 100% | 100% | 100% | 100% |
+| 1 | next to the ramekin | 100% | 96% | 82% | 98% | 100% | 90% | 100% |
+| 2 | table center | 96% | 100% | 100% | 100% | 100% | 100% | 100% |
+| 3 | on the cookie box | 98% | 98% | 100% | 98% | 100% | 98% | 98% |
+| 4 | in the top drawer | 98% | 94% | 94% | 100% | 100% | 96% | 94% |
+| 5 | on the ramekin | 98% | 64% | 58% | 98% | 98% | 98% | 94% |
+| 6 | next to the cookie box | 98% | 98% | 96% | 100% | 100% | 100% | 100% |
+| 7 | on the stove | 100% | 92% | 84% | 100% | 98% | 94% | 94% |
+| 8 | next to the plate | 100% | 94% | 90% | 100% | 98% | 98% | 100% |
+| 9 | on the wooden cabinet | 96% | 86% | 66% | 98% | 96% | 98% | 98% |
+| **Overall** | | **98.4%** | **92.2%** | **87.0%** | **99.2%** | **99.0%** | **97.2%** | **97.8%** |
+
+| id | target | Region | Region v2 | Region v3 | Landmark ("next to") | "close to" | "beside" | "near" | "adjacent to" |
+|--:|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin | 100% | 100% | 100% | — | — | — | — | — |
+| 1 | next to the ramekin | 76% | 66% | 70% | — | — | — | — | — |
+| 3 | on the cookie box | 96% | 100% | 98% | 98% | 100% | 98% | 98% | 100% |
+| 5 | on the ramekin | 84% | 86% | 80% | 96% | 96% | 98% | 96% | 100% |
+| 6 | next to the cookie box | 98% | 100% | 100% | — | — | — | — | — |
+| 7 | on the stove | 26% | 28% | 16% | 68% | 88% | 92% | 94% | 92% |
+| 8 | next to the plate | 100% | 100% | 100% | — | — | — | — | — |
+| 9 | on the wooden cabinet | 24% | 40% | 34% | 86% | 100% | 100% | 96% | 96% |
+| **Overall** | | **75.5%** | **77.5%** | **74.8%** | **87.0%** | **96.0%** | **97.0%** | **96.0%** | **97.0%** |
+
+### 9.3 — Per-task: scene conditions (default prompt unless noted)
+
+| id | target | `irrelevant` | `semantic` | `landmark` | `landmark` + hardneg prompt | `drawer_open` |
+|--:|---|--:|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin | 98% | 100% | 22% | 18% | 38% |
+| 1 | next to the ramekin | 16% | 32% | 42% | 2% | 50% |
+| 2 | table center | 100% | 100% | 100% | 100% | 100% |
+| 3 | on the cookie box | 84% | 98% | 96% | 100% | 44% |
+| 4 | in the top drawer | 100% | 98% | 84% | 86% | 60% |
+| 5 | on the ramekin | 16% | 98% | 74% | 80% | 36% |
+| 6 | next to the cookie box | 96% | 96% | 84% | 80% | 0% |
+| 7 | on the stove | 100% | 100% | 96% | 96% | 70% |
+| 8 | next to the plate | 96% | 96% | 88% | 94% | 0% |
+| 9 | on the wooden cabinet | 100% | 92% | 34% | 6% | 36% |
+| **Overall** | | **80.6%** | **91.0%** | **72.0%** | **66.2%** | **43.4%** |
+
+Suites: `irrelevant` = `libero_spatial_3bowl_front`, `semantic` = `libero_spatial_3bowl_semantic2`,
+`landmark` = `libero_spatial_3bowl_hardneg`, `drawer_open` = `libero_spatial_3bowl_open`. The two 4a
+gap-fill cells (`grounding/surface_landmark`, `grounding/region_surface`; task 0 only) are 50/50 each.
+
+### 9.4 — Metrics (same formulas as the plan)
+
+```
+Split 1
+  Negative Contrast Drop   = 98.4 − 87.0 = 11.4 pts      (OpenVLA: 47.2)
+  Distractor Mention Drop  = 98.4 − 92.2 =  6.2 pts      (OpenVLA: 51.6)
+  Negation-specific Drop   = 92.2 − 87.0 =  5.2 pts      (OpenVLA: −4.4)
+  Length-only Drop         = 98.4 − 99.2 = −0.8 (infix), 98.4 − 99.0 = −0.6 (suffix)   (OpenVLA: 21.2 / 30.4)
+  Content Drop (residual)  = 99.2 − 87.0 = 12.2 (negative), 99.0 − 92.2 = 6.8 (positive) (OpenVLA: 26.0 / 21.2)
+
+Split 4
+  Same-cue Paraphrase Drop = 98.4 − 97.2 = 1.2 (lexical), 98.4 − 97.8 = 0.6 (syntactic)  (OpenVLA lexical: 11.6)
+  Region-cue Drop, 8 tasks = 98.75 − 75.5 / 77.5 / 74.75 = 23.3 / 21.3 / 24.0 pts for region / v2 / v3   (OpenVLA region: 67.0)
+    landmark-family pool {0,1,6,8}: 99.5% → 93.5 / 91.5 / 92.5
+    surface-family pool  {3,5,7,9}: 98.0% → 57.5 / 63.5 / 57.0
+  Cue-type Drop (excess)   = SR(paraphrase_lexical, 8 tasks: 97.0%) − SR(region*) = 21.5 / 19.5 / 22.3 pts
+  Landmark-cue Drop        = SR(default, 4 tasks: 98.0%) − 87.0 = 11.0 pts                (OpenVLA: 50.0)
+  Novel-cue Drop           = 98.0 − 96.0 / 97.0 / 96.0 / 97.0 = 2.0 / 1.0 / 2.0 / 1.0 pts  (OpenVLA "close to": 27.5)
+  Familiarity Gap (robust) = mean of 4 novel synonyms (96.5%) − SR(target_cue_landmark: 87.0%) = +9.5 pts
+
+Splits 2 / 3 (against pi05's own 2-bowl default, 98.4%; pi05 has no closed-drawer 3-bowl run)
+  irrelevant −17.8, semantic −7.4, landmark −26.4, landmark + hardneg prompt −32.2, drawer_open −55.0
+```
+
+### 9.5 — What the pi05 numbers show
+
+1. **Prompt robustness is far higher.** Content-free added text costs pi05 nothing (99.2% / 99.0%
+   against 98.4%), and same-cue paraphrases cost about 1 pt. The same conditions cost OpenVLA 21–30
+   and 11.6 pts.
+2. **Mentioning the distractor still costs something, and negation adds to it.** 6.2 pts for a bare
+   mention and 11.4 pts with negation, concentrated on task 5 (64% / 58%) and task 9 (86% / 66%).
+   Because the length controls are flat, this residual is content-specific for pi05.
+3. **The region cue is the one prompt manipulation that clearly hurts pi05, and it is stable across
+   three wordings** (75.5 / 77.5 / 74.8%). It is carried by tasks 7 and 9 (16–40%) and task 1
+   (66–76%); the other five tasks stay at 80–100%.
+4. **The familiar "next to X" cue is again worse than every novel proximity synonym** (87.0% against
+   96–97% for all four), driven by task 7 (68%). This is the same direction as OpenVLA's 4c result,
+   at a much smaller size.
+5. **pi05 is not uniformly more robust: a third bowl hurts it more than it hurts OpenVLA on three of
+   five scene conditions.** `irrelevant` 80.6% (OpenVLA 85.2%), `landmark` 72.0% (80.6%),
+   `drawer_open` 43.4% (60.0%). The losses are sharply task-specific: tasks 1 and 5 drop to 16% in
+   `irrelevant`, tasks 0 and 9 to 22% / 34% in `landmark`, and tasks 6 and 8 to 0% in `drawer_open`.
+   No rollout videos have been reviewed for these, so the failure mode behind them is not established.
+6. **The disambiguating prompt does not rescue the hard-negative scene for pi05 either**: 66.2% with
+   it against 72.0% without, with task 1 going from 42% to 2% and task 9 from 34% to 6%.
+
+Results: `results/*--pi05_libero--shard{0..3}of4.jsonl`.

@@ -26,10 +26,10 @@ in success rate can be attributed to a specific capability gap rather than confo
 
 | Split | Probes | Registry status |
 |---|---|---|
-| 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented, plus 2 length controls (authored 2026-10-01, not yet run) |
+| 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented, plus 2 length controls (authored 2026-10-01, run 2026-10-01) |
 | 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` and `semantic` each redefined a second time (see Split 2 below) -- both current suites run 2026-08-27, 85.2% each |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
-| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`); 4c: `grounding/target_cue_proximity_novel`. All run. 4b/4c paraphrase controls (7 conditions) authored 2026-10-01, not yet run |
+| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`); 4c: `grounding/target_cue_proximity_novel`. All run. 4b/4c paraphrase controls (7 conditions) authored 2026-10-01; 1 of 7 run so far (`benchmark_split_result.md` §5.5) |
 | VLM Bowl-Pointing / Bowl-Attraction Probes (§11, not a `SPLITS` entry) | Is the distractor-mention collapse (Splits 1/2) a grounding failure or an action-decoding failure? | Standalone diagnostic scripts, run directly — not registered in `eval_registry.py`. Both probes run to completion on their respective batteries; open gaps listed in §11.3 |
 
 "Implemented" = task suite + prompts exist in the registry and can be run with one `run_eval.sh`
@@ -62,7 +62,7 @@ Negation-specific Drop  = SR(positive_contrast) - SR(negative_contrast)
 
 Registry: `spatial/default`, `spatial/positive_contrast`, `spatial/negative_contrast`.
 
-**Length control (authored 2026-10-01, not yet run).** Both contrast conditions make the prompt
+**Length control (authored 2026-10-01; run 2026-10-01, results in `benchmark_split_result.md` §2).** Both contrast conditions make the prompt
 longer *and* push it off the fine-tuning template, so their drop can't yet be pinned on either one
 (§11.3 gap 2). The two length controls keep every task's native wording verbatim. Each adds a
 content-free politeness clause (no object, location, or second referent) at the position the
@@ -440,7 +440,7 @@ table above and `resolve_split('grounding/target_cue_proximity_novel')` returns
 ... run_eval.sh --split grounding/target_cue_proximity_novel --task_ids 3 5 7 9
 ```
 
-**4b/4c paraphrase controls (authored 2026-10-01, not yet run).** Every 4b/4c number so far rests
+**4b/4c paraphrase controls (authored 2026-10-01; partly run, results in `benchmark_split_result.md` §5.5).** Every 4b/4c number so far rests
 on one hand-written phrasing per task, and 4b only measured *cross*-cue rewordings. These
 conditions add (i) the matrix's missing diagonal, meaning the target described in its **own**
 native cue type, exactly truthfully, in different words, and (ii) extra wordings for the region
@@ -645,7 +645,7 @@ Carried forward from `benchmark_split_result.md` §8.6's revised synthesis:
    so far separates "deviates from the fine-tuning template" from "prompt is simply longer" — both
    predict the same symptoms observed in §11.2. Would need a same-length, template-adjacent
    paraphrase condition to isolate. Unaddressed by the sample-size extension.
-   **Controls authored 2026-10-01, not yet run:** Split 1's `length_control_infix`/`_suffix`
+   **Controls authored 2026-10-01 (length controls and `paraphrase_lexical` run 2026-10-01; see `benchmark_split_result.md` §2 and §5.5):** Split 1's `length_control_infix`/`_suffix`
    (token-matched, content-free clause on native wording) and Split 4's same-cue paraphrases
    (`paraphrase_lexical`/`_syntactic`, +0..3 tokens). Together they separate length from
    template deviation at the success-rate level.
