@@ -17,6 +17,10 @@
 #   # Specific GPUs, sharding the suite's tasks round-robin across them:
 #   MACHINE_CONFIG=../../config/server.env GPUS=0,1,2,3,4 bash run_eval.sh --split spatial_3bowl/irrelevant
 #
+#   # An openpi policy (e.g. pi05_libero): start one policy server per GPU first
+#   # (scripts/serve_openpi.sh), then point each shard at its server:
+#   MODEL_FAMILY=openpi GPUS=0,1,2,3 bash run_eval.sh --split spatial/default --run_id_note pi05_libero
+#
 #   # Resume an interrupted run, or list available splits:
 #   bash run_eval.sh --split spatial/default --resume True
 #   python ../../openvla/experiments/robot/libero/run_libero_eval.py --help
@@ -34,6 +38,12 @@ if [[ -n "${MACHINE_CONFIG:-}" ]]; then
   source "${MACHINE_CONFIG}"
 fi
 
+# openvla: the model runs inside this container from CHECKPOINT.
+# openpi:  the model runs in an openpi policy server on the host; shard i talks to
+#          127.0.0.1:$((POLICY_PORT_BASE + i)) (scripts/serve_openpi.sh starts them in that order).
+MODEL_FAMILY="${MODEL_FAMILY:-openvla}"
+POLICY_PORT_BASE="${POLICY_PORT_BASE:-8000}"
+OPENPI_CHECKPOINT="${OPENPI_CHECKPOINT:-gs://openpi-assets/checkpoints/pi05_libero}"
 IMAGE_NAME="${IMAGE_NAME:-openvla-libero:cuda12.1}"
 SERVER_ROOT="${SERVER_ROOT:-}"
 CHECKPOINT="${CHECKPOINT:-${WORKSPACE_ROOT}/openvla/checkpoint/baseline_lora_libero_spatial_4gpu_b24_run004/openvla-7b+libero_spatial_no_noops+b24+lr-0.0005+lora-r32+dropout-0.0--image_aug}"
@@ -49,8 +59,14 @@ SEED="${SEED:-7}"
 
 EXTRA_ARGS=("$@") # forwarded to run_libero_eval.py verbatim (e.g. --split spatial/default)
 
+case "${MODEL_FAMILY}" in
+  openvla) ;;
+  openpi) CHECKPOINT="${OPENPI_CHECKPOINT}" ;; # recorded in run metadata only; nothing to mount
+  *) echo "Unknown MODEL_FAMILY '${MODEL_FAMILY}' (expected openvla or openpi)." >&2; exit 1 ;;
+esac
+
 # --- checkpoint integrity check (unchanged from the original per-suite scripts) ---
-if [[ -f "${CHECKPOINT}/model.safetensors.index.json" ]]; then
+if [[ "${MODEL_FAMILY}" == openvla && -f "${CHECKPOINT}/model.safetensors.index.json" ]]; then
   python3 - "${CHECKPOINT}" <<'PY'
 import glob, json, os, sys
 checkpoint = sys.argv[1]
@@ -85,7 +101,7 @@ DOCKER_TTY_ARGS=()
 DOCKER_MOUNTS=(-v "${WORKSPACE_ROOT}:/workspace")
 [[ -n "${SERVER_ROOT}" && -d "${SERVER_ROOT}" ]] && DOCKER_MOUNTS+=(-v "${SERVER_ROOT}:${SERVER_ROOT}:ro")
 # A checkpoint anywhere else on the host is identity-mounted read-only on its own.
-if [[ "${CHECKPOINT}" != "${WORKSPACE_ROOT}"/* && ( -z "${SERVER_ROOT}" || "${CHECKPOINT}" != "${SERVER_ROOT}"/* ) ]]; then
+if [[ "${MODEL_FAMILY}" == openvla && "${CHECKPOINT}" != "${WORKSPACE_ROOT}"/* && ( -z "${SERVER_ROOT}" || "${CHECKPOINT}" != "${SERVER_ROOT}"/* ) ]]; then
   DOCKER_MOUNTS+=(-v "${CHECKPOINT}:${CHECKPOINT}:ro")
 fi
 DOCKER_MOUNTS+=(-v "${SCRIPT_DIR}/10_nvidia_egl.json:/etc/glvnd/egl_vendor.d/10_nvidia.json:ro")
@@ -124,11 +140,18 @@ mkdir -p "${LOG_DIR}"
 
 run_shard() {
   local gpu="$1" shard_idx="$2" num_shards="$3"
-  local shard_args=()
+  local shard_args=() model_args=() net_args=()
   if ((num_shards > 1)); then
     shard_args=(--num_shards "${num_shards}" --shard_index "${shard_idx}")
   fi
+  if [[ "${MODEL_FAMILY}" == openpi ]]; then
+    # Host networking so the container reaches the policy server on the host's loopback.
+    # The GPU is still passed through, for MuJoCo's EGL rendering.
+    net_args=(--network host)
+    model_args=(--policy_port "$((POLICY_PORT_BASE + shard_idx))")
+  fi
   docker run --rm "${DOCKER_TTY_ARGS[@]}" "${DOCKER_USER_ARGS[@]}" --gpus "device=${gpu}" \
+    "${net_args[@]}" \
     --ipc=host \
     --shm-size=32g \
     "${DOCKER_ENV_COMMON[@]}" \
@@ -136,8 +159,9 @@ run_shard() {
     -w /workspace/openvla \
     "${IMAGE_NAME}" \
     python experiments/robot/libero/run_libero_eval.py \
-    --model_family openvla \
+    --model_family "${MODEL_FAMILY}" \
     --pretrained_checkpoint "${CONTAINER_CHECKPOINT}" \
+    "${model_args[@]}" \
     --load_in_4bit "${LOAD_IN_4BIT}" \
     --load_in_8bit "${LOAD_IN_8BIT}" \
     --center_crop "${CENTER_CROP}" \
@@ -153,7 +177,8 @@ if ((NUM_SHARDS == 1)); then
   run_shard "${GPU_ARR[0]}" 0 1
 else
   echo "Sharding across ${NUM_SHARDS} GPUs: ${GPUS}"
-  STAMP="$(date +%Y_%m_%d-%H_%M_%S)"
+  # Model family + PID too: two launches in the same second must not share shard log files.
+  STAMP="$(date +%Y_%m_%d-%H_%M_%S)-${MODEL_FAMILY}-$$"
   pids=()
   for idx in "${!GPU_ARR[@]}"; do
     gpu="${GPU_ARR[$idx]}"

@@ -26,10 +26,10 @@ in success rate can be attributed to a specific capability gap rather than confo
 
 | Split | Probes | Registry status |
 |---|---|---|
-| 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented |
+| 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented, plus 2 length controls (authored 2026-10-01, run 2026-10-01) |
 | 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` and `semantic` each redefined a second time (see Split 2 below) -- both current suites run 2026-08-27, 85.2% each |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
-| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`); 4c: `grounding/target_cue_proximity_novel`. All run |
+| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`); 4c: `grounding/target_cue_proximity_novel`. All run. 4b/4c paraphrase controls (7 conditions) authored and run 2026-10-01 (`benchmark_split_result.md` §5.5) |
 | VLM Bowl-Pointing / Bowl-Attraction Probes (§11, not a `SPLITS` entry) | Is the distractor-mention collapse (Splits 1/2) a grounding failure or an action-decoding failure? | Standalone diagnostic scripts, run directly — not registered in `eval_registry.py`. Both probes run to completion on their respective batteries; open gaps listed in §11.3 |
 
 "Implemented" = task suite + prompts exist in the registry and can be run with one `run_eval.sh`
@@ -61,6 +61,29 @@ Negation-specific Drop  = SR(positive_contrast) - SR(negative_contrast)
 ```
 
 Registry: `spatial/default`, `spatial/positive_contrast`, `spatial/negative_contrast`.
+
+**Length control (authored 2026-10-01; run 2026-10-01, results in `benchmark_split_result.md` §2).** Both contrast conditions make the prompt
+longer *and* push it off the fine-tuning template, so their drop can't yet be pinned on either one
+(§11.3 gap 2). The two length controls keep every task's native wording verbatim. Each adds a
+content-free politeness clause (no object, location, or second referent) at the position the
+contrast clause occupies, sized to the contrast clause's mean length in the checkpoint's own
+Llama-2 tokens:
+
+| Condition id | Stands in for | Added text (identical for all 10 tasks) | Extra tokens vs. native |
+|---|---|---|---|
+| `length_control_infix` | `negative_contrast` (+9..13, mean +11.1) | "..., if it is not too much trouble for you, and place it on the plate" | +11 |
+| `length_control_suffix` | `positive_contrast` (+11..15, mean +13.1) | "... and place it on the plate; thank you so very much in advance for your help with this" | +13 |
+
+```
+Length-only Drop        = SR(default) - SR(length_control_*)
+Content Drop (residual) = SR(length_control_infix)  - SR(negative_contrast)
+                          SR(length_control_suffix) - SR(positive_contrast)
+```
+
+A length-only drop inside the ±3.3pt pooled noise band means the contrast conditions' ~50pt
+damage comes from *what* the added clause says. A large length-only drop means prompt length or
+generic off-template text is itself a sufficient cause. Registry: `spatial/length_control_infix`,
+`spatial/length_control_suffix` (all 10 tasks, 500 rollouts each).
 
 ### Split 2 — Distractor Placement Probe
 
@@ -417,6 +440,46 @@ table above and `resolve_split('grounding/target_cue_proximity_novel')` returns
 ... run_eval.sh --split grounding/target_cue_proximity_novel --task_ids 3 5 7 9
 ```
 
+**4b/4c paraphrase controls (authored 2026-10-01; run 2026-10-01, results in `benchmark_split_result.md` §5.5).** Every 4b/4c number so far rests
+on one hand-written phrasing per task, and 4b only measured *cross*-cue rewordings. These
+conditions add (i) the matrix's missing diagonal, meaning the target described in its **own**
+native cue type, exactly truthfully, in different words, and (ii) extra wordings for the region
+cue and for 4c's novel proximity cue. Distractor never mentioned; scene and init states identical
+to `spatial/default`.
+
+| Condition id | What it tests | Example (task 5 unless noted) | Tasks | Rollouts |
+|---|---|---|---|--:|
+| `paraphrase_lexical` | same cue, one synonym swap / argument reorder | "on top of the ramekin"; task 1: "beside the ramekin"; task 0: "between the ramekin and the plate" | 0–9 | 500 |
+| `paraphrase_syntactic` | same cue, native words, relative clause | "that is on the ramekin" | 0–9 | 500 |
+| `target_cue_region_v2` | region cue, 2nd wording (same zones as `target_cue_region`) | "in the back-left area of the table" | 0,1,3,5–9 | 400 |
+| `target_cue_region_v3` | region cue, 3rd wording (side-first) | "on the left side of the table, toward the back" | 0,1,3,5–9 | 400 |
+| `target_cue_proximity_beside` | novel proximity synonym | "beside the ramekin" | 3,5,7,9 | 200 |
+| `target_cue_proximity_near` | novel proximity synonym | "near the ramekin" | 3,5,7,9 | 200 |
+| `target_cue_proximity_adjacent` | novel proximity synonym | "adjacent to the ramekin" | 3,5,7,9 | 200 |
+
+`paraphrase_lexical`'s per-task edit: task 0 argument reorder; task 2 "table center" -> "the
+middle of the table"; task 4 "in" -> "inside"; tasks 1/6/8 "next to" -> "beside"; tasks 3/5/7/9
+"on" -> "on top of". The last group is also how `negative_contrast` rewords tasks 3/5/9's target,
+so this condition also bounds how much of that drop comes from the target rewording rather than
+the added clause. `paraphrase_syntactic`'s only extra edit is task 2's "from table center" -> "that
+is at table center". The region variants reuse `target_cue_region`'s zone per task, so they inherit
+its truthfulness check. All four proximity synonyms ("close to", "beside", "near", "adjacent to")
+appear in none of the 10 native prompts.
+
+```
+Same-cue Paraphrase Drop = SR(default) - SR(paraphrase_{lexical,syntactic})
+Cue-type Drop (excess)   = SR(paraphrase_lexical) - SR(target_cue_region*)       [same tasks]
+Familiarity Gap (robust) = mean over 4 novel synonyms of SR(novel) - SR(target_cue_landmark)
+```
+
+If the same-cue paraphrases stay near `default`, 4b's collapse is about the cue type. If they drop
+nearly as far, the checkpoint fails on any surface-form change, which is the stronger
+template-matching claim. The spread across the 3 region and 4 novel-proximity wordings is the
+per-phrasing variance that 4b/4c's single-wording numbers could not show. Registry:
+`grounding/paraphrase_{lexical,syntactic}`, `grounding/target_cue_region_v{2,3}`,
+`grounding/target_cue_proximity_{beside,near,adjacent}`. The subset conditions must be run with
+the `--task_ids` listed above.
+
 **Deprioritized stretch option — the original 3x3 target x distractor mention matrix.** Kept as an
 explicitly optional follow-on, not part of 4b's core design: a full truthful 3x3 would need a
 purpose-built pilot scene (e.g. relocating `cookies_1` adjacent to `ramekin_region` so a single
@@ -582,6 +645,10 @@ Carried forward from `benchmark_split_result.md` §8.6's revised synthesis:
    so far separates "deviates from the fine-tuning template" from "prompt is simply longer" — both
    predict the same symptoms observed in §11.2. Would need a same-length, template-adjacent
    paraphrase condition to isolate. Unaddressed by the sample-size extension.
+   **Controls authored 2026-10-01 (all run 2026-10-01; see `benchmark_split_result.md` §2 and §5.5):** Split 1's `length_control_infix`/`_suffix`
+   (token-matched, content-free clause on native wording) and Split 4's same-cue paraphrases
+   (`paraphrase_lexical`/`_syntactic`, +0..3 tokens). Together they separate length from
+   template deviation at the success-rate level.
 3. **No mechanistic localization.** §11.2 shows *what the arm does* (approach behavior), not
    *where in the network* it goes wrong — vision encoder, language projector, or action-token head
    could each independently produce "never commits to a target," and task 3's approach-then-fail
