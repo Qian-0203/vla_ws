@@ -23,11 +23,35 @@ LOG_DIR="${ROOT}/openvla/experiments/logs/openpi_servers"
 PID_FILE="${LOG_DIR}/servers.pid"
 mkdir -p "${LOG_DIR}"
 
+# `uv run` starts the server as a child process, and killing only the recorded PID leaves that
+# child holding its GPU memory. Each server is its own process group (setsid below), so signal the
+# group; walk the process tree as well, for PID files written before servers had their own group.
+kill_tree() {
+  local child
+  for child in $(pgrep -P "$1" 2>/dev/null); do kill_tree "${child}"; done
+  kill "$1" 2>/dev/null || true
+}
+
 if [[ "${1:-}" == stop ]]; then
   [[ -f "${PID_FILE}" ]] || { echo "No servers recorded in ${PID_FILE}."; exit 0; }
-  while read -r pid; do kill "${pid}" 2>/dev/null && echo "stopped ${pid}" || true; done <"${PID_FILE}"
+  mapfile -t pids <"${PID_FILE}"
+  for pid in "${pids[@]}"; do
+    kill -0 "${pid}" 2>/dev/null || { echo "${pid} already gone"; continue; }
+    kill_tree "${pid}"
+    kill -- "-${pid}" 2>/dev/null || true
+    echo "stopped ${pid}"
+  done
   rm -f "${PID_FILE}"
-  exit 0
+  sleep 2
+  left=0
+  for pid in "${pids[@]}"; do
+    if pgrep -g "${pid}" >/dev/null 2>&1; then
+      echo "Still running in process group ${pid} (stop by hand):" >&2
+      pgrep -g "${pid}" -a >&2
+      left=1
+    fi
+  done
+  exit "${left}"
 fi
 
 command -v uv >/dev/null || { echo "uv not found: curl -LsSf https://astral.sh/uv/install.sh | sh" >&2; exit 1; }
@@ -48,9 +72,11 @@ for idx in "${!GPU_ARR[@]}"; do
   port=$((POLICY_PORT_BASE + idx))
   log="${LOG_DIR}/server-gpu${gpu}-port${port}.log"
   # JAX grabs 75% of GPU memory by default; these GPUs may be shared, so allocate on demand.
+  # setsid makes the recorded PID the leader of a process group holding uv and the server.
   (cd "${OPENPI_DIR}" && CUDA_VISIBLE_DEVICES="${gpu}" XLA_PYTHON_CLIENT_PREALLOCATE=false \
-    nohup uv run scripts/serve_policy.py --env "${OPENPI_ENV}" --port "${port}" >"${log}" 2>&1 </dev/null &
-    echo $! >>"${PID_FILE}")
+    exec setsid nohup uv run scripts/serve_policy.py --env "${OPENPI_ENV}" --port "${port}" \
+    >"${log}" 2>&1 </dev/null) &
+  echo $! >>"${PID_FILE}"
   echo "server ${idx}: GPU ${gpu}, port ${port}, log ${log}"
 done
 
