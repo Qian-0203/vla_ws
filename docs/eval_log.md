@@ -1038,13 +1038,43 @@ correlation estimate (sd≈0.41-0.48 on n=9 within-episode points) further.
 
 ---
 
+## 2026-10-01 — OpenVLA batch on the 9 new conditions finished (completes the entry above)
+
+- **Same launch as the previous entry**, no relaunch and no resume needed: the pipeline ran through
+  all 9 splits and exited 0 at 2026-10-01 23:42 UTC. No shard failure and no CUDA OOM in any shard log.
+- **Outcome** (all on openvla `a5f9a97`):
+
+  | Split | SR | Rollouts | Ran (UTC, 2026-10-01) |
+  |---|--:|--:|---|
+  | `grounding/paraphrase_syntactic` | 82.2% | 411/500 | 10:20 → 14:24 |
+  | `grounding/target_cue_region_v2` | 20.0% | 80/400 | 14:26 → 16:42 |
+  | `grounding/target_cue_region_v3` | 18.8% | 75/400 | 16:42 → 19:05 |
+  | `grounding/target_cue_proximity_beside` | 38.0% | 76/200 | 19:06 → 20:30 |
+  | `grounding/target_cue_proximity_near` | 49.0% | 98/200 | 20:30 → 21:59 |
+  | `grounding/target_cue_proximity_adjacent` | 37.5% | 75/200 | 21:59 → 23:42 |
+
+  Together with the three splits in the previous entry: 9 conditions, 3,400/3,400 rollouts. Detail:
+  `benchmark_split_result.md` §2 and §5.5.
+- **Results:** same paths as the previous entry; the HF mirror `Qian0203/vla_ws-eval-results` holds
+  all 11,702 rollouts in the results directory as of 2026-10-02 01:46 UTC.
+- **Correction to the two entries above** (they are left as written): the "another user's training
+  containers" on the GPUs were not another user's. The 14 `hybridil:train` containers mount
+  `/home/qian/hybridil` and were started from the `qian` account (about 2 GB of GPU memory each). The
+  other user on the host, `vaclis`, ran non-container training jobs of about 65 GB per GPU on the
+  afternoon and evening of 2026-10-01 (first seen at 15:47 UTC).
+- **openpi servers:** stopped 2026-10-01 19:36 UTC. `scripts/serve_openpi.sh stop` killed only the
+  wrapper shells and left the `uv` / `serve_policy.py` children holding about 9 GB per GPU; those were
+  terminated by hand. The script has since been fixed to stop the whole process group.
+
+**Status:** closed. Every condition in the registry's current set now has an OpenVLA and a
+`pi05_libero` number.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
-**Nothing is waiting to be launched.** All 9 conditions authored 2026-10-01 were launched on
-2026-09-30 (entries above). For OpenVLA, 3 are finished and 6 are still running or queued inside that
-pipeline: `grounding/paraphrase_syntactic` (all 10 tasks, 500), `grounding/target_cue_region_v2` /
-`_v3` (`--task_ids 0 1 3 5 6 7 8 9`, 400 each), and `grounding/target_cue_proximity_beside` /
-`_near` / `_adjacent` (`--task_ids 3 5 7 9`, 200 each). For `pi05_libero`, all 22 are finished.
+**Nothing is waiting to be launched.** All 9 conditions authored 2026-10-01 are finished for both
+OpenVLA and `pi05_libero` (entries above).
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.
