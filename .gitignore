@@ -3,6 +3,7 @@
 .codex/
 .cache/
 .libero/
+.libero-host/
 
 # Machine-specific profiles (copy config/server.env.example)
 config/*.env
