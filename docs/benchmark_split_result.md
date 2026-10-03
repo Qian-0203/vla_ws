@@ -230,8 +230,12 @@ one table per task — see `split2_distractor_comparison.md`.
 | `irrelevant` (current, `libero_spatial_3bowl_front`) | ✅ run | 85.2% | 500/500 |
 | `semantic` (current, `libero_spatial_3bowl_semantic2`) | ✅ run | 85.2% | 500/500 |
 | `landmark` | ✅ run | 80.6% | 403/500 |
-| `landmark_with_hardneg_prompt` (Split 1×2 combo) | ✅ run | 41.2% | 412/500 |
+| `landmark_with_hardneg_prompt` (Split 1×2 combo) | ✅ run | 41.2% | 206/500† |
 | `path` | ⬜ not authored | — | — |
+
+† Corrected 2026-10-03 from 412/500, which was the sum of the per-task percentages in §3's
+`landmark_with_hardneg_prompt` table, not a count. 206 = that sum ÷ 2 (50 trials/task), matching
+41.2%. Derived from the per-task table; the raw JSONL was not re-read. See `eval_log.md`, 2026-10-03.
 
 Retired condition definitions (`irrelevant_v1_legacy`, `semantic_v1_legacy`, `center_fixed_legacy`)
 were run and superseded by the current `irrelevant`/`semantic` above; their numbers are preserved in

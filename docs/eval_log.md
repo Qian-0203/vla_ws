@@ -1071,6 +1071,31 @@ correlation estimate (sd≈0.41-0.48 on n=9 within-episode points) further.
 
 ---
 
+## 2026-10-03 — Correction: two entries misread the 2026-08-19 batch's counts (no eval run)
+
+- **Found by:** Ken Zheng's review note on `vla_ws` PR #1 (`landmark_with_hardneg_prompt`'s count
+  does not match its rate), then traced through git history.
+- **Error 1, the 2026-08-19 entry's row 5:** `landmark_with_hardneg_prompt` is listed as
+  41.2% / 412/500. The correct count is **206/500**. 412 is the sum of the per-task percentages
+  (38+34+50+62+80+38+52+4+48+6) in `benchmark_split_result.md` §3. It entered in `88cf7ef`
+  (2026-08-20, the commit that first recorded this run) and was copied unchanged through later
+  doc restructures. The 41.2% rate and the per-task rates were always right. The 206 is derived
+  from that table (each task's successes = its rate × 50); the raw
+  `libero_spatial_3bowl_hardneg--hardneg--shard{0..3}of4.jsonl` lives on the 2026-08-19 server and
+  was not re-read. `benchmark_split_result.md` §3's status table is corrected with a footnote.
+- **The same table's "Rollouts" column holds success counts, not completed rollouts.** Rows 1–4
+  (444, 162, 424, 403 out of 500) are each rate × 500. All five runs completed 500 rollouts.
+- **Error 2, the 2026-08-27 entry's livelock note:** it cites "444/500, 424/500, 403/500, 412/500,
+  162/500" as evidence that past full-suite batches undershot 500 rollouts. They are success counts
+  (412 not even that), so that inference is wrong: those batches did not undershoot. The rest of
+  the note stands: the unbounded `reset()` retry in the LIBERO fork was real, it did stall
+  `spatial_3bowl/irrelevant` at 121/500, and the bounded retry fixed it.
+- The two entries above are left as written, per this file's append-only rule.
+
+**Status:** closed.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 **Nothing is waiting to be launched.** All 9 conditions authored 2026-10-01 are finished for both
