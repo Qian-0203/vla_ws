@@ -28,7 +28,7 @@ python3 scripts/preflight.py
 # 3. Sanity gate: the unmodified baseline (500 rollouts)
 SPLITS=spatial/default bash scripts/run_benchmark.sh
 
-# 4. Everything else (about 4,400 more rollouts). Already-finished splits are skipped with --resume.
+# 4. Everything else (about 7,800 more rollouts). Already-finished splits are skipped with --resume.
 bash scripts/run_benchmark.sh --resume True
 ```
 
@@ -67,22 +67,31 @@ in order.
 ## Splits
 
 Reference column: `openvla-7b` LoRA r32 fine-tuned on `libero_spatial_no_noops`, bf16, 50 trials/task,
-seed 7. Rows are ordered as `run_benchmark.sh` runs them: baseline first, then roughly by how much
-each split moved the reference model. Task ids are the same across all scenes.
+seed 7. Rows are ordered as `run_benchmark.sh` runs them: baseline first, then grouped by probe,
+roughly by how much each group moved the reference model. Task ids are the same across all scenes.
 
 | Split id | Probe | What changes vs. baseline | Tasks | Reference SR |
 |---|---|---|---|--:|
 | `spatial/default` | 1 · Prompt | nothing (baseline: 2 bowls, native prompt) | 0–9 | 84.0% |
 | `spatial/positive_contrast` | 1 · Prompt | prompt also states where the distractor bowl is | 0–9 | 32.4% |
 | `spatial/negative_contrast` | 1 · Prompt | prompt names the distractor and negates it ("not the one …") | 0–9 | 36.8% |
+| `spatial/length_control_suffix` | 1 · Length control | native prompt + a content-free clause at the end (+13 tokens, matches `positive_contrast`'s length) | 0–9 | 53.6% |
+| `spatial/length_control_infix` | 1 · Length control | native prompt + a content-free clause mid-sentence (+11 tokens, matches `negative_contrast`'s length) | 0–9 | 62.8% |
 | `grounding/target_cue_region` | 4b · Cue type | target described as a table zone ("back-left of the table") | 0,1,3,5–9 | 17.0% |
+| `grounding/target_cue_region_v2` | 4b · Cue type | same table zone, 2nd wording ("in the back-left area of the table") | 0,1,3,5–9 | 20.0% |
+| `grounding/target_cue_region_v3` | 4b · Cue type | same table zone, 3rd wording ("on the left side of the table, toward the back") | 0,1,3,5–9 | 18.8% |
 | `grounding/target_cue_landmark` | 4b · Cue type | "on X" rephrased as "next to X" | 3,5,7,9 | 30.5% (default on these tasks: 80.5%) |
 | `grounding/target_cue_proximity_novel` | 4c · Cue type | "on X" rephrased as "close to X" (never seen in training) | 3,5,7,9 | 53.0% |
+| `grounding/target_cue_proximity_beside` | 4c · Cue type | "on X" rephrased as "beside X" | 3,5,7,9 | 38.0% |
+| `grounding/target_cue_proximity_near` | 4c · Cue type | "on X" rephrased as "near X" | 3,5,7,9 | 49.0% |
+| `grounding/target_cue_proximity_adjacent` | 4c · Cue type | "on X" rephrased as "adjacent to X" | 3,5,7,9 | 37.5% |
 | `spatial_3bowl/landmark_with_hardneg_prompt` | 1×2 | `landmark` scene + prompt that disambiguates the target | 0–9 | 41.2% |
 | `spatial_3bowl/drawer_open` | 3 · Clutter | 3 bowls + cabinet top drawer open | 0–9 | 60.0% (73.1% excl. tasks 3,6,7, which the drawer physically blocks) |
 | `spatial_3bowl/landmark` | 2 · Distractor | 3rd bowl near the target's own landmark (hard negative) | 0–9 | 80.6% |
 | `spatial_3bowl/irrelevant` | 2 · Distractor | 3rd bowl far from everything | 0–9 | 85.2% |
 | `spatial_3bowl/semantic` | 2 · Distractor | 3rd bowl at a different named landmark | 0–9 | 85.2% |
+| `grounding/paraphrase_lexical` | 4 · Same-cue paraphrase | one synonym swap in the native cue ("on" → "on top of", "next to" → "beside") | 0–9 | 72.4% |
+| `grounding/paraphrase_syntactic` | 4 · Same-cue paraphrase | native words in a relative clause ("the black bowl that is on X") | 0–9 | 82.2% |
 | `grounding/surface_landmark` | 4a · Scene | surface-cue target + landmark-cue distractor | 0 (1-task suite) | 88.0% |
 | `grounding/region_surface` | 4a · Scene | region-cue target + surface-cue distractor | 0 (1-task suite) | 92.0% |
 

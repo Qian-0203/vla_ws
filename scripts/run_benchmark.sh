@@ -8,7 +8,7 @@
 #   CHECKPOINT=/path/to/merged/openvla/ckpt bash scripts/run_benchmark.sh
 #   CHECKPOINT=... GPUS=0,1,2,3 bash scripts/run_benchmark.sh --resume True   # continue after a crash
 #   CHECKPOINT=... SPLITS="spatial/default" bash scripts/run_benchmark.sh        # just the sanity gate
-#   CHECKPOINT=... SPLITS=new bash scripts/run_benchmark.sh                      # the 2026-10-01 conditions
+#   CHECKPOINT=... SPLITS=new bash scripts/run_benchmark.sh                      # only the 9 conditions added 2026-10-01
 #   MODEL_FAMILY=openpi CHECKPOINT=gs://openpi-assets/checkpoints/pi05_libero RUN_NOTE=pi05_libero \
 #     bash scripts/run_benchmark.sh                  # an openpi policy; start scripts/serve_openpi.sh first
 #
@@ -25,8 +25,8 @@ RESULTS_DIR="${RESULTS_DIR:-${ROOT}/openvla/experiments/logs/results}"
 # Tags every results file with the checkpoint so runs of different models never collide.
 RUN_NOTE="${RUN_NOTE:-$(basename "${CHECKPOINT}" | tr -c 'A-Za-z0-9._\n-' '_' | cut -c1-80)}"
 
-# Ordered by how much each split moved the reference checkpoint's success rate
-# (docs/benchmark_split_result.md), after the spatial/default sanity gate.
+# Grouped by probe, and ordered roughly by how much each group moved the reference checkpoint's
+# success rate (docs/benchmark_split_result.md), after the spatial/default sanity gate.
 # Split 4b/4c instruction dicts only cover a task subset -- those ids are required.
 declare -A TASK_IDS=(
   [grounding/target_cue_region]=0,1,3,5,6,7,8,9
@@ -38,7 +38,8 @@ declare -A TASK_IDS=(
   [grounding/target_cue_proximity_near]=3,5,7,9
   [grounding/target_cue_proximity_adjacent]=3,5,7,9
 )
-# Authored 2026-10-01, not yet in DEFAULT_SPLITS (no reference number yet); run with SPLITS="...".
+# The 9 conditions added 2026-10-01, runnable on their own with SPLITS=new (docs/eval_log.md's
+# launch commands for that batch use it). They are all in DEFAULT_SPLITS as well.
 NEW_SPLITS=(
   spatial/length_control_infix spatial/length_control_suffix
   grounding/paraphrase_lexical grounding/paraphrase_syntactic
@@ -49,14 +50,23 @@ DEFAULT_SPLITS=(
   spatial/default                             # Split 1 baseline -- sanity gate
   spatial/positive_contrast                   # Split 1
   spatial/negative_contrast                   # Split 1
+  spatial/length_control_suffix               # Split 1 length control (for positive_contrast)
+  spatial/length_control_infix                # Split 1 length control (for negative_contrast)
   grounding/target_cue_region                 # Split 4b
+  grounding/target_cue_region_v2              # Split 4b, 2nd wording
+  grounding/target_cue_region_v3              # Split 4b, 3rd wording
   grounding/target_cue_landmark               # Split 4b
-  grounding/target_cue_proximity_novel        # Split 4c
+  grounding/target_cue_proximity_novel        # Split 4c ("close to")
+  grounding/target_cue_proximity_beside       # Split 4c synonym
+  grounding/target_cue_proximity_near         # Split 4c synonym
+  grounding/target_cue_proximity_adjacent     # Split 4c synonym
   spatial_3bowl/landmark_with_hardneg_prompt  # Split 1x2
   spatial_3bowl/drawer_open                   # Split 3
   spatial_3bowl/landmark                      # Split 2
   spatial_3bowl/irrelevant                    # Split 2
   spatial_3bowl/semantic                      # Split 2
+  grounding/paraphrase_lexical                # Split 4 same-cue paraphrase
+  grounding/paraphrase_syntactic              # Split 4 same-cue paraphrase
   grounding/surface_landmark                  # Split 4a gap-fill cell
   grounding/region_surface                    # Split 4a gap-fill cell
 )
