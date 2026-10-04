@@ -1435,6 +1435,11 @@ phrasing a VLM finds easy.
    the explanation for *this* failure shape. Still open: whether `negative_contrast`'s own extra clause
    (vs. its distractor content specifically) matters, since no condition adds comparable filler length
    without semantic content.
+   *Update 2026-10-01:* that condition now exists. `length_control_infix`/`_suffix` (§2) add a
+   content-free clause and cost 21.2 / 30.4 pts on their own, about 45% / 59% of the contrast-prompt
+   drops; 26.0 / 21.2 pts remain after subtracting them. Both length and distractor content matter.
+   The bowl-attraction probe has not been run on the length controls, so whether filler length
+   produces the same majority-"neither" failure shape is still open.
 3. **Mechanistic localization — open, substantially narrowed.** Real, replicated early-window
    vision-attention/resolution-layer effects for `target_cue_landmark`, no module localized, and the
    confidence diagnostic is null. See `mechanistic_localization.md` §2.
