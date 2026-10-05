@@ -34,8 +34,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 if [[ -n "${MACHINE_CONFIG:-}" ]]; then
+  # The profile only fills in what the caller left unset. The committed profiles use
+  # `: "${VAR:=value}"`, but a hand-written one with plain `VAR=value` lines would otherwise
+  # override the caller's environment (e.g. CHECKPOINT=... silently ignored), so save every
+  # variable the profile assigns that is already non-empty, and restore it after sourcing.
+  declare -A _caller_env=()
+  for _v in $(grep -oE '^[[:space:]]*(export[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*=' "${MACHINE_CONFIG}" |
+    sed -E 's/^[[:space:]]*(export[[:space:]]+)?//; s/=$//' || true); do
+    [[ -n "${!_v:-}" ]] && _caller_env[${_v}]="${!_v}" # empty counts as unset, like `:=`
+  done
   # shellcheck disable=SC1090
   source "${MACHINE_CONFIG}"
+  for _v in "${!_caller_env[@]}"; do
+    printf -v "${_v}" '%s' "${_caller_env[${_v}]}"
+  done
+  unset _v _caller_env
 fi
 
 # openvla: the model runs inside this container from CHECKPOINT.
