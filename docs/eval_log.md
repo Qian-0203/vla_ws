@@ -1096,10 +1096,108 @@ correlation estimate (sd≈0.41-0.48 on n=9 within-episode points) further.
 
 ---
 
+## 2026-10-05 — Official OpenVLA LIBERO-Spatial checkpoint: sanity gate passed, full benchmark launched
+
+- **Why:** a third reference point between our own LoRA checkpoint and `pi05_libero`: the checkpoint
+  the OpenVLA authors released for this suite,
+  [`openvla/openvla-7b-finetuned-libero-spatial`](https://huggingface.co/openvla/openvla-7b-finetuned-libero-spatial)
+  (MIT, LoRA r32, action-stats key `libero_spatial`). Gate: `spatial/default` must land near the
+  paper's 84.7% before the other 21 conditions are worth running.
+- **Machine:** `berkeley` now points at a new instance, `g4-flexstart-mig-uswest1-15gr` (same 4×
+  RTX PRO 6000 Blackwell, driver 580.178.04; Machines table below). Shared host: `vaclis` held
+  about 71.7 GB per GPU for the whole run (peaked near 97 GB earlier that morning), so about 25 GB
+  per GPU was free; the model takes about 16 GB per GPU in bf16.
+- **Setup on the new machine:**
+  - **EGL:** the CDI spec at `/var/run/cdi/nvidia.yaml` had been generated before
+    `libnvidia-gl-580-server` was installed, so containers saw no EGL device. The first gate
+    attempt (06:48 UTC) failed in every shard with
+    `MUJOCO_EGL_DEVICE_ID ... between 0 and -1`. Fixed by re-running
+    `sudo nvidia-ctk cdi generate --output=/var/run/cdi/nvidia.yaml`. `/var/run` is cleared on
+    reboot, so the spec has to be regenerated after a restart (or also written to `/etc/cdi/`).
+    The failed attempt's log is kept as `~/logs/official_sanity_gate.0648-egl-fail.log`.
+  - **Checkpoint download:** this machine has no `uv`, so `scripts/hf_checkpoint.sh` could not run.
+    The checkpoint (about 15 GB, 16 files, about 20 s) was fetched with `huggingface_hub` from inside
+    the eval image instead, which needs `--entrypoint python3` (the image's entrypoint creates
+    `/workspace/.libero`) and `LIBERO_CONFIG_PATH=/tmp/.libero`. It lives at
+    `openvla/checkpoint/openvla-7b-finetuned-libero-spatial`. `preflight.py` passed.
+  - **Smoke-test incident:** the first smoke test (06:53 UTC) passed `CHECKPOINT=` and `GPUS=` on
+    the command line together with `MACHINE_CONFIG=config/server.env`. The hand-written profile
+    assigned both with plain `VAR=value`, which overrode the caller's values, so it ran *our LoRA
+    checkpoint* on all 4 GPUs at 50 trials. It was stopped and its 6 result files were deleted; the
+    shard logs (`multigpu-2026_10_05-06_53_40-*`) are kept. Fixed in `run_eval.sh` (`0a1e62d`:
+    caller-set variables now survive the profile), and the server's `server.env` was rewritten in
+    the `:=` form (backup `config/server.env.bak-2026-10-05`). The second smoke test
+    (`official_smoke2`, task 0, 1 trial, 07:05 UTC) succeeded.
+- **Gate launch:** a watcher script waited for GPU memory from 07:08 UTC, first requiring 30 GB
+  free on every GPU over two consecutive 5-minute samples, then (10:12) 22 GB. `vaclis` stayed at
+  about 25.4 GB free, so the gate was started by hand at 10:18 UTC instead. All variables were set
+  explicitly:
+
+  ```bash
+  GPUS=0,1,2,3 IMAGE_NAME=openvla-libero:blackwell OPENVLA_ATTN_IMPLEMENTATION=sdpa \
+    LOAD_IN_4BIT=False SEED=7 NUM_TRIALS_PER_TASK=50 \
+    CHECKPOINT=$HOME/vla_ws/openvla/checkpoint/openvla-7b-finetuned-libero-spatial \
+    RUN_NOTE=openvla-official-libero-spatial SPLITS=spatial/default bash scripts/run_benchmark.sh
+  ```
+
+  vla_ws `0a1e62d`, openvla `67702c1`, LIBERO `b794927`; bf16, sdpa, torch 2.7.1+cu128.
+- **Outcome — gate passed:** **84.0% (420/500)**, against 84.7% in the OpenVLA paper and 84.0% for
+  our LoRA checkpoint. Shards finished between 11:17 and 11:54 UTC (about 1.6 h wall clock), with
+  no failure and no OOM. Detail: `benchmark_split_result.md` §10.
+- **Remaining 21 conditions:** launched 12:27 UTC with the same command minus `SPLITS=...`, plus
+  `--resume True` (`spatial/default` was skipped as complete). Log `~/logs/official_full_benchmark.log`.
+  The resume rewrote `spatial/default`'s four `*.meta.json` files with the 12:27 timestamp; the
+  JSONL rollouts are unchanged.
+- **Results:** `openvla/experiments/logs/results/{suite}--{condition}--openvla-official-libero-spatial--shard{0..3}of4.jsonl`
+  (server-local, gitignored).
+
+**Status:** gate closed; the other 21 conditions are running. A follow-up entry will record them.
+
+---
+
+## 2026-10-06 — QwenVLA results received from Ken Zheng (runs of 2026-09-30 and 2026-10-05; not launched from this workspace)
+
+- **What:** Ken Zheng's QwenVLA LIBERO-Spatial checkpoint (Qwen3-VL-8B + 256-bin discrete action
+  tokens; `finetune-merged-libero_spatial-78.6pct.pt`, sha256 `7eb0186a36b71e14d9d827cbe19ea9565f7686cdf6938189c3b92f85825f3860`)
+  on all 22 current conditions plus `spatial_3bowl/center_fixed_legacy`. Ken ran both batches on
+  his own machines and sent the raw results as two packages; this entry records them.
+- **Batch 1, 2026-09-30, dgx1 (8× A100-SXM4-80GB):** the 13 original splits + `center_fixed_legacy`,
+  14 runs, 5,400 rollouts. `scripts/run_eval_qwenvla.sh` (host conda env, torch 2.11.0+cu130,
+  SDPA), `RUN_NOTE=qwenvla-78.6pct`, 10 shards per run, stats `finetune-dataset_statistics.json`
+  (key `libero_spatial_no_noops`). The meta files record openvla `664f315`; the run used that
+  commit plus the then-uncommitted QwenVLA changes, later committed as `b0e040b` (openvla PR #2,
+  now `67702c1`). Headline first reported in vla_ws PR #1's description.
+- **Batch 2, 2026-10-05, 8× H200:** the 9 conditions authored 2026-10-01, 9 runs, 3,400 rollouts.
+  vla_ws `qwenvla-support` @ `e53baca`, openvla `67702c1`, LIBERO `b794927`; stats from qwen-vla's
+  committed `assets/dataset_statistics/libero_spatial_no_noops.json`. Run as 5 concurrent
+  `run_benchmark.sh` streams with disjoint `SPLITS` subsets (`launch.sh` in the package); each split
+  is still one `run_eval_qwenvla.sh --split` call with 10 task shards.
+- **Protocol difference from the OpenVLA/pi05 runs:** `env_recreate_every=15` (object jitter
+  re-seeded from episode 15 on); everything else (seed 7, 50 trials/task, center crop, task subsets)
+  matches.
+- **Checks on receipt (2026-10-06):** both tarballs match their `.sha256`. Ken's README records a
+  provenance check per package (exactly 50 rollouts per task on the expected task ids, no duplicate
+  `(task_id, episode_idx)`, no unparseable lines, all meta files agreeing on checkpoint, seed,
+  trials, crop, `env_recreate_every` and note). Re-aggregating the extracted JSONL here with
+  `scripts/aggregate_results.py --filter=--qwenvla-78.6pct` reproduces every headline in both
+  READMEs.
+- **Outcome:** `spatial/default` 79.8% (399/500); `positive_contrast` / `negative_contrast` 54.8 /
+  37.2%; length controls 74.8 / 76.2%; region cue 17.2 / 18.8 / 21.0%; `drawer_open` 68.2% against
+  77.2% closed. Full tables and analysis: `benchmark_split_result.md` §11.
+- **Results:** stored locally under `Archive 2/qwenvla_vla_ws_13-splits_dgx1_2026-09-30/` and
+  `Archive 2/qwenvla_vla_ws_new-splits_2026-10-05/` (not tracked in git); files
+  `results/{suite}--{condition}--qwenvla-78.6pct--shard{0..9}of10.jsonl`.
+
+**Status:** closed. Every condition in the registry's current set now has OpenVLA, `pi05_libero`
+and QwenVLA numbers.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 **Nothing is waiting to be launched.** All 9 conditions authored 2026-10-01 are finished for both
-OpenVLA and `pi05_libero` (entries above).
+OpenVLA and `pi05_libero` (entries above). The official OpenVLA checkpoint's run over the 21
+non-gate conditions is in progress (2026-10-05 entry).
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.
@@ -1119,7 +1217,9 @@ in place: update it when a machine is added or retired, and leave the dated entr
 | 4× Blackwell server (instance name not recorded) | 4× RTX PRO 6000 Blackwell | `openvla-libero:blackwell` / sdpa | bf16 | 2026-08-19 and 2026-08-20 batches |
 | GCP `g4-flex-20260824`, ssh alias `berkeley` — replaced 2026-09-10 | 4× RTX PRO 6000 Blackwell Server Edition, 98 GB each, compute cap 12.0 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-08-25 → 2026-09-08 entries |
 | GCP replacement instance, same `berkeley` alias — replaced by 2026-09-30 | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-10 entries |
-| GCP `g4-flexstart-mig-uswest1-9dxc`, same `berkeley` alias — current. Shared host: other users' jobs run on the same GPUs. Workspace `/home/qian/vla_ws`, checkpoint `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32`, openpi checkout `/home/qian/openpi` | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-30 onward |
+| GCP `g4-flexstart-mig-uswest1-9dxc`, same `berkeley` alias — replaced by 2026-10-05. Shared host: other users' jobs run on the same GPUs. Workspace `/home/qian/vla_ws`, checkpoint `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32`, openpi checkout `/home/qian/openpi` | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-30 → 2026-10-03 entries |
+| GCP `g4-flexstart-mig-uswest1-15gr`, same `berkeley` alias — current. Shared host (`vaclis` runs training on the same GPUs). Workspace `/home/qian/vla_ws`; checkpoints `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32` and `openvla/checkpoint/openvla-7b-finetuned-libero-spatial` (official). No `uv` installed | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-10-05 onward |
+| Ken Zheng's machines: dgx1 (8× A100-SXM4-80GB) and an 8× H200 node — not ours | 8× A100 80 GB / 8× H200 | host conda env (`scripts/run_eval_qwenvla.sh`) / SDPA | not quantized (dtype not recorded) | QwenVLA runs, 2026-09-30 and 2026-10-05 (logged 2026-10-06) |
 | Laptop | 1× RTX 5060 Laptop, 8 GB, compute cap 12.0 | `openvla-libero:blackwell` / sdpa | 4-bit only | scene authoring, init states, contact sheets, smoke tests (no reported number comes from here) |
 
 Entries above that cite `config/berkeley.env` or `config/server.env` both refer to the 4× Blackwell
@@ -1148,7 +1248,9 @@ FlashAttention-2 (2026-08-1x) vs. 84.4% on Blackwell with sdpa (2026-09-10).
    `MUJOCO_EGL_DEVICE_ID ... must be an integer between 0 and -1`. To fix it, install
    `libnvidia-gl-<driver version>-server` and run
    `sudo nvidia-ctk cdi generate --output=/var/run/cdi/nvidia.yaml`. No Docker restart is needed.
-   Confirm with a manual EGL render before touching the eval pipeline.
+   Confirm with a manual EGL render before touching the eval pipeline. The CDI spec must be
+   generated *after* `libnvidia-gl` is installed; a spec from before it gives the same error
+   (2026-10-05). `/var/run` is cleared on reboot, so regenerate it after a restart.
 3. Run `git clone --recursive https://github.com/Qian-0203/vla_ws.git`. Since 2026-09-29, `openvla`
    and `LIBERO` are submodules; before that date, each was cloned separately over SSH.
 4. Build the image that matches the GPU's compute capability: `Dockerfile.blackwell` for 12.0, and
@@ -1164,6 +1266,8 @@ FlashAttention-2 (2026-08-1x) vs. 84.4% on Blackwell with sdpa (2026-09-10).
    `uvx --from huggingface_hub hf auth login`. The reference checkpoint is uploaded as the private
    repo `Qian0203/openvla-7b-libero-spatial-lora-r32`, which took about 5 minutes from the laptop on
    2026-10-01. So the 4.5-hour `rsync` was limited by the single connection, not by the home uplink.
+   Without `uv` on the server, run `huggingface_hub` from inside the eval image instead, with
+   `--entrypoint python3` and `-e LIBERO_CONFIG_PATH=/tmp/.libero` (2026-10-05).
 6. Run `python3 scripts/preflight.py`.
 7. Smoke test: `run_eval.sh --split spatial/default --task_ids 5 --num_trials_per_task 1`.
 8. Validation: run the full `spatial/default` split. It must land within about ±3.3 pts of 84.0%

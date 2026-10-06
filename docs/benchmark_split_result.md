@@ -51,6 +51,8 @@ Applies to every condition below unless a section says otherwise.
 | VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
 | Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02/03/04, all 10 `libero_spatial` tasks for `default`+`negative_contrast` (280 rollouts); `target_cue_landmark` + `target_cue_proximity_novel` on the 4-task surface cohort (80 more). Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): pooled at full scale, "arm never approaches either bowl" is the *majority* failure mode (58.1% of `negative_contrast` failures) — success rates closely match the real 500/200-trial evals. `target_cue_proximity_novel` (no distractor, no misleading template) fails the same way as `target_cue_landmark` despite a much higher success rate — a second line of evidence against distractor-pull. Task 3 shows a persistent second mode (correct approach, still fails). See §8.6 for the synthesis and open gaps |
 | Cross-model reference: `pi05_libero` (§9) | Runs through the same registry via `--model_family openpi` | All 22 current conditions run 2026-09-30 → 2026-10-01 (8,300 rollouts). `spatial/default` 98.4%; prompt-only conditions 87–99% except the region cue (75–78%); 3-bowl scene conditions 43–91% |
+| Cross-model reference: official OpenVLA checkpoint (§10) | Same registry and code path as the reference; only `CHECKPOINT` differs | Sanity gate run 2026-10-05: `spatial/default` 84.0% (420/500), against 84.7% in the OpenVLA paper and 84.0% for our checkpoint. The other 21 conditions are running |
+| Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% |
 | Mechanistic Localization Probe (not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`) | Run 2026-09-04 → 2026-09-10 on task 5. Real, n=50-replicated early-window vision-attention/resolution-layer effects for `target_cue_landmark`; no layer/module localized; confidence diagnostic null. Full record: `mechanistic_localization.md` |
 
 ---
@@ -1656,3 +1658,192 @@ Splits 2 / 3 (against pi05's own 2-bowl default, 98.4%; pi05 has no closed-drawe
    it against 72.0% without, with task 1 going from 42% to 2% and task 9 from 34% to 6%.
 
 Results: `results/*--pi05_libero--shard{0..3}of4.jsonl`.
+
+## 10. Cross-model reference: the official OpenVLA LIBERO-Spatial checkpoint (2026-10-05, in progress)
+
+**What this is.** The checkpoint the OpenVLA authors released for this suite,
+`openvla/openvla-7b-finetuned-libero-spatial` (LoRA r32, MIT), run through the same registry,
+scenes, init states, seed (7) and 50 trials/task as our reference checkpoint. Same model family,
+same code path (`--model_family openvla`, bf16, sdpa, center crop), so unlike §9 the only thing that
+changes is the weights. The one config difference is the action-stats key: the official checkpoint
+stores it as `libero_spatial`, which every split already passes as `--unnorm_key`. Launch details:
+`eval_log.md`, 2026-10-05.
+
+### 10.1 — Sanity gate: `spatial/default`
+
+| id | target | Official checkpoint | Ours (§2, original) | Δ (official − ours) |
+|--:|---|--:|--:|--:|
+| 0 | between the plate and the ramekin | 82% | 92% | −10 |
+| 1 | next to the ramekin | 96% | 84% | +12 |
+| 2 | table center | 86% | 92% | −6 |
+| 3 | on the cookie box | 96% | 84% | +12 |
+| 4 | in the top drawer | 70% | 76% | −6 |
+| 5 | on the ramekin | 90% | 94% | −4 |
+| 6 | next to the cookie box | 88% | 90% | −2 |
+| 7 | on the stove | 86% | 72% | +14 |
+| 8 | next to the plate | 78% | 84% | −6 |
+| 9 | on the wooden cabinet | 68% | 72% | −4 |
+| **Overall** | | **84.0% (420/500)** | **84.0% (420/500)** | **0.0** |
+
+**Gate passed.** 84.0% sits 0.7 pts below the 84.7% the OpenVLA paper reports for this checkpoint,
+well inside the ±3.3-pt pooled noise band (§0). The pipeline therefore reproduces the published
+number, and our own checkpoint matches the released one on the baseline. Per-task differences
+reach ±10–14 pts (tasks 0, 1, 3, 7), the same size as our checkpoint's own run-to-run spread (§2,
+2026-09-10 replication: ±6–10 pts), so no single task difference is meaningful on its own. Task 9
+is among the weakest for both checkpoints (68% / 72%).
+
+### 10.2 — The other 21 conditions
+
+Running since 2026-10-05 12:27 UTC. To be filled in, with the same tables as §9.1–9.4, when they
+finish.
+
+Results: `results/*--openvla-official-libero-spatial--shard{0..3}of4.jsonl`.
+
+## 11. Cross-model reference: QwenVLA on the whole benchmark (run by Ken Zheng, 2026-09-30 and 2026-10-05)
+
+**What this is.** A second non-OpenVLA policy: Ken Zheng's QwenVLA LIBERO-Spatial checkpoint
+(Qwen3-VL-8B backbone + 256-bin discrete action tokens, deterministic decoding;
+`finetune-merged-libero_spatial-78.6pct.pt`, sha256 `7eb0186a…3f860`) on all 22 current conditions,
+plus `spatial_3bowl/center_fixed_legacy` as the closed-drawer control for `drawer_open` — 23 runs,
+8,800 rollouts. Same registry, scenes, seed (7), center crop and 50 trials/task. Ken ran both
+batches on his own machines and delivered the raw JSONL; launch details: `eval_log.md`, 2026-10-06.
+
+**Read these caveats before comparing columns.**
+
+- **`env_recreate_every=15`.** The env is rebuilt every 15 episodes, which re-seeds object jitter
+  from episode 15 on. The OpenVLA and pi05 runs used 0, so episodes 15–49 do not start from exactly
+  the same object placements.
+- **Lower baseline.** 79.8% on `spatial/default` (80.0% on stock LIBERO-Spatial in Ken's own eval),
+  against OpenVLA's 84.0%. Compare drops against each model's own baseline, not raw rates.
+- **Different runtime.** Host conda env (torch 2.11, SDPA), not the Docker image. The 13 original
+  splits + `center_fixed_legacy` ran on 8× A100 (2026-09-30); the 9 conditions authored 2026-10-01
+  ran on 8× H200 (2026-10-05).
+- **One run per condition.** §0's noise bands apply.
+
+### 11.1 — Overall, against OpenVLA and pi05
+
+| Split | Probe | Tasks | OpenVLA | pi05_libero | QwenVLA | Rollouts (QwenVLA) |
+|---|---|---|--:|--:|--:|--:|
+| `spatial/default` | 1 · Prompt | 0–9 | 84.0% | 98.4% | **79.8%** | 399/500 |
+| `spatial/positive_contrast` | 1 · Prompt | 0–9 | 32.4% | 92.2% | **54.8%** | 274/500 |
+| `spatial/negative_contrast` | 1 · Prompt | 0–9 | 36.8% | 87.0% | **37.2%** | 186/500 |
+| `spatial/length_control_infix` | 1 · Length control | 0–9 | 62.8% | 99.2% | **74.8%** | 374/500 |
+| `spatial/length_control_suffix` | 1 · Length control | 0–9 | 53.6% | 99.0% | **76.2%** | 381/500 |
+| `grounding/paraphrase_lexical` | 4 · Same-cue paraphrase | 0–9 | 72.4% | 97.2% | **80.0%** | 400/500 |
+| `grounding/paraphrase_syntactic` | 4 · Same-cue paraphrase | 0–9 | 82.2% | 97.8% | **81.0%** | 405/500 |
+| `grounding/target_cue_region` | 4b · Cue type | 0,1,3,5–9 | 17.0% | 75.5% | **17.2%** | 69/400 |
+| `grounding/target_cue_region_v2` | 4b · Cue type | 0,1,3,5–9 | 20.0% | 77.5% | **18.8%** | 75/400 |
+| `grounding/target_cue_region_v3` | 4b · Cue type | 0,1,3,5–9 | 18.8% | 74.8% | **21.0%** | 84/400 |
+| `grounding/target_cue_landmark` | 4b · Cue type | 3,5,7,9 | 30.5% | 87.0% | **39.5%** | 79/200 |
+| `grounding/target_cue_proximity_novel` | 4c · "close to" | 3,5,7,9 | 53.0% | 96.0% | **46.0%** | 92/200 |
+| `grounding/target_cue_proximity_beside` | 4c · "beside" | 3,5,7,9 | 38.0% | 97.0% | **49.0%** | 98/200 |
+| `grounding/target_cue_proximity_near` | 4c · "near" | 3,5,7,9 | 49.0% | 96.0% | **50.5%** | 101/200 |
+| `grounding/target_cue_proximity_adjacent` | 4c · "adjacent to" | 3,5,7,9 | 37.5% | 97.0% | **44.5%** | 89/200 |
+| `spatial_3bowl/irrelevant` | 2 · Distractor | 0–9 | 85.2% | 80.6% | **79.0%** | 395/500 |
+| `spatial_3bowl/semantic` | 2 · Distractor | 0–9 | 85.2% | 91.0% | **74.0%** | 370/500 |
+| `spatial_3bowl/landmark` | 2 · Distractor | 0–9 | 80.6% | 72.0% | **68.6%** | 343/500 |
+| `spatial_3bowl/landmark_with_hardneg_prompt` | 1×2 | 0–9 | 41.2% | 66.2% | **47.4%** | 237/500 |
+| `spatial_3bowl/center_fixed_legacy` | 3 · Closed-drawer control | 0–9 | 80.2% | — | **77.2%** | 386/500 |
+| `spatial_3bowl/drawer_open` | 3 · Clutter | 0–9 | 60.0% | 43.4% | **68.2%** | 341/500 |
+| `grounding/surface_landmark` | 4a · Scene | 0 | 88.0% | 100.0% | **90.0%** | 45/50 |
+| `grounding/region_surface` | 4a · Scene | 0 | 92.0% | 100.0% | **98.0%** | 49/50 |
+
+### 11.2 — Per-task: prompt-only conditions (stock 2-bowl scene)
+
+| id | target | Default | Pos. contrast | Neg. contrast | Len. infix | Len. suffix | Para. lexical | Para. syntactic |
+|--:|---|--:|--:|--:|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin | 86% | 86% | 82% | 84% | 84% | 88% | 86% |
+| 1 | next to the ramekin | 86% | 10% | 0% | 70% | 78% | 82% | 78% |
+| 2 | table center | 84% | 74% | 2% | 86% | 84% | 86% | 80% |
+| 3 | on the cookie box | 88% | 90% | 68% | 96% | 80% | 84% | 90% |
+| 4 | in the top drawer | 60% | 54% | 50% | 50% | 56% | 58% | 62% |
+| 5 | on the ramekin | 86% | 8% | 0% | 88% | 84% | 86% | 94% |
+| 6 | next to the cookie box | 92% | 82% | 90% | 84% | 96% | 92% | 90% |
+| 7 | on the stove | 84% | 72% | 42% | 60% | 70% | 82% | 86% |
+| 8 | next to the plate | 84% | 64% | 34% | 82% | 80% | 88% | 82% |
+| 9 | on the wooden cabinet | 48% | 8% | 4% | 48% | 50% | 54% | 62% |
+| **Overall** | | **79.8%** | **54.8%** | **37.2%** | **74.8%** | **76.2%** | **80.0%** | **81.0%** |
+
+| id | target | Region | Region v2 | Region v3 | Landmark ("next to") | "close to" | "beside" | "near" | "adjacent to" |
+|--:|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin | 34% | 54% | 64% | — | — | — | — | — |
+| 1 | next to the ramekin | 16% | 6% | 8% | — | — | — | — | — |
+| 3 | on the cookie box | 12% | 18% | 12% | 58% | 54% | 62% | 60% | 56% |
+| 5 | on the ramekin | 32% | 32% | 52% | 8% | 12% | 18% | 30% | 12% |
+| 6 | next to the cookie box | 26% | 10% | 10% | — | — | — | — | — |
+| 7 | on the stove | 0% | 0% | 0% | 70% | 86% | 82% | 72% | 86% |
+| 8 | next to the plate | 18% | 30% | 10% | — | — | — | — | — |
+| 9 | on the wooden cabinet | 0% | 0% | 12% | 22% | 32% | 34% | 40% | 24% |
+| **Overall** | | **17.2%** | **18.8%** | **21.0%** | **39.5%** | **46.0%** | **49.0%** | **50.5%** | **44.5%** |
+
+### 11.3 — Per-task: scene conditions (default prompt unless noted)
+
+| id | target | `center_fixed_legacy` (closed) | `irrelevant` | `semantic` | `landmark` | `landmark` + hardneg prompt | `drawer_open` |
+|--:|---|--:|--:|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin | 84% | 84% | 94% | 58% | 42% | 70% |
+| 1 | next to the ramekin | 90% | 74% | 34% | 82% | 82% | 70% |
+| 2 | table center | 88% | 98% | 98% | 100% | 94% | 96% |
+| 3 | on the cookie box | 92% | 96% | 96% | 82% | 38% | 66% |
+| 4 | in the top drawer | 72% | 46% | 38% | 64% | 70% | 72% |
+| 5 | on the ramekin | 76% | 82% | 80% | 82% | 44% | 84% |
+| 6 | next to the cookie box | 78% | 82% | 86% | 78% | 76% | 0% |
+| 7 | on the stove | 76% | 86% | 84% | 74% | 12% | 78% |
+| 8 | next to the plate | 82% | 86% | 74% | 34% | 16% | 84% |
+| 9 | on the wooden cabinet | 34% | 56% | 56% | 32% | 0% | 62% |
+| **Overall** | | **77.2%** | **79.0%** | **74.0%** | **68.6%** | **47.4%** | **68.2%** |
+
+Suites as in §9.3, plus `center_fixed_legacy` = `libero_spatial_3bowl`.
+
+### 11.4 — Metrics (same formulas as the plan; OpenVLA in parentheses)
+
+```
+Split 1
+  Negative Contrast Drop   = 79.8 − 37.2 = 42.6 pts      (OpenVLA: 47.2)
+  Distractor Mention Drop  = 79.8 − 54.8 = 25.0 pts      (OpenVLA: 51.6)
+  Negation-specific Drop   = 54.8 − 37.2 = 17.6 pts      (OpenVLA: −4.4)
+  Length-only Drop         = 79.8 − 74.8 = 5.0 (infix), 79.8 − 76.2 = 3.6 (suffix)      (OpenVLA: 21.2 / 30.4)
+  Content Drop (residual)  = 74.8 − 37.2 = 37.6 (negative), 76.2 − 54.8 = 21.4 (positive)  (OpenVLA: 26.0 / 21.2)
+
+Split 4
+  Same-cue Paraphrase Drop = 79.8 − 80.0 = −0.2 (lexical), 79.8 − 81.0 = −1.2 (syntactic)  (OpenVLA: 11.6 / 1.8)
+  Region-cue Drop, 8 tasks = 81.75 − 17.25 / 18.75 / 21.0 = 64.5 / 63.0 / 60.75 pts for region / v2 / v3   (OpenVLA: 67.0 / 64.0 / 65.3)
+  Landmark-cue Drop        = SR(default, 4 tasks: 76.5%) − 39.5 = 37.0 pts             (OpenVLA: 50.0)
+  Novel-cue Drop           = 76.5 − 46.0 / 49.0 / 50.5 / 44.5 = 30.5 / 27.5 / 26.0 / 32.0 pts   (OpenVLA: 27.5 / 42.5 / 31.5 / 43.0)
+  Familiarity Gap (robust) = mean of 4 novel synonyms (47.5%) − SR(target_cue_landmark: 39.5%) = +8.0 pts   (OpenVLA: +13.9)
+
+Splits 2 / 3 (against QwenVLA's own 2-bowl default, 79.8%)
+  irrelevant −0.8, semantic −5.8, landmark −11.2, landmark + hardneg prompt −32.4,
+  center_fixed_legacy −2.6, drawer_open −11.6
+  Drawer, open − closed: raw 68.2 − 77.2 = −9.0 (OpenVLA −20.2);
+    same 7 tasks as §4 {0,1,2,4,5,8,9}: 76.9 − 75.1 = +1.7 (OpenVLA −11.1)
+```
+
+### 11.5 — What the QwenVLA numbers show
+
+1. **The distractor-mention collapse is not OpenVLA-specific.** A Qwen3-VL-based VLA loses 25.0 pts
+   to a bare mention and 42.6 pts with negation, concentrated on the same tasks as OpenVLA:
+   1, 5 and 9 fall to 0–10%, and task 2 falls to 2% under negation.
+2. **For QwenVLA the drop is content, not length.** The content-free length controls cost only
+   3.6–5.0 pts (OpenVLA 21–30), and same-cue paraphrases cost nothing. So the mention/negation
+   residual (21.4 / 37.6 pts) is attributable to the distractor content itself. Negation adds 17.6
+   pts on top of the mention, where for OpenVLA it added nothing.
+3. **The region cue collapses QwenVLA exactly as it does OpenVLA**: 17.2 / 18.8 / 21.0% across three
+   wordings, a 61–65-pt drop (OpenVLA 64–67). Tasks 7 and 9 reach 0% in every wording except v3's
+   task 9 (12%). It is the prompt manipulation that hurts all three policies most, pi05 included
+   (75–78%).
+4. **The familiar "next to X" cue is again the worst proximity cue** (39.5% vs. 44.5–50.5% for the
+   novel synonyms, +8.0 pts). All three models now show this direction (OpenVLA +13.9, pi05 +9.5).
+   Task 5 stays low in every proximity wording (8–30%).
+5. **Measured as drops from each model's own baseline, the distractor scenes hurt QwenVLA more than
+   OpenVLA and less than pi05.** A third bowl alone costs little
+   (`irrelevant` −0.8, `center_fixed_legacy` −2.6); `semantic` costs 5.8 (task 1 to 34%, task 4 to
+   38%); `landmark` costs 11.2 (tasks 8, 9, 0). The disambiguating prompt again hurts rather than
+   helps the hard-negative scene: 47.4% with it against 68.6% without (task 9 to 0%, task 7 to 12%).
+6. **The open drawer hardly affects QwenVLA, and its 0% is task 6 only.** Tasks 3 and 7 reach 66% and
+   78% with the drawer open, so §4's "tasks 3, 6, 7 are physically blocked" holds for task 6 only.
+   pi05 shows the same (task 3 44%, task 7 70%; §9.3). On §4's 7-task subset the drawer costs
+   QwenVLA nothing (+1.7).
+
+Results (local, not in the repo): `Archive 2/qwenvla_vla_ws_13-splits_dgx1_2026-09-30/` and
+`Archive 2/qwenvla_vla_ws_new-splits_2026-10-05/` (tarball + sha256 + README + `summary.txt`),
+files `results/*--qwenvla-78.6pct--shard{0..9}of10.jsonl`.
