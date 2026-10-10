@@ -1297,6 +1297,30 @@ findings 24–25, §12.
 
 ---
 
+## 2026-10-11 — Screen batch D: `target_swap` and `no_location` on both OpenVLA checkpoints
+
+5 trials/task, seed 7, `berkeley` GPU 1 (other GPUs shared with other users' jobs), image
+`openvla-libero:blackwell` / sdpa / bf16, openvla `62487f7` in `~/vla_ws`, `--instruction_file` with the
+v1 candidate JSONs (sha256 identical to the committed ones). Detail: `benchmark_split_result.md` §12
+batch D, §6 finding 26.
+
+- **Official checkpoint** (`~/run_screen_official_d.sh`, note `openvla-official-libero-spatial--screen`),
+  2026-10-10 17:53 → 19:27 UTC: `target_swap` 52%, `no_location` 20%. Baseline is batch 1's
+  `screen_default` (82%).
+- **Our checkpoint** (`~/run_screen_r32_d.sh`, note `openvla-7b-libero-spatial-lora-r32--screen`), queued
+  behind the official run, 19:28 → 21:41 UTC: `screen_default` 82%, `target_swap` 54%, `no_location`
+  10%.
+- Both scripts exited 0 and synced to the HF mirror. The logs show `EGLError` tracebacks mid-run (6 in
+  ours); every condition completed 50/50.
+- Ran alongside, from another session: full 50-trial `target_swap` / `no_location` runs for pi05
+  (`berkeley-2`) and both OpenVLA checkpoints (`berkeley`, queued behind these screens, from
+  `~/vla_ws_e` with openvla `1e8544e`, which adds outcome logging). That session records them in its own
+  entry.
+
+**Status:** done.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 `spatial/negation_only` (authored 2026-10-10): run for OpenVLA and `pi05_libero` (2026-10-11 entry);
