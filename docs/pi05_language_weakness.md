@@ -15,7 +15,8 @@ Figures: `docs/figures/pi05_language_heatmap.png`, `docs/figures/pi05_mirror_pai
 | Full benchmark, 2026-09-30 → 10-01 (`--pi05_libero--shard{0..3}of4`) | 22 registry conditions | 50 | 8,300 |
 | `spatial/negation_only`, 2026-10-10 (`--pi05_libero`) | 1 | 50 | 500 |
 | Language-stress screen, batches 1–3, 2026-10-10 (`--pi05_libero--screen`) | 12 candidates | 5 | 580 |
-| **Total** (the 16-rollout `pi05_smoke` run excluded) | | | **9,380** |
+| Full `target_swap` + `no_location` (batch E), 2026-10-10 (`--pi05_libero`) | 2 | 50 | 1,000 |
+| **Total** (the 16-rollout `pi05_smoke` run excluded) | | | **10,380** |
 
 All from the HF mirror `Qian0203/vla_ws-eval-results`, `results/`, deduplicated on
 `(task_id, episode_idx)`. Same scene, init states and seed (7) as every other policy. Every failed
@@ -27,19 +28,20 @@ the arm went for (§6).
 ## 1. Summary
 
 1. **pi05 reads the location phrase on only six of the ten `libero_spatial` tasks.** On tasks 0, 2, 4
-   and 8 it carries out the layout's trained motion whatever the sentence says (`target_swap`: 1/20
-   delivers the bowl the prompt names, against 29/30 on the other six). Every prompt manipulation is
+   and 8 it carries out the layout's trained motion whatever the sentence says (full `target_swap` run:
+   11/200 deliver the bowl the prompt names, against 273/300 on the other six, task 3 the partial case
+   at 30/50). Every prompt manipulation is
    close to free on those four tasks, which inflates every 10-task average.
 2. **Tasks 7 and 9 are the only clean language test in the suite.** They share one layout, a bowl on
    the stove and a bowl on the cabinet top, with the target swapped, so nothing but the sentence can
-   separate them. With the location removed pi05 is at chance there (5/10). This pair, not the
+   separate them. With the location removed pi05 falls below chance there (38/100). This pair, not the
    10-task mean, shows the weaknesses below at full size.
 3. **Exclusion is never composed; the negated phrase acts as a pointer.** "the bowl that is not on X"
    delivers the target in 1/100 rollouts on tasks 7/9 and 44/300 on the six language-read tasks,
    against 180/200 on the layout-driven four. Every rewording ("any … except", "the other …, not the
    one") does the same, and negating the target's own location (`negation_swap`) gives 0/50.
-4. **The table-region cue is worse than no cue.** "front-left of the table" style cues give 25–34% on
-   tasks 7/9, below the 50% of removing the location altogether.
+4. **The table-region cue is no better than no cue.** "front-left of the table" style cues give 25–34%
+   on tasks 7/9; removing the location altogether gives 38% there (full run).
 5. **The 78% on Chinese is the layout prior, not Chinese understanding.** Per task, `translate_zh`
    tracks `no_location` (r = 0.93, mean absolute difference 4 pts) and not `target_swap` (r = −0.20).
    On tasks 7/9 it is 3/10.
@@ -81,15 +83,18 @@ pi05 does:
 
 | Group | Tasks | `target_swap` | `no_location` | default |
 |---|---|--:|--:|--:|
-| Layout-driven | 0, 2, 4, 8 | **1/20** | 17/20 | 98.5% |
-| Language-read | 1, 3, 5, 6 | 19/20 | 19/20 | 98.5% |
-| Mirror pair | 7, 9 | 10/10 | **5/10** | 98.0% |
+| Layout-driven | 0, 2, 4, 8 | **11/200** (5.5%) | 188/200 | 98.5% |
+| Language-read | 1, 3, 5, 6 | 176/200 (88.0%; task 3 30/50) | 181/200 | 98.5% |
+| Mirror pair | 7, 9 | 97/100 | **38/100** (95% CI 29–48%) | 98.0% |
+
+Full runs, 50 trials/task (2026-10-10, `benchmark_split_result.md` §12 batch E). The 5-trial screens
+gave the same split (1/20, 19/20, 10/10 for `target_swap`; per-task r = 0.99).
 
 On the four layout-driven tasks pi05 ignores a truthful instruction to fetch the other bowl. On the
 other six it follows it. On the mirror pair, where the layout carries no information, removing the
-location drops it to chance. The remaining sections read every condition through these three groups.
-Group membership rests on the 5-trial `target_swap` screen (§6); the full-run `negation_only` profile
-(§3.1) agrees with it on every task except task 3, which sits between the groups in both.
+location drops it below chance (38%). The remaining sections read every condition through these three groups.
+Group membership comes from the full `target_swap` run; the `negation_only` profile (§3.1) agrees with
+it on every task except task 3, which sits between the groups in both (60% and 62%).
 
 No single geometric rule separates the layout-driven tasks from the language-read ones: three of the
 four have both bowls on the table surface, but so does task 1. Rollout videos would settle what the
@@ -111,9 +116,11 @@ Success rates per group; 95% Wilson intervals for the cells the argument rests o
 
 - **The 44.8% is entirely the layout prior.** Across the ten tasks `negation_only` (full run)
   correlates with `target_swap` at r = −0.95 (Spearman −0.93, p = 1e-4): it succeeds exactly where pi05
-  ignores the sentence.
+  ignores the sentence. Against the full `target_swap` run the fit is closer still: per task the two
+  success rates add up to 0.90–1.22 (r = −0.98), so pi05 fails a negation exactly as often as it
+  follows the location the sentence names.
 - **The negated location acts as a positive pointer.** On the mirror pair the policy must choose from
-  the words; with "not on the cabinet" it delivers the stove bowl in 1/100, far below the 50% it gets
+  the words; with "not on the cabinet" it delivers the stove bowl in 1/100, far below the 38% it gets
   with no location at all. That is consistent with going to the place named and dropping "not" (direct
   confirmation needs which-bowl logging, §6).
 - **Not a "not" problem.** "except" and "the other …, not the one" track `negation_only` per task
@@ -141,31 +148,34 @@ in every group), so the residual comes from the distractor's location words. The
 losses are task 5 (64% / 58%) and task 9 (86% / 66%). Negation adds a further 8 pts on the
 language-read group (89.0 → 81.0), which is W1 again on a smaller scale.
 
-### 3.3 W3 — Self-correction: the first-named location wins on the mirror pair (screen)
+### 3.3 W3 — Self-correction fails on the mirror pair (screen)
 
 `self_correction` * ("the black bowl on top of the wooden cabinet, sorry, I mean the one on the
 stove, …") is 20/20 on the layout-driven tasks, 19/20 on tasks 1, 3, 5, 6, and **3/10 on tasks 7/9**.
-Where the layout cannot help, the retracted location, named first, wins more often than chance. 10
-rollouts only (95% CI 11–60%); worth a full run on the mirror pair.
+Where the layout cannot help, the corrected sentence does no better than no location (38/100, full
+run); whether the retracted, first-named location wins needs which-bowl logging. 10 rollouts only (95%
+CI 11–60%); worth a full run on the mirror pair.
 
-### 3.4 W4 — Allocentric table-region cues mislead (severity: high, stable across wordings)
+### 3.4 W4 — Allocentric table-region cues carry no usable information (severity: high, stable across wordings)
 
 | Condition (task 7 wording) | Layout-driven (0, 8) | Language-read (6) | Mirror 7/9 |
 |---|--:|--:|--:|
 | `target_cue_region` ("the black bowl at the front-left of the table") | 100% | 67.3% | **25.0%** (18–34) |
 | `target_cue_region_v2` | 100% | 70.0% | 34.0% (25–44) |
 | `target_cue_region_v3` | 100% | 66.3% | 25.0% (18–34) |
-| `no_location` * | 20/20 | 24/30 | 5/10 |
+| `no_location` (full run) | 100/100 | 219/300 | 38/100 (29–48) |
 
-All three wordings put the mirror pair below the no-location chance level, so the region words are not
-just ignored, they point at the other bowl more often than not. Two explanations remain open:
+On the mirror pair the region cue does no better than removing the location altogether (38/100 in the
+full run): v1 and v3 at 25/100 are lower, v2 at 34/100 is not. An earlier version of this file, using
+the 5-trial `no_location` screen (5/10), read this as the region words pointing at the other bowl; the
+full run makes that a possibility, not a finding. Two explanations remain open:
 
 - pi05 resolves "front/left/right" in a different frame from the one the cues were written in (camera
   view vs. robot base). The cues are truthful in the frame `benchmark_split_plan.md` §4b uses; whether
   that matches the images the policy sees has not been checked against a rendered frame.
-- Region words carry no training signal at all (no `libero_spatial` prompt uses them), and the
-  below-chance result is noise around 50%. Against this: v1 and v3 are each 25/100, with intervals
-  ending at 34%.
+- Region words carry no training signal at all (no `libero_spatial` prompt uses them), so the policy
+  behaves as if no location were given (38%). v1 and v3 (25/100, intervals ending at 34%) sit just
+  below that interval's lower end (29%); the difference is marginal.
 
 Task 1 also loses 24–34 pts under every region wording, so the effect is not confined to the pair.
 
@@ -182,14 +192,14 @@ named. The target's relation word is unchanged.
 | "near / beside / close to / adjacent to the stove" | 94–96/100 | 96–97% |
 | "on the cooktop" (`noun_synonym` *) | 8/10 | 87.5% |
 | "on the appliance you cook on" (`functional_landmark` *) | 6/10 | 87.5% |
-| no location (`no_location` *) | 5/10 | 82% |
+| no location (`no_location`, full run) | 38/100 | 81.4% |
 | "on the 炉子" (`code_switch` *) | 4/10 | 80% |
 | "拿起炉子上的黑色碗…" (`translate_zh` *) | 3/10 | 78% |
 
 - pi05 binds the landmark *noun* tightly to its training vocabulary. Relation words can be swapped
   freely; the noun cannot.
 - **The Chinese headline is the layout prior.** Per task, `translate_zh` follows `no_location`
-  (r = 0.93, mean |difference| 4 pts) and is unrelated to `target_swap` (r = −0.20); `code_switch`
+  (r = 0.93 against the screen, 0.92 against the full run) and is unrelated to `target_swap` (r = −0.20); `code_switch`
   likewise (r = 0.81 with `no_location`). Both lose task 4 (2/5), the one unique-layout task where
   `no_location` also fails (2/5), and both sit at or below chance on the mirror pair. The
   conclusion that pi05 "keeps most of its success" in Chinese (finding 25 in `benchmark_split_result.md`
@@ -231,7 +241,7 @@ and the mirror pair alone):
 | `noun_synonym` * | 87.5% | 25/30 | 8/10 |
 | `functional_landmark` * | 87.5% | 25/30 | 6/10 |
 | `self_correction` * | 84% | 22/30 | 3/10 |
-| `no_location` * | 82% | 24/30 | 5/10 |
+| `no_location` (full run) | 81.4% | 219/300 | 38/100 |
 | `code_switch` * | 80% | 24/30 | 4/10 |
 | `translate_zh` * | 78% | 22/30 | 3/10 |
 | `target_cue_region` (v1 / v2 / v3) | 75.5 / 77.5 / 74.8% | 67.3 / 70.0 / 66.3% | 25 / 34 / 25% |
@@ -268,12 +278,12 @@ mirror-pair numbers (tasks 7/9, 50 trials each) are there to compare already, e.
 ## 6. Limitations
 
 - **Outcome only.** Every failure is a 230-step timeout; the results do not record which bowl was
-  grasped or placed. "The negated phrase acts as a pointer" (W1), "the first-named location wins" (W3)
-  and "region words point at the other bowl" (W4) are inferred from below-chance success on the mirror
-  pair and from `target_swap` / `negation_swap`, not observed.
+  grasped or placed. "The negated phrase acts as a pointer" (W1) is inferred from
+  `target_swap` + `negation_only` adding up to about 1 per task and from `negation_swap`; which bowl the
+  policy takes under self-correction (W3) and region cues (W4) is unknown. None of it is observed.
 - **Screens are 5 trials/task**: ±20 pts per task, 10 rollouts on the mirror pair (95% CIs about ±30
-  pts). The task grouping depends on the `target_swap` screen; task 3 (4/5 there, 62% under
-  `negation_only`) and task 8 (1/5, 76%) are the least certain members.
+  pts). The task grouping no longer depends on them: the full `target_swap` run confirms it, with task 3
+  (60%) partial and task 8 (18%) mostly layout-driven.
 - One seed (7), one init-state set, one run per condition.
 - pi05_libero was trained on all 40 LIBERO tasks; several `target_swap` prompts are word for word
   another task's training instruction. Its "reading" of the location may be matching whole training
@@ -285,8 +295,8 @@ mirror-pair numbers (tasks 7/9, 50 trials each) are there to compare already, e.
 1. **Log which bowl ends up on the plate, and which one is grasped first**, in each rollout row (the
    distractor's `On(bowl_2, plate)` predicate plus first-contact object). No new rollouts needed for
    new conditions, and it turns W1/W3/W4 from inferences into observations.
-2. **Full runs (50 trials/task) of `target_swap` and `no_location` on pi05 and on OpenVLA.** They define
-   the grouping every analysis here depends on; currently 5 trials/task and pi05 only.
+2. ~~Full runs (50 trials/task) of `target_swap` and `no_location`.~~ Done for pi05 (2026-10-10,
+   §2 above); both OpenVLA checkpoints running with which-bowl logging (§12 batch E).
 3. **A mirror-pair split.** Tasks 7/9 are the only layout-ambiguous pair in `libero_spatial`. New suites
    with more such pairs (two bowls in the same places, target swapped, e.g. stove/cookie box, ramekin/
    cabinet top) would give a language score that the layout prior cannot inflate. Placing bowls on the

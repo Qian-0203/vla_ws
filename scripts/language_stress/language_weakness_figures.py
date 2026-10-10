@@ -61,7 +61,7 @@ def heatmap(P, SC, title, fname):
     ('Cue type','target_cue_proximity_near',P,'target_cue_proximity_near'),('Cue type','target_cue_landmark',P,'target_cue_landmark'),('Cue type','target_cue_region',P,'target_cue_region'),('Cue type','target_cue_region_v2',P,'target_cue_region_v2'),
     ('Distractor mention','positive_contrast',P,'positive_contrast'),('Distractor mention','negative_contrast',P,'negative_contrast'),('Distractor mention','self_correction',SC,'self_correction *'),
     ('Exclusion','negation_only',P,'negation_only'),('Exclusion','negation_except',SC,'negation_except *'),('Exclusion','negation_other',SC,'negation_other *'),('Exclusion','negation_swap',SC,'negation_swap * (other bowl)'),
-    ('Reliance probes','no_location',SC,'no_location *'),('Reliance probes','target_swap',SC,'target_swap * (other bowl)')]
+    ('Reliance probes','no_location',P,'no_location'),('Reliance probes','target_swap',P,'target_swap (other bowl)')]
     cols=[0,2,4,8,1,3,5,6,7,9]
     M=np.full((len(rows),len(cols)),np.nan); N=np.zeros_like(M)
     labels=[r[3] for r in rows]
@@ -111,7 +111,7 @@ heatmap(OV, OVS, 'OpenVLA (official checkpoint) success rate (%) by condition an
         'openvla_official_language_heatmap.png')
 
 # mirror-pair gradient
-items=[('default',P,'exact training wording'),('target_cue_proximity_near',P,'"near the stove" (relation synonym)'),('noun_synonym',SC,'"on the cooktop" (noun synonym)'),('target_cue_landmark',P,'"next to the stove"'),('negative_contrast',P,'target + "not the one on …"'),('functional_landmark',SC,'"the appliance you cook on"'),('no_location',SC,'location removed (chance ≈ 50%)'),('code_switch',SC,'"on the 炉子" (code-switch)'),('translate_zh',SC,'full Chinese'),('self_correction',SC,'distractor first, then "sorry, I mean …"'),('target_cue_region',P,'table-region cue ("front-left")'),('negation_only',P,'"the bowl that is not on …"')]
+items=[('default',P,'exact training wording'),('target_cue_proximity_near',P,'"near the stove" (relation synonym)'),('noun_synonym',SC,'"on the cooktop" (noun synonym)'),('target_cue_landmark',P,'"next to the stove"'),('negative_contrast',P,'target + "not the one on …"'),('functional_landmark',SC,'"the appliance you cook on"'),('no_location',P,'location removed'),('code_switch',SC,'"on the 炉子" (code-switch)'),('translate_zh',SC,'full Chinese'),('self_correction',SC,'distractor first, then "sorry, I mean …"'),('target_cue_region',P,'table-region cue ("front-left")'),('negation_only',P,'"the bowl that is not on …"')]
 def wil(k,n,z=1.96):
     p=k/n; d=1+z*z/n; c=(p+z*z/(2*n))/d; h=z*math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d; return c-h,c+h
 fig,ax=plt.subplots(figsize=(9,5.6),dpi=150)
@@ -121,7 +121,6 @@ for y,(c,m,lab) in zip(ys,items):
     ax.plot([lo*100,hi*100],[y,y],color='#9ec5f4',lw=2,solid_capstyle='round',zorder=1)
     ax.scatter([v*100],[y],s=46,color='#256abf',zorder=2,edgecolors='#ffffff',linewidths=1.5)
     ax.text(102,y,f'{v*100:.0f}%  ({k}/{n})',va='center',fontsize=8.5,color='#2b2a27')
-ax.axvline(50,color='#9a9890',lw=1,ls=(0,(3,3)))
 ax.set_yticks(ys); ax.set_yticklabels([i[2] for i in items],fontsize=8.5,color='#2b2a27')
 ax.set_xlim(0,100); ax.set_xlabel('success rate on tasks 7 + 9 (%), 95% Wilson CI',fontsize=8.5,color='#4a4945')
 for s in ('top','right','left'): ax.spines[s].set_visible(False)

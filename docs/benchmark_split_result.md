@@ -53,6 +53,7 @@ Applies to every condition below unless a section says otherwise.
 | Cross-model reference: `pi05_libero` (§9) | Runs through the same registry via `--model_family openpi` | All 22 current conditions run 2026-09-30 → 2026-10-01 (8,300 rollouts). `spatial/default` 98.4%; prompt-only conditions 87–99% except the region cue (75–78%); 3-bowl scene conditions 43–91% |
 | Cross-model reference: official OpenVLA checkpoint (§10) | Same registry and code path as the reference; only `CHECKPOINT` differs | All 22 conditions run 2026-10-05 → 2026-10-07 (8,300 rollouts). Against our checkpoint: r = 0.980, mean absolute difference 4.0 pts, 20 of 22 within 7 pts. `spatial/default` 84.0% for both |
 | Language-stress screening (§12, not a `SPLITS` entry) | `screening/language_stress/` + `run_libero_eval.py --instruction_file` | 2026-10-10, 5 trials/task, three batches, 14 candidates. Every negation/exclusion wording collapses both families (official OpenVLA 0–8%, pi05_libero 0–46%); `negation_swap` is 0% for both. `translate_zh` / `code_switch` separate them (OpenVLA 0–4%, pi05 78–80%). `negation_only` promoted to `spatial/negation_only` and run in full for OpenVLA (2.6%) and pi05 (44.8%). Batch D (2026-10-10/11): OpenVLA `target_swap` 52–54%, `no_location` 10–20% (pi05 60% / 82%) |
+| Full `target_swap` / `no_location` runs (§12 batch E, not `SPLITS` entries) | Same candidate JSONs as the screens, 50 trials/task | pi05_libero done 2026-10-10: `target_swap` 56.8%, `no_location` 81.4% (1,000 rollouts). Both OpenVLA checkpoints running 2026-10-10/11 with per-rollout outcome logging (openvla `1e8544e`) |
 | Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% |
 | Mechanistic Localization Probe (not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`) | Run 2026-09-04 → 2026-09-10 on task 5. Real, n=50-replicated early-window vision-attention/resolution-layer effects for `target_cue_landmark`; no layer/module localized; confidence diagnostic null. Full record: `mechanistic_localization.md` |
 
@@ -1204,6 +1205,14 @@ Results: `results/libero_spatial--{paraphrase_lexical,paraphrase_syntactic,targe
     mixes that with repeating the layout's trained motion. Both routes fail `negation_only`, for
     different reasons (§12 batch D, point 4). Which bowl each rollout delivered is not yet logged.
 
+27. **Full runs confirm pi05's two routes, and that it drops "not"** (2026-10-11, §12 batch E, 50
+    trials/task). `target_swap` is 56.8%: 5.5% (11/200) on tasks 0, 2, 4, 8 and 97.2% (243/250) on tasks
+    1, 5, 6, 7, 9, with task 3 in between (60%); per task it matches the 5-trial screen at r = 0.99. Per
+    task, `target_swap` + `negation_only` sums to 0.90–1.22 (r = −0.98): where pi05 goes to the bowl a
+    sentence names, it fails `negation_only` by the same amount, so it takes the negated bowl. Without
+    the location it keeps 81.4% overall but 38% on tasks 7 and 9, the one pair whose layout is shared.
+    The OpenVLA full runs (with which-bowl logging) are still running.
+
 ## 7. Render / contact-sheet check log
 
 Every new or previously-unchecked scene gets its init-state contact sheet rendered
@@ -2227,3 +2236,52 @@ Per-task successes out of 5 (ours / official / pi05), with the bowl `target_swap
 
 Results: `results/libero_spatial--{screen_default,target_swap,no_location}--openvla-7b-libero-spatial-lora-r32--screen.jsonl`
 and `--openvla-official-libero-spatial--screen.jsonl` (`berkeley`; in the HF mirror).
+
+**Batch E: `target_swap` and `no_location` at the full 50 trials/task** (same candidate JSONs as
+batches 2 and D, sha256 `3cccd982…` and `5df13c4f…`; seed 7). Launch details: `eval_log.md` 2026-10-11
+batch E.
+
+- pi05_libero: `berkeley-2`, two policy servers (GPUs 0 and 3, ports 8000/8001), openvla `62487f7`
+  (success only, no which-bowl fields), 2026-10-10 19:19 → 20:17 UTC. Done, 1,000 rollouts.
+- Both OpenVLA checkpoints: running on openvla `1e8544e`, which logs the bowl approached, lifted and
+  delivered in every rollout (`target_swap` on `berkeley`, `no_location` on `berkeley-2`). Added here
+  when done.
+
+pi05_libero per task (successes out of 50; the screen's out of 5 in brackets):
+
+| id | Class (blind-task table) | `target_swap` | `no_location` | `negation_only` (§2, /50) | `target_swap` + `negation_only` (rates) |
+|--:|---|--:|--:|--:|--:|
+| 0 | blind | 0 [0] | 50 [5] | 49 | 0.98 |
+| 2 | blind | 2 [0] | 50 [5] | 48 | 1.00 |
+| 4 | blind (form-sensitive) | 0 [0] | 38 [2] | 45 | 0.90 |
+| 8 | blind | 9 [1] | 50 [5] | 38 | 0.94 |
+| 1 | following | 48 [5] | 40 [4] | 1 | 0.98 |
+| 3 | following | **30** [4] | 47 [5] | 31 | 1.22 |
+| 5 | following | 50 [5] | 45 [5] | 3 | 1.06 |
+| 6 | following | 48 [5] | 49 [5] | 8 | 1.12 |
+| 7 | following, shared layout | 48 [5] | **18** [3] | 1 | 0.98 |
+| 9 | following, shared layout | 49 [5] | **20** [2] | 0 | 0.98 |
+| **Overall** | | **56.8%** (284/500) [60%] | **81.4%** (407/500) [82%] | 44.8% | |
+
+**Reading (batch E, pi05).**
+
+1. **The blind/following split holds at 50 trials/task.** `target_swap` is 5.5% on the blind tasks
+   (95% CI 3–10%) and 97.2% on tasks 1, 5, 6, 7, 9; per task it matches the screen at r = 0.99. The
+   blind-task table above therefore stands as computed. Task 3 sits between the classes (60%); task 8
+   follows the named location in 9 of 50.
+2. **On `negation_only` pi05 takes the bowl the sentence names.** Per task, the rate at which it delivers
+   the named bowl under `target_swap` and its `negation_only` success add up to about 1 (0.90–1.22,
+   r = −0.98, p < 10⁻⁶): it fails a negation exactly as often as it follows a location. This is
+   inferred from success rates of two separate conditions; these pi05 runs do not log which bowl was
+   delivered.
+3. **Without the location, the shared-layout pair falls below chance.** `no_location` keeps 94% on the
+   blind tasks and 90.5% on tasks 1, 3, 5, 6, but 38/100 (95% CI 29–48%) on tasks 7 and 9, whose
+   layouts are identical. Both tasks are low (36%, 40%), so pi05 is not defaulting to one bowl; part of
+   the pair's rollouts deliver neither. The screen's 5/10 overstated this pair.
+4. **Task 4 is less form-sensitive than the screen suggested**: 76% without the location (screen 2/5),
+   against 98% with it. It stays the one blind task that loses something when the phrase is removed.
+5. **The Chinese result still tracks the layout.** Per task, `translate_zh` (screen) follows the full
+   `no_location` at r = 0.92 and not `target_swap` (r = −0.23).
+
+Results: `results/libero_spatial--{target_swap,no_location}--pi05_libero--shard{0,1}of2.jsonl`
+(`berkeley-2`; in the HF mirror).
