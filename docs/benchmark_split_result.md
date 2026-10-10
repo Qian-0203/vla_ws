@@ -1191,7 +1191,10 @@ Results: `results/libero_spatial--{paraphrase_lexical,paraphrase_syntactic,targe
     ("…, sorry, I mean the one …") and function-described landmarks cost OpenVLA about 50 pts and pi05
     13–16. pi05 is also not purely language-driven: with the location removed it still scores 82%
     (`no_location`), and told to fetch the *other* bowl it does so in 60% (`target_swap`), all of that
-    on six of the ten tasks. Training differs (40 LIBERO tasks on a base co-trained with web data, vs.
+    on six of the ten tasks. The four blind tasks (0, 2, 4, 8) carry about 40% of pi05's successes on
+    every 10-task prompt condition; restricted to the six language-following tasks, `negative_contrast`
+    is 81.0% and `negation_only` 14.7% (25.4% if task 4, which drops without the location, counts as
+    following; §12, blind-task table). Training differs (40 LIBERO tasks on a base co-trained with web data, vs.
     `libero_spatial` only), so this is a reference point, not a controlled comparison.
 
 ## 7. Render / contact-sheet check log
@@ -2099,3 +2102,73 @@ Per-task successes out of 5 (pi05 / official OpenVLA; `target_swap` and `no_loca
 Results: `results/libero_spatial--<candidate>--pi05_libero--screen.jsonl` and
 `--openvla-official-libero-spatial--screen.jsonl` (batch 3 on `berkeley-2`, batch 1 on `berkeley`; all in
 the HF mirror). Candidate JSONs: `screening/language_stress/candidates/` (v2 added 2026-10-10).
+
+**pi05 language-blind tasks: how much of each condition's SR they carry** (analysis added 2026-10-11;
+computed from the per-task tables in §2, §9.2 and §12, no new rollouts). A task is *language-blind* when
+pi05 fails `target_swap` on it: told to fetch the other bowl, it delivers the trained target anyway.
+On such a task pi05 succeeds whenever the correct bowl is the trained target, whatever the sentence
+says. That holds for every condition below, so successes there are not evidence of language grounding.
+The swap conditions (`target_swap`, `negation_swap`) are the exception: there the blind tasks fail by
+construction. `no_location` serves as a consistency check: if a task ignores language entirely,
+deleting the location should cost nothing.
+
+| id | `target_swap` (/5) | `no_location` (/5) | Class |
+|--:|--:|--:|---|
+| 0 | 0 | 5 | blind; consistent |
+| 2 | 0 | 5 | blind; consistent |
+| 8 | 1 | 5 | blind; consistent |
+| 4 | 0 | **2** | blind to the location *content*, but sensitive to sentence form (also 2/5 under `translate_zh` and `code_switch`) |
+| 1, 3, 5, 6 | 4–5 | 4–5 | following; the layout alone also identifies the target |
+| 7, 9 | 5 | 3, 2 | following; the layout alone does not suffice, so the most language-dependent tasks |
+
+The main table uses the `target_swap` definition, blind = {0, 2, 4, 8}. The two right-hand columns
+are the strict version, which also requires `no_location` to match default: blind = {0, 2, 8}, with
+task 4 moved to the following set.
+
+| Condition | Tasks | SR | Blind {0,2,4,8} | Following {1,3,5,6,7,9} | SR pts from blind tasks | Share of successes | Strict: following {1,3–7,9} | Strict: share |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| `default` | 10 | 98.4% | 98.5% | 98.3% | 39.4 | 40% | 98.3% | 30% |
+| `positive_contrast` | 10 | 92.2% | 97.0% | **89.0%** | 38.8 | 42% | 89.7% | 32% |
+| `negative_contrast` | 10 | 87.0% | 96.0% | **81.0%** | 38.4 | 44% | 82.9% | 33% |
+| `length_control_infix` / `_suffix` | 10 | 99.2% / 99.0% | 100% / 99.5% | 98.7% / 98.7% | 40.0 / 39.8 | 40% | 98.9% / 98.9% | 30% |
+| `paraphrase_lexical` / `_syntactic` | 10 | 97.2% / 97.8% | 98.5% / 98.5% | 96.3% / 97.3% | 39.4 | 40–41% | 96.3% / 96.9% | 31% |
+| `target_cue_region` / `_v2` / `_v3` | 8 | 75.5% / 77.5% / 74.8% | 100% (0, 8 only) | **67.3% / 70.0% / 66.3%** | 25.0 | 32–33% | same (no task 4) | 32–33% |
+| `negation_only` | 10 | 44.8% | 90.0% | **14.7%** | 36.0 | **80%** | **25.4%** | **60%** |
+| *Screen, 5 trials/task:* | | | | | | | | |
+| `translate_zh` | 10 | 78% | 85% | 73.3% | 34 | 44% | 68.6% | 38% |
+| `noun_synonym` | 8 | 87.5% | 100% (0, 4) | 83.3% | 25 | 29% | 85.7% | 14% |
+| `no_location` | 10 | 82% | 85% | 80.0% | 34 | 41% | 74.3% | 37% |
+| `negation_except` | 10 | 44% | 90% | **13.3%** | 36 | 82% | 22.9% | 64% |
+| `negation_other` | 10 | 46% | 85% | **20.0%** | 34 | 74% | 28.6% | 57% |
+| `self_correction` | 10 | 84% | 100% | 73.3% | 40 | 48% | 77.1% | 36% |
+| `functional_landmark` | 8 | 87.5% | 100% (0, 4) | 83.3% | 25 | 29% | 85.7% | 14% |
+| `code_switch` | 10 | 80% | 80% | 80.0% | 32 | 40% | 74.3% | 35% |
+
+"SR pts from blind tasks" is the blind tasks' summed per-task rate divided by the condition's task count:
+the part of the headline number a policy would score by ignoring language on those tasks. The
+`target_cue_landmark` and four proximity conditions (tasks 3, 5, 7, 9) contain no blind task under
+either definition, so their numbers stand as reported.
+
+**Reading.**
+
+1. **Most of pi05's exclusion-condition success is not grounded.** Under the `target_swap` definition,
+   74–82% of the successes in `negation_only`, `negation_except` and `negation_other` come from the
+   blind tasks. On the following tasks pi05 scores 13–20%, against OpenVLA's 2.6% on `negation_only`.
+   The strict definition softens this (57–64% of successes; 23–29% on the following tasks) without
+   changing the direction.
+2. **The headline SR understates pi05's language-condition drops.** On the following subset,
+   `negative_contrast` is 81.0% (strict 82.9%; headline 87.0%) and the region cue 66–70% (headline
+   75–78%); the blind tasks sit near 100% and dilute the drop.
+3. **Task 4 is blind to what the location says, not to the sentence.** It ignores a swapped location
+   but drops to 2/5 when the location is removed or the sentence is (partly) in Chinese, so its
+   successes depend on the prompt keeping its trained form.
+4. **Blind-task failures still carry information.** A drop on a blind task means the wording disturbed
+   execution rather than target choice (task 4 above; task 8 at 76% under `negation_only`).
+5. **Proposal:** report pi05 conditions with an extra "language-following subset" SR (tasks 1, 3, 5, 6,
+   7, 9) alongside the headline number, with the strict {1, 3–7, 9} value as a bound.
+
+Caveats: both the classification and the `no_location` check rest on 5 trials/task (task 3 at 4/5,
+task 8 at 1/5 and task 4's 2/5 are the closest calls); promoting `target_swap` and `no_location` to
+50-trial splits would firm it up. The classification is defined in the stock 2-bowl scene and is not
+applied to the 3-bowl scene conditions (§9.3), whose layouts differ. Whether OpenVLA has blind tasks
+is unknown: neither screen has been run on it.
