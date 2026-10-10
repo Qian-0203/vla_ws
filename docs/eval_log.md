@@ -1252,10 +1252,56 @@ and QwenVLA numbers.
 
 ---
 
+## 2026-10-11 — `spatial/negation_only` results (OpenVLA, pi05); language-stress screen batches 2–3
+
+Closes the 2026-10-10 entry's three runs and adds one more batch. All at seed 7, openvla `62487f7` on
+both servers (`run_libero_eval.py --instruction_file` for the screens), image `openvla-libero:blackwell`
+/ sdpa / bf16. Detail and analysis: `benchmark_split_result.md` §2 (`negation_only` setting), §6
+findings 24–25, §12.
+
+- **`spatial/negation_only`, full (50 trials/task):**
+  - OpenVLA reference (`openvla-7b-libero-spatial-lora-r32`), `berkeley` GPU 3, 2026-10-10 06:43 →
+    16:00 UTC: **2.6%** (13/500), no task above 10%.
+  - pi05_libero, `berkeley-2` policy server GPU 3 / port 8001, 06:41 → 07:37 UTC: **44.8%** (224/500),
+    bimodal (tasks 0/2/4/8 at 76–98%, the rest 0–62%).
+  - Results: `results/libero_spatial--negation_only--openvla-7b-libero-spatial-lora-r32.jsonl`
+    (`berkeley`), `results/libero_spatial--negation_only--pi05_libero.jsonl` (`berkeley-2`).
+- **Screen batch 2** (pi05 only, `berkeley-2` GPU 1 / port 8000, 06:41 → 06:58 UTC; `~/run_screen_pi05_b.sh`):
+  `target_swap` 60%, `no_location` 82% (50 rollouts each); `screen_default` was resumed from batch 1,
+  not re-run.
+- **Screen batch 3** (6 v2 candidates from `scripts/language_stress/make_candidates.py`, generated on the
+  laptop and copied to `berkeley-2` with `scp` before they were committed; sha256 in each run's
+  metadata):
+  - pi05_libero, GPU 1 / port 8000, 07:00 → 07:50 UTC (`~/run_screen_pi05_c.sh`).
+  - official OpenVLA checkpoint, GPU 3, 10:20 → 12:52 UTC (`~/run_screen_official_c.sh`, same settings
+    as batch 1's `berkeley:~/run_screen_official.sh`; GPUs 0–2 were full with `vaclis` jobs).
+
+  | Candidate | OpenVLA, official | pi05_libero |
+  |---|--:|--:|
+  | `negation_swap` | 0% | 0% |
+  | `negation_except` | 6% | 44% |
+  | `negation_other` | 8% | 46% |
+  | `self_correction` | 32% | 84% |
+  | `functional_landmark` (8 tasks) | 30% | 87.5% |
+  | `code_switch` | 4% | 80% |
+
+  Both pi05 screen logs show `EGLError` tracebacks mid-run (12 in batch 3's); every condition still
+  completed its full count and both scripts exited 0.
+- **Housekeeping.** Both pi05 policy servers on `berkeley-2` stopped 2026-10-10 after
+  their runs finished, about 10:10 UTC (`scripts/serve_openpi.sh stop`). The `berkeley-2` ssh config typo noted on
+  2026-10-10 is fixed; plain `ssh berkeley-2` works.
+- **Not done:** QwenVLA `spatial/negation_only` still to be requested from Ken Zheng; `target_swap` /
+  `no_location` not screened on OpenVLA; `distractor_first`, `coreference`, `translate_es` unscreened.
+
+**Status:** done.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
-`spatial/negation_only` (authored 2026-10-10): running for OpenVLA and `pi05_libero` (2026-10-10
-entry); QwenVLA not yet requested. The official OpenVLA checkpoint's full run finished 2026-10-07.
+`spatial/negation_only` (authored 2026-10-10): run for OpenVLA and `pi05_libero` (2026-10-11 entry);
+QwenVLA not yet requested. The official OpenVLA checkpoint's full run finished 2026-10-07; it has not
+run `spatial/negation_only` (only the 5-trial screen).
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.

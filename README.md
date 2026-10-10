@@ -28,7 +28,7 @@ python3 scripts/preflight.py
 # 3. Sanity gate: the unmodified baseline (500 rollouts)
 SPLITS=spatial/default bash scripts/run_benchmark.sh
 
-# 4. Everything else (about 7,800 more rollouts). Already-finished splits are skipped with --resume.
+# 4. Everything else (about 8,300 more rollouts). Already-finished splits are skipped with --resume.
 bash scripts/run_benchmark.sh --resume True
 ```
 
@@ -77,6 +77,7 @@ roughly by how much each group moved the reference model. Task ids are the same 
 | `spatial/negative_contrast` | 1 · Prompt | prompt names the distractor and negates it ("not the one …") | 0–9 | 36.8% |
 | `spatial/length_control_suffix` | 1 · Length control | native prompt + a content-free clause at the end (+13 tokens, matches `positive_contrast`'s length) | 0–9 | 53.6% |
 | `spatial/length_control_infix` | 1 · Length control | native prompt + a content-free clause mid-sentence (+11 tokens, matches `negative_contrast`'s length) | 0–9 | 62.8% |
+| `spatial/negation_only` | 1 · Prompt | target named only by negating the distractor ("the black bowl that is not on …") | 0–9 | 2.6% |
 | `grounding/target_cue_region` | 4b · Cue type | target described as a table zone ("back-left of the table") | 0,1,3,5–9 | 17.0% |
 | `grounding/target_cue_region_v2` | 4b · Cue type | same table zone, 2nd wording ("in the back-left area of the table") | 0,1,3,5–9 | 20.0% |
 | `grounding/target_cue_region_v3` | 4b · Cue type | same table zone, 3rd wording ("on the left side of the table, toward the back") | 0,1,3,5–9 | 18.8% |
