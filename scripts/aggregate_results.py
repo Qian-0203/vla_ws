@@ -14,6 +14,7 @@ Usage:
     python scripts/aggregate_results.py                       # every run found
     python scripts/aggregate_results.py --filter 3bowl_open    # substring filter
     python scripts/aggregate_results.py --results-dir openvla/experiments/logs/results
+    python scripts/aggregate_results.py --filter negation_only --outcomes   # + per-task failure modes
 """
 import argparse
 import glob
@@ -49,6 +50,48 @@ def summarize(records):
     return per_task, overall
 
 
+OUTCOMES = (
+    "target_delivered", "wrong_bowl_delivered", "wrong_bowl_grasped", "target_grasped_only", "no_grasp", "unknown",
+)
+
+
+def classify_outcome(r):
+    """One rollout's behavioral outcome, from the env-side fields run_libero_eval.py logs since the
+    RolloutOutcomeTracker was added. Older rows (no `target_object`) are "unknown".
+
+    target_delivered      success (the goal's own predicate held)
+    wrong_bowl_delivered  failed, and a distractor bowl is On the plate at episode end
+    wrong_bowl_grasped    failed, nothing wrong delivered, and the first bowl grasped (lifted >3 cm while
+                          touching the gripper) was a distractor
+    target_grasped_only   failed, and the first bowl grasped was the target
+    no_grasp              failed without ever lifting a bowl
+    """
+    if r.get("target_object") is None:
+        return "unknown"
+    if r["success"]:
+        return "target_delivered"
+    if set(r.get("bowls_on_plate") or []) & set(r.get("distractor_objects") or []):
+        return "wrong_bowl_delivered"
+    grasped = r.get("first_bowl_grasped")
+    if grasped is None:
+        return "no_grasp"
+    return "target_grasped_only" if grasped == r["target_object"] else "wrong_bowl_grasped"
+
+
+def print_outcomes(records):
+    by_task = defaultdict(list)
+    for r in records:
+        by_task[(r["task_id"], r["task_name"])].append(classify_outcome(r))
+    print("\n| id | " + " | ".join(OUTCOMES) + " | n |")
+    print("|--:|" + "--:|" * (len(OUTCOMES) + 1))
+    totals = defaultdict(int)
+    for (task_id, _), outs in sorted(by_task.items()):
+        for o in outs:
+            totals[o] += 1
+        print(f"| {task_id} | " + " | ".join(str(outs.count(o)) for o in OUTCOMES) + f" | {len(outs)} |")
+    print("| all | " + " | ".join(str(totals[o]) for o in OUTCOMES) + f" | {len(records)} |")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -56,6 +99,10 @@ def main():
         default=os.path.join(os.path.dirname(__file__), "..", "openvla", "experiments", "logs", "results"),
     )
     parser.add_argument("--filter", default=None, help="Only include runs whose name contains this substring")
+    parser.add_argument(
+        "--outcomes", action="store_true",
+        help="Also print per-task outcome counts (wrong bowl delivered/grasped, ...); see classify_outcome",
+    )
     args = parser.parse_args()
 
     results_dir = os.path.abspath(args.results_dir)
@@ -77,6 +124,8 @@ def main():
         for (task_id, task_name), (rate, n) in per_task.items():
             print(f"| {task_id} | {task_name} | {rate * 100:.1f}% | {n} |")
         print(f"\n**Overall (mean of per-task rates): {overall * 100:.1f}%**")
+        if args.outcomes:
+            print_outcomes(records)
 
 
 if __name__ == "__main__":

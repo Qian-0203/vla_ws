@@ -125,11 +125,20 @@ Any flag not consumed by `run_eval.sh` (`--split`, `--resume`, ...) forwards str
 ## Results & logs
 
 - Text log: `openvla/experiments/logs/EVAL-{suite}-openvla-{timestamp}[--note][--shardXofY].txt`
-- Structured results (used for resume + aggregation): `openvla/experiments/logs/results/{suite}--{condition}[--note][--shardXofY].jsonl` — one JSON line per rollout: `{task_id, task_name, episode_idx, success, num_steps}`
+- Structured results (used for resume + aggregation): `openvla/experiments/logs/results/{suite}--{condition}[--note][--shardXofY].jsonl` — one JSON line per rollout: `{task_id, task_name, episode_idx, success, num_steps, ...}`.
+  Rows written since the env-side outcome logging (`RolloutOutcomeTracker` in `libero_utils.py`, every
+  model family) also carry `target_object`/`distractor_objects` (goal bowl after any `swap_target`
+  retarget, other black bowls), `bowls_on_plate` (bowls satisfying the goal's own `On(bowl, plate_1)` at
+  episode end), `first_bowl_approached`(+`_step`, eef within 8 cm, same definition as the §8.5 probe),
+  `first_bowl_grasped`/`first_grasp_step` (bowl >3 cm above its post-settle height while touching the
+  gripper), and per-bowl `approach_step_by_bowl`/`grasp_step_by_bowl`/`min_dist_by_bowl`. `success` is
+  unchanged; older rows lack these fields.
 - Run metadata (config, checkpoint, git commit, python/torch/GPU, timestamp): sibling `*.meta.json`
 - Rollout videos: `openvla/rollouts/{date}/`
 - Aggregate: `python scripts/aggregate_results.py [--filter <suite substring>]` — per-task +
-  suite-wide success rate (mean of per-task rates, matching `docs/benchmark_split_result.md`'s convention).
+  suite-wide success rate (mean of per-task rates, matching `docs/benchmark_split_result.md`'s convention); `--outcomes`
+  adds per-task counts of target delivered / wrong bowl delivered / wrong bowl grasped / target grasped
+  only / no grasp (rows without the outcome fields count as `unknown`).
 - After a real run, update the docs by hand (none are auto-generated):
   1. Append an entry to `docs/eval_log.md` — batch date, hardware/image/checkpoint, launch order, one-line
      headline + rollouts per condition, results-file paths. Never overwrite existing entries.
