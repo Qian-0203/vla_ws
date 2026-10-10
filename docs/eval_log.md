@@ -1193,11 +1193,69 @@ and QwenVLA numbers.
 
 ---
 
+## 2026-10-10 — Server replaced again; official run recovered; two servers set up; language-stress screen; `spatial/negation_only` launched
+
+- **What happened to `…-15gr`.** By 2026-10-10 the `berkeley` address (`35.247.68.140`) no longer
+  answered. The HF mirror's last commit was 2026-10-02 00:07 UTC, from `…-9dxc`: the 2026-09-30 sync
+  loop exited with its pipelines and was never set up on `…-15gr`, so nothing from 2026-10-05 onward
+  (the official-checkpoint run) had left that machine.
+- **Recovered.** The new instance `g4-15gr-1009-mig-uswest3-zzst` (ssh alias `berkeley-2`, up since
+  2026-10-09 22:05 UTC) booted from the old disk: `~/vla_ws` was intact. The official run had finished
+  all 22 conditions on 2026-10-07 02:23 UTC (8,300/8,300 rollouts; first result 2026-10-05 11:17 UTC;
+  the four shard failures in the 2026-10-05 entry were all resumed). Pushed to the HF mirror on
+  2026-10-10 (commit `7944b87`, 20,003 rollouts in `results/`) and copied to the laptop under
+  `~/vla_results_backup/2026-10-10_berkeley-2/`. Rollout videos from this run were not mirrored. Full
+  results: `benchmark_split_result.md` §10.2.
+- **Two servers.** `berkeley` is now `g4-flexstart-mig-ussouth1-5tbf` (`34.174.233.202`): GPUs 0–2
+  were full with other users' jobs, about 41 GB free on GPU 3. It had no Docker: installed `docker.io`
+  (Ubuntu archive), configured the NVIDIA runtime, installed `libnvidia-gl-580-server`, and only then
+  regenerated the CDI spec (3 EGL entries). Cloned `vla_ws` with submodules over HTTPS (all three repos
+  are public), built `openvla-libero:blackwell` fresh (mujoco 2.3.2, robosuite 1.4.1, torch
+  2.7.1+cu128), downloaded both checkpoints, `preflight.py` clean. `berkeley-2` kept its Docker, EGL
+  libs, image and openpi checkout; `vaclis` occupies about 83 GB on each of its GPUs, leaving about
+  14 GB, enough for a pi05 policy server (about 9 GB) but not for OpenVLA in bf16. Note: the ssh config
+  entry for `berkeley-2` has a typo (`HostName 34.106.148.66s`); these commands used
+  `-o HostName=34.106.148.66`.
+- **Results sync.** New `scripts/sync_results_hf.sh` (vla_ws `ecfb6f9`) mirrors `results/*.jsonl`,
+  `*.meta.json` and the text logs (to `logs/<hostname>/`) every 30 min from cron, independent of any
+  pipeline. Installed on both servers; tested under cron's empty environment. `berkeley` syncs since
+  its HF login on 2026-10-10 06:32 UTC.
+- **Language-stress screen, batch 1** (5 trials/task; `screening/language_stress/`, openvla
+  `5e52d0a` behaviour, deployed as copied files before the commit; candidate JSONs and their sha256
+  are in each run's metadata):
+
+  | Candidate | OpenVLA, official ckpt (`berkeley` GPU 3) | pi05_libero (`berkeley-2` GPU 1) |
+  |---|--:|--:|
+  | `screen_default` | 82% | 100% |
+  | `negation_only` | 2% | 44% |
+  | `translate_zh` | 0% | 78% |
+  | `noun_synonym` | 62% | 88% |
+
+  pi05 finished 2026-10-09 23:50 UTC, OpenVLA 2026-10-10 02:41 UTC. Run notes
+  `pi05_libero--screen`, `openvla-official-libero-spatial--screen`. Detail: `benchmark_split_result.md` §12.
+- **Promoted and launched.** `negation_only` became `spatial/negation_only` (openvla `62487f7`, vla_ws
+  `ecfb6f9`; both server checkouts updated to these commits before launch). Launched 2026-10-10 about
+  06:45 UTC, 50 trials/task, seed 7:
+  - pi05_libero, `berkeley-2`, second policy server on GPU 3 / port 8001, run note `pi05_libero`
+    (`~/run_negation_pi05.sh`, log `~/logs/negation_pi05.log`);
+  - OpenVLA reference checkpoint (`openvla-7b-libero-spatial-lora-r32`, fetched from the private HF
+    repo), `berkeley` GPU 3, run note `openvla-7b-libero-spatial-lora-r32` (`~/run_negation_openvla.sh`,
+    log `~/logs/negation_openvla.log`). The first launch failed before any rollout: the checkpoint
+    download hit xet logging on a read-only HF_HOME mount and the launcher's completeness check passed
+    on the config files alone. Relaunched with `HF_HUB_DISABLE_XET=1` and a check for all four weight
+    shards.
+  - Screen batch 2 on pi05 (`screen_default`, `target_swap`, `no_location`), `berkeley-2` GPU 1 /
+    port 8000 (`~/run_screen_pi05_b.sh`).
+  QwenVLA for `spatial/negation_only` is to be requested from Ken Zheng.
+
+**Status:** open. Results of the three runs above get their own entry.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
-**Nothing is waiting to be launched.** All 9 conditions authored 2026-10-01 are finished for both
-OpenVLA and `pi05_libero` (entries above). The official OpenVLA checkpoint's run over the 21
-non-gate conditions is in progress (2026-10-05 entry).
+`spatial/negation_only` (authored 2026-10-10): running for OpenVLA and `pi05_libero` (2026-10-10
+entry); QwenVLA not yet requested. The official OpenVLA checkpoint's full run finished 2026-10-07.
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.
@@ -1218,7 +1276,9 @@ in place: update it when a machine is added or retired, and leave the dated entr
 | GCP `g4-flex-20260824`, ssh alias `berkeley` — replaced 2026-09-10 | 4× RTX PRO 6000 Blackwell Server Edition, 98 GB each, compute cap 12.0 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-08-25 → 2026-09-08 entries |
 | GCP replacement instance, same `berkeley` alias — replaced by 2026-09-30 | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-10 entries |
 | GCP `g4-flexstart-mig-uswest1-9dxc`, same `berkeley` alias — replaced by 2026-10-05. Shared host: other users' jobs run on the same GPUs. Workspace `/home/qian/vla_ws`, checkpoint `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32`, openpi checkout `/home/qian/openpi` | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-30 → 2026-10-03 entries |
-| GCP `g4-flexstart-mig-uswest1-15gr`, same `berkeley` alias — current. Shared host (`vaclis` runs training on the same GPUs). Workspace `/home/qian/vla_ws`; checkpoints `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32` and `openvla/checkpoint/openvla-7b-finetuned-libero-spatial` (official). No `uv` installed | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-10-05 onward |
+| GCP `g4-flexstart-mig-uswest1-15gr`, same `berkeley` alias — replaced by 2026-10-10 (its disk came back as `berkeley-2`). Shared host (`vaclis` runs training on the same GPUs). Workspace `/home/qian/vla_ws`; checkpoints `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32` and `openvla/checkpoint/openvla-7b-finetuned-libero-spatial` (official). No `uv` installed | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-10-05 onward |
+| GCP `g4-flexstart-mig-ussouth1-5tbf` (`34.174.233.202`), ssh alias `berkeley` — current. Shared host (`vaclis`, `ayushraj`): only GPU 3 had room on 2026-10-10. Docker installed 2026-10-10 | 4× RTX PRO 6000 Blackwell Server Edition, driver 580.178.04 | `openvla-libero:blackwell` (built 2026-10-10) / sdpa | bf16 | 2026-10-10 entry |
+| GCP `g4-15gr-1009-mig-uswest3-zzst` (`34.106.148.66`), ssh alias `berkeley-2` — current. Booted from `…-15gr`'s disk; `vaclis` uses about 83 GB per GPU | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa; openpi at `~/openpi` | bf16 | 2026-10-10 entry (pi05) |
 | Ken Zheng's machines: dgx1 (8× A100-SXM4-80GB) and an 8× H200 node — not ours | 8× A100 80 GB / 8× H200 | host conda env (`scripts/run_eval_qwenvla.sh`) / SDPA | not quantized (dtype not recorded) | QwenVLA runs, 2026-09-30 and 2026-10-05 (logged 2026-10-06) |
 | Laptop | 1× RTX 5060 Laptop, 8 GB, compute cap 12.0 | `openvla-libero:blackwell` / sdpa | 4-bit only | scene authoring, init states, contact sheets, smoke tests (no reported number comes from here) |
 
@@ -1242,6 +1302,10 @@ FlashAttention-2 (2026-08-1x) vs. 84.4% on Blackwell with sdpa (2026-09-10).
 
 ### Standing up a new server (procedure used on 2026-09-10)
 
+0. Before launching anything, install the results sync from cron (`scripts/sync_results_hf.sh`; the
+   install line is in its header) and run it once by hand. Flexstart instances are replaced without
+   notice (2026-10-10 entry). If the machine has no Docker, `sudo apt-get install docker.io` plus
+   `sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker` works.
 1. Install Docker CE and `nvidia-container-toolkit`, and configure the NVIDIA runtime.
 2. Check that MuJoCo's EGL rendering libraries are present. Compute-only cloud drivers ship without
    them, and the failure looks like

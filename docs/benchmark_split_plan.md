@@ -85,6 +85,25 @@ damage comes from *what* the added clause says. A large length-only drop means p
 generic off-template text is itself a sufficient cause. Registry: `spatial/length_control_infix`,
 `spatial/length_control_suffix` (all 10 tasks, 500 rollouts each).
 
+**Negation-only reference (authored 2026-10-10).** `negative_contrast` names the target *and* negates
+the distractor, so a policy can ignore the negated clause and still read the target's own location.
+`negation_only` removes that route: the target is identified only by negating the distractor's
+location, and the target's own location is never stated.
+
+| Condition | Wording (task 7) |
+|---|---|
+| `default` | "pick up the black bowl on the stove and place it on the plate" |
+| `negative_contrast` | "pick up the black bowl on the stove, not the one on top of the wooden cabinet, and place it on the plate" |
+| `negation_only` | "pick up the black bowl that is not on top of the wooden cabinet and place it on the plate" |
+
+It is truthful only in the stock 2-bowl scene, where exactly one other black bowl exists. The
+distractor phrases are the ones `negative_contrast` uses. Hypothesis: a policy that grounds negation
+scores near `default`; one that keys on the location words it is given moves toward the distractor or
+fails to commit. Metric: `Negation-only Drop = SR(default) − SR(negation_only)`. It was selected by the
+language-stress screen (`benchmark_split_result.md` §12) as the one candidate that collapsed both the
+official OpenVLA checkpoint and pi05_libero. Registry: `spatial/negation_only` (all 10 tasks, 500
+rollouts).
+
 ### Split 2 — Distractor Placement Probe
 
 | Field | Description |

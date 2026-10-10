@@ -51,7 +51,8 @@ Applies to every condition below unless a section says otherwise.
 | VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
 | Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02/03/04, all 10 `libero_spatial` tasks for `default`+`negative_contrast` (280 rollouts); `target_cue_landmark` + `target_cue_proximity_novel` on the 4-task surface cohort (80 more). Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): pooled at full scale, "arm never approaches either bowl" is the *majority* failure mode (58.1% of `negative_contrast` failures) — success rates closely match the real 500/200-trial evals. `target_cue_proximity_novel` (no distractor, no misleading template) fails the same way as `target_cue_landmark` despite a much higher success rate — a second line of evidence against distractor-pull. Task 3 shows a persistent second mode (correct approach, still fails). See §8.6 for the synthesis and open gaps |
 | Cross-model reference: `pi05_libero` (§9) | Runs through the same registry via `--model_family openpi` | All 22 current conditions run 2026-09-30 → 2026-10-01 (8,300 rollouts). `spatial/default` 98.4%; prompt-only conditions 87–99% except the region cue (75–78%); 3-bowl scene conditions 43–91% |
-| Cross-model reference: official OpenVLA checkpoint (§10) | Same registry and code path as the reference; only `CHECKPOINT` differs | Sanity gate run 2026-10-05: `spatial/default` 84.0% (420/500), against 84.7% in the OpenVLA paper and 84.0% for our checkpoint. The other 21 conditions are running |
+| Cross-model reference: official OpenVLA checkpoint (§10) | Same registry and code path as the reference; only `CHECKPOINT` differs | All 22 conditions run 2026-10-05 → 2026-10-07 (8,300 rollouts). Against our checkpoint: r = 0.980, mean absolute difference 4.0 pts, 20 of 22 within 7 pts. `spatial/default` 84.0% for both |
+| Language-stress screening (§12, not a `SPLITS` entry) | `screening/language_stress/` + `run_libero_eval.py --instruction_file` | 2026-10-10, 5 trials/task: `negation_only` official OpenVLA 82% → 2%, pi05_libero 100% → 44%; `translate_zh` 0% / 78%; `noun_synonym` 62% / 88%. `negation_only` promoted to `spatial/negation_only`; full runs for OpenVLA and pi05 launched 2026-10-10 |
 | Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% |
 | Mechanistic Localization Probe (not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`) | Run 2026-09-04 → 2026-09-10 on task 5. Real, n=50-replicated early-window vision-attention/resolution-layer effects for `target_cue_landmark`; no layer/module localized; confidence diagnostic null. Full record: `mechanistic_localization.md` |
 
@@ -70,6 +71,7 @@ string** changes across conditions; scene and init states are identical.
 | `negative_contrast` — names + negates distractor ("…not the one…") | ✅ run | **36.8%** | 184/500 |
 | `length_control_infix` — native wording + content-free clause mid-sentence (+11 tokens) | ✅ run | **62.8%** | 314/500 |
 | `length_control_suffix` — native wording + content-free clause at the end (+13 tokens) | ✅ run | **53.6%** | 268/500 |
+| `negation_only` — target named only by negating the distractor's location (authored 2026-10-10, §12) | ⏳ running | — | — |
 
 Computed: `Negative Contrast Drop = 84.0 − 36.8 = 47.2 pts`. `Distractor Mention Drop = 84.0 − 32.4 =
 51.6 pts`. `Negation-specific Drop = 32.4 − 36.8 = −4.4 pts` — negative, meaning the negation clause
@@ -1659,7 +1661,7 @@ Splits 2 / 3 (against pi05's own 2-bowl default, 98.4%; pi05 has no closed-drawe
 
 Results: `results/*--pi05_libero--shard{0..3}of4.jsonl`.
 
-## 10. Cross-model reference: the official OpenVLA LIBERO-Spatial checkpoint (2026-10-05, in progress)
+## 10. Cross-model reference: the official OpenVLA LIBERO-Spatial checkpoint (2026-10-05 → 2026-10-07)
 
 **What this is.** The checkpoint the OpenVLA authors released for this suite,
 `openvla/openvla-7b-finetuned-libero-spatial` (LoRA r32, MIT), run through the same registry,
@@ -1694,8 +1696,85 @@ is among the weakest for both checkpoints (68% / 72%).
 
 ### 10.2 — The other 21 conditions
 
-Running since 2026-10-05 12:27 UTC. To be filled in, with the same tables as §9.1–9.4, when they
-finish.
+All 22 conditions finished on 2026-10-07 02:23 UTC (8,300/8,300 rollouts). The results lived only on
+the eval server's disk until that disk reappeared on a new instance on 2026-10-10 (`eval_log.md`,
+2026-10-10); they are now in the HF mirror.
+
+**The official checkpoint reproduces ours across the benchmark.** Over all 22 conditions the two
+checkpoints' success rates correlate at r = 0.980, the mean absolute difference is 4.0 pts, and 20 of
+22 differ by at most 7 pts. The two exceptions: `target_cue_proximity_novel` ("close to", 53.0% ours
+vs 37.0% official) and `grounding/region_surface` (92.0% vs 82.0%, 50 rollouts each). Every headline
+effect holds for both: region cue 15.0 / 16.5 / 17.0% (ours 17.0 / 20.0 / 18.8%); contrast prompts
+32.8 / 42.4% (32.4 / 36.8%); length controls 63.6 / 51.2% (62.8 / 53.6%); "next to" 25.0% below all
+four unseen synonyms (31.0–45.0%).
+
+| Split | OpenVLA (ours) | OpenVLA (official) | Δ (official − ours) |
+|---|--:|--:|--:|
+| `spatial/default` | 84.0% | 84.0% | 0.0 |
+| `spatial/positive_contrast` | 32.4% | 32.8% | +0.4 |
+| `spatial/negative_contrast` | 36.8% | 42.4% | +5.6 |
+| `spatial/length_control_infix` | 62.8% | 63.6% | +0.8 |
+| `spatial/length_control_suffix` | 53.6% | 51.2% | −2.4 |
+| `grounding/paraphrase_lexical` | 72.4% | 79.0% | +6.6 |
+| `grounding/paraphrase_syntactic` | 82.2% | 84.8% | +2.6 |
+| `grounding/target_cue_region` | 17.0% | 15.0% | −2.0 |
+| `grounding/target_cue_region_v2` | 20.0% | 16.5% | −3.5 |
+| `grounding/target_cue_region_v3` | 18.8% | 17.0% | −1.8 |
+| `grounding/target_cue_landmark` | 30.5% | 25.0% | −5.5 |
+| `grounding/target_cue_proximity_novel` | 53.0% | 37.0% | −16.0 |
+| `grounding/target_cue_proximity_beside` | 38.0% | 31.5% | −6.5 |
+| `grounding/target_cue_proximity_near` | 49.0% | 45.0% | −4.0 |
+| `grounding/target_cue_proximity_adjacent` | 37.5% | 31.0% | −6.5 |
+| `spatial_3bowl/irrelevant` | 85.2% | 82.8% | −2.4 |
+| `spatial_3bowl/semantic` | 85.2% | 83.2% | −2.0 |
+| `spatial_3bowl/landmark` | 80.6% | 77.0% | −3.6 |
+| `spatial_3bowl/landmark_with_hardneg_prompt` | 41.2% | 42.2% | +1.0 |
+| `spatial_3bowl/drawer_open` | 60.0% | 64.6% | +4.6 |
+| `grounding/surface_landmark` | 88.0% | 88.0% | 0.0 |
+| `grounding/region_surface` | 92.0% | 82.0% | −10.0 |
+
+Per-task, official checkpoint (prompt-only conditions; cue-type conditions; scene conditions):
+
+| id | target | Default | Pos. contrast | Neg. contrast | Len. infix | Len. suffix | Para. lexical | Para. syntactic |
+|--:|---|--:|--:|--:|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin | 82% | 72% | 92% | 84% | 68% | 90% | 92% |
+| 1 | next to the ramekin | 96% | 0% | 14% | 72% | 40% | 94% | 88% |
+| 2 | table center | 86% | 46% | 18% | 60% | 52% | 70% | 92% |
+| 3 | on the cookie box | 96% | 42% | 78% | 82% | 82% | 82% | 94% |
+| 4 | in the top drawer | 70% | 38% | 46% | 46% | 50% | 68% | 76% |
+| 5 | on the ramekin | 90% | 2% | 0% | 74% | 52% | 86% | 86% |
+| 6 | next to the cookie box | 88% | 48% | 84% | 78% | 54% | 94% | 90% |
+| 7 | on the stove | 86% | 2% | 12% | 44% | 24% | 78% | 86% |
+| 8 | next to the plate | 78% | 74% | 78% | 72% | 80% | 74% | 80% |
+| 9 | on the wooden cabinet | 68% | 4% | 2% | 24% | 10% | 54% | 64% |
+| **Overall** | | **84.0%** | **32.8%** | **42.4%** | **63.6%** | **51.2%** | **79.0%** | **84.8%** |
+
+| id | target | Region | Region v2 | Region v3 | Landmark ("next to") | "close to" | "beside" | "near" | "adjacent to" |
+|--:|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin | 38% | 50% | 38% | — | — | — | — | — |
+| 1 | next to the ramekin | 18% | 20% | 16% | — | — | — | — | — |
+| 3 | on the cookie box | 26% | 24% | 30% | 52% | 38% | 58% | 60% | 58% |
+| 5 | on the ramekin | 24% | 24% | 30% | 26% | 48% | 36% | 52% | 40% |
+| 6 | next to the cookie box | 10% | 12% | 20% | — | — | — | — | — |
+| 7 | on the stove | 0% | 0% | 0% | 18% | 46% | 26% | 48% | 18% |
+| 8 | next to the plate | 4% | 2% | 2% | — | — | — | — | — |
+| 9 | on the wooden cabinet | 0% | 0% | 0% | 4% | 16% | 6% | 20% | 8% |
+| **Overall** | | **15.0%** | **16.5%** | **17.0%** | **25.0%** | **37.0%** | **31.5%** | **45.0%** | **31.0%** |
+
+| id | target | `irrelevant` | `semantic` | `landmark` | `landmark` + hardneg prompt | `drawer_open` |
+|--:|---|--:|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin | 90% | 78% | 42% | 10% | 64% |
+| 1 | next to the ramekin | 78% | 74% | 92% | 60% | 92% |
+| 2 | table center | 96% | 94% | 92% | 70% | 62% |
+| 3 | on the cookie box | 98% | 94% | 90% | 68% | 68% |
+| 4 | in the top drawer | 90% | 76% | 72% | 56% | 70% |
+| 5 | on the ramekin | 92% | 82% | 96% | 14% | 90% |
+| 6 | next to the cookie box | 50% | 96% | 74% | 76% | 0% |
+| 7 | on the stove | 98% | 90% | 88% | 12% | 84% |
+| 8 | next to the plate | 74% | 78% | 64% | 56% | 74% |
+| 9 | on the wooden cabinet | 62% | 70% | 60% | 0% | 42% |
+| **Overall** | | **82.8%** | **83.2%** | **77.0%** | **42.2%** | **64.6%** |
+
 
 Results: `results/*--openvla-official-libero-spatial--shard{0..3}of4.jsonl`.
 
@@ -1847,3 +1926,49 @@ Splits 2 / 3 (against QwenVLA's own 2-bowl default, 79.8%)
 Results (local, not in the repo): `Archive 2/qwenvla_vla_ws_13-splits_dgx1_2026-09-30/` and
 `Archive 2/qwenvla_vla_ws_new-splits_2026-10-05/` (tarball + sha256 + README + `summary.txt`),
 files `results/*--qwenvla-78.6pct--shard{0..9}of10.jsonl`.
+
+## 12. Language-stress screening (2026-10-10)
+
+**Why.** pi05_libero scores 87–99% on every prompt condition above except the region cue (75–78%), so
+the benchmark had no language condition on which all model families fail. `screening/language_stress/`
+generates candidate conditions (one JSON each, outside `SPLITS`), all truthful in the stock 2-bowl
+scene, and `scripts/language_stress/screen.sh` runs them at 5 trials/task (50 rollouts per 10-task
+condition, about ±7 pts) through `run_libero_eval.py --instruction_file` (openvla `62487f7`). A
+candidate that moves every policy is promoted to a split and run at 50 trials/task.
+
+**Batch 1** (official OpenVLA checkpoint on `berkeley` GPU 3; pi05_libero on `berkeley-2` GPU 1):
+
+| Candidate (task 7 wording) | OpenVLA, official | pi05_libero |
+|---|--:|--:|
+| `screen_default` ("pick up the black bowl on the stove and place it on the plate") | 82% | 100% |
+| `negation_only` ("… the black bowl that is not on top of the wooden cabinet …") | 2% (−80) | 44% (−56) |
+| `translate_zh` ("拿起炉子上的黑色碗，把它放到盘子上") | 0% (−82) | 78% (−22) |
+| `noun_synonym` ("… on the cooktop …"; 8 tasks) | 62% (−20) | 88% (−12) |
+
+Per-task successes out of 5:
+
+| id | OpenVLA `negation_only` | pi05 `negation_only` | OpenVLA `translate_zh` | pi05 `translate_zh` | OpenVLA `noun_synonym` | pi05 `noun_synonym` |
+|--:|--:|--:|--:|--:|--:|--:|
+| 0 | 1 | 5 | 0 | 5 | 5 | 5 |
+| 1 | 0 | 1 | 0 | 4 | 3 | 3 |
+| 2 | 0 | 5 | 0 | 5 | — | — |
+| 3 | 0 | 3 | 0 | 5 | 5 | 4 |
+| 4 | 0 | 4 | 0 | 2 | 3 | 5 |
+| 5 | 0 | 0 | 0 | 5 | 1 | 5 |
+| 6 | 0 | 1 | 0 | 5 | 5 | 5 |
+| 7 | 0 | 0 | 0 | 1 | 0 | 3 |
+| 8 | 0 | 3 | 0 | 5 | — | — |
+| 9 | 0 | 0 | 0 | 2 | 3 | 5 |
+
+**Reading.** `negation_only` is the first language condition to cut pi05_libero by more than a third
+(its largest drop elsewhere is the region cue, −21 to −24), and it removes almost all of OpenVLA's
+success. pi05's losses sit on tasks 5, 7 and 9 (0/5) and 1 and 6 (1/5), so they are not one task.
+`translate_zh` separates the two families: OpenVLA fails every rollout, pi05 keeps most of its
+success. `noun_synonym` costs both a moderate amount, more than the relation-word paraphrases of
+§5.5 did. These are screening numbers, not results: `negation_only` was promoted to
+`spatial/negation_only` (openvla `62487f7`), and its full runs for OpenVLA (our checkpoint) and
+pi05_libero started 2026-10-10. `target_swap` and `no_location` were screened on pi05 in a second
+batch the same day.
+
+Results: `results/libero_spatial--<candidate>--{openvla-official-libero-spatial,pi05_libero}--screen.jsonl`.
+
