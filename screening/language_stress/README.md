@@ -48,6 +48,17 @@ python3 scripts/language_stress/summarize.py openvla-ours--screen pi05_libero--s
 for every policy, the policies largely ignore the location phrase whenever the layout determines the
 task, and π0.5's prompt robustness is that, not better grounding.
 
+## Candidates (v2, 2026-10-10, written after `negation_only`)
+
+| Condition | Family | What changes (task 7 example) | Why |
+|---|---|---|---|
+| `negation_swap` | negation | "pick up the black bowl that is not on the stove …"; success = the *other* bowl | Negates the target's own location. A policy that drops "not" grabs the named bowl and scores near 0 |
+| `negation_except` | negation | "pick up any black bowl except the one on top of the wooden cabinet …" | Exclusion without the word "not" |
+| `negation_other` | negation | "pick up the other black bowl, not the one on top of the wooden cabinet, …" | `negative_contrast` minus the target's location |
+| `self_correction` | discourse (repair) | "… on top of the wooden cabinet, sorry, I mean the one on the stove, …" | The distractor is named first, then retracted |
+| `functional_landmark` | lexical (no landmark noun) | "… on the appliance you cook on …" (8 tasks) | No landmark noun left to match |
+| `code_switch` | multilingual (mixed) | "pick up the 黑色碗 on the 炉子 and place it on the 盘子" | Between `screen_default` and `translate_zh` |
+
 ## Results so far (2026-10-10, 5 trials/task, ±7 pts)
 
 | Candidate | OpenVLA, official checkpoint | π0.5-LIBERO |
@@ -56,6 +67,14 @@ task, and π0.5's prompt robustness is that, not better grounding.
 | `negation_only` | 2% (−80) | 44% (−56) |
 | `translate_zh` | 0% (−82) | 78% (−22) |
 | `noun_synonym` | 62% (−20) | 88% (−12) |
+| `target_swap` | — | 60% (−40) |
+| `no_location` | — | 82% (−18) |
+| `negation_swap` | 0% (−82) | 0% (−100) |
+| `negation_except` | 6% (−76) | 44% (−56) |
+| `negation_other` | 8% (−74) | 46% (−54) |
+| `self_correction` | 32% (−50) | 84% (−16) |
+| `functional_landmark` | 30% (−52) | 87.5% (−12.5) |
+| `code_switch` | 4% (−78) | 80% (−20) |
 
 Results: `results/libero_spatial--<candidate>--{openvla-official-libero-spatial,pi05_libero}--screen.jsonl`
 (HF mirror `Qian0203/vla_ws-eval-results`). Launch details: `docs/eval_log.md`, 2026-10-10.

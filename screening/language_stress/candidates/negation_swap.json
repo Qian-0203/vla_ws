@@ -1,0 +1,30 @@
+{
+  "condition": "negation_swap",
+  "family": "negation",
+  "hypothesis": "negation_only with the roles exchanged: the sentence negates the TARGET's location and success is scored on the other bowl. A policy that ignores 'not' and grabs the bowl at the named place scores near 0, separating 'ignores negation' from 'cannot parse the sentence'.",
+  "swap_target": true,
+  "task_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "instructions": {
+    "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": "pick up the black bowl that is not between the plate and the ramekin and place it on the plate",
+    "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": "pick up the black bowl that is not next to the ramekin and place it on the plate",
+    "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": "pick up the black bowl that is not at the center of the table and place it on the plate",
+    "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": "pick up the black bowl that is not on the cookie box and place it on the plate",
+    "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": "pick up the black bowl that is not in the top drawer of the wooden cabinet and place it on the plate",
+    "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": "pick up the black bowl that is not on the ramekin and place it on the plate",
+    "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": "pick up the black bowl that is not next to the cookie box and place it on the plate",
+    "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": "pick up the black bowl that is not on the stove and place it on the plate",
+    "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": "pick up the black bowl that is not next to the plate and place it on the plate",
+    "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": "pick up the black bowl that is not on the wooden cabinet and place it on the plate"
+  }
+}
