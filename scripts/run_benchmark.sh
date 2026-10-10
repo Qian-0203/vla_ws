@@ -52,6 +52,7 @@ DEFAULT_SPLITS=(
   spatial/negative_contrast                   # Split 1
   spatial/length_control_suffix               # Split 1 length control (for positive_contrast)
   spatial/length_control_infix                # Split 1 length control (for negative_contrast)
+  spatial/negation_only                       # Split 1 negation-only reference (2026-10-10)
   grounding/target_cue_region                 # Split 4b
   grounding/target_cue_region_v2              # Split 4b, 2nd wording
   grounding/target_cue_region_v3              # Split 4b, 3rd wording

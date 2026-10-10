@@ -1,0 +1,30 @@
+{
+  "condition": "code_switch",
+  "family": "multilingual (mixed)",
+  "hypothesis": "English syntax with Chinese noun phrases: sits between screen_default and translate_zh, locating where the translation cost comes from.",
+  "swap_target": false,
+  "task_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "instructions": {
+    "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": "pick up the 黑色碗 between the 盘子 and the 小烤碗 and place it on the 盘子",
+    "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": "pick up the 黑色碗 next to the 小烤碗 and place it on the 盘子",
+    "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate": "pick up the 黑色碗 at the center of the 桌子 and place it on the 盘子",
+    "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": "pick up the 黑色碗 on the 饼干盒 and place it on the 盘子",
+    "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": "pick up the 黑色碗 in the 最上层抽屉 of the 木柜 and place it on the 盘子",
+    "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": "pick up the 黑色碗 on the 小烤碗 and place it on the 盘子",
+    "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": "pick up the 黑色碗 next to the 饼干盒 and place it on the 盘子",
+    "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": "pick up the 黑色碗 on the 炉子 and place it on the 盘子",
+    "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate": "pick up the 黑色碗 next to the 盘子 and place it on the 盘子",
+    "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": "pick up the 黑色碗 on the 木柜 and place it on the 盘子"
+  }
+}

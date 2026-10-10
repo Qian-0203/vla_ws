@@ -49,6 +49,16 @@ ES = {0: "que está entre el plato y el ramequín", 1: "que está junto al rameq
       5: "que está sobre el ramequín", 6: "que está junto a la caja de galletas", 7: "que está sobre la estufa",
       8: "que está junto al plato", 9: "que está sobre el gabinete de madera"}
 
+# Landmarks described by what they are for, so no landmark noun is left to match. Only functional
+# claims, nothing visual (colors etc. would need checking against the renders). The plate stays: it
+# is also the goal, so tasks 2 and 8 have nothing to replace.
+FUNCTIONAL = {"ramekin": "small dish for baking single servings", "cookie box": "box that snacks come in",
+              "stove": "appliance you cook on", "wooden cabinet": "piece of furniture you store things in"}
+
+# English frame, Chinese noun phrases (Simplified, matching ZH). Longest keys first.
+CODE_SWITCH = {"black bowl": "黑色碗", "top drawer": "最上层抽屉", "wooden cabinet": "木柜", "cookie box": "饼干盒",
+               "ramekin": "小烤碗", "stove": "炉子", "plate": "盘子", "table": "桌子"}
+
 
 def distractor_phrases():
     spec = importlib.util.spec_from_file_location("instructions", INSTRUCTIONS)
@@ -62,16 +72,21 @@ def distractor_phrases():
     return out
 
 
-def synonymize(phrase):
-    for noun, syn in NOUN_SYNONYMS.items():
-        phrase = phrase.replace(noun, syn)
+def substitute(phrase, table):
+    for src, dst in table.items():
+        phrase = phrase.replace(src, dst)
     return phrase
+
+
+def synonymize(phrase):
+    return substitute(phrase, NOUN_SYNONYMS)
 
 
 def build():
     d = distractor_phrases()
     ids = list(TASKS)
     syn_ids = [t for t in ids if synonymize(TASKS[t][2]) != TASKS[t][2]]
+    fn_ids = [t for t in ids if substitute(TASKS[t][2], FUNCTIONAL) != TASKS[t][2]]
     c = []
 
     def add(condition, family, hypothesis, text_fn, task_ids=ids, swap_target=False):
@@ -111,6 +126,33 @@ def build():
         lambda t: f"拿起{ZH[t]}黑色碗，把它放到盘子上")
     add("translate_es", "multilingual", "The default instruction in Spanish.",
         lambda t: f"toma el tazón negro {ES[t]} y colócalo en el plato")
+
+    # v2 (2026-10-10), after negation_only took pi05 to 44%.
+    add("negation_swap", "negation",
+        "negation_only with the roles exchanged: the sentence negates the TARGET's location and success is "
+        "scored on the other bowl. A policy that ignores 'not' and grabs the bowl at the named place scores "
+        "near 0, separating 'ignores negation' from 'cannot parse the sentence'.",
+        lambda t: f"pick up the black bowl that is not {TASKS[t][2]} and place it on the plate", swap_target=True)
+    add("negation_except", "negation",
+        "Exclusion without the word 'not'. Read with negation_only: tests whether the failure is specific to "
+        "'not' or general to identifying a referent by exclusion.",
+        lambda t: f"pick up any black bowl except the one {d[t]} and place it on the plate")
+    add("negation_other", "negation",
+        "'the other' plus a negated distractor; same content as negative_contrast minus the target's location.",
+        lambda t: f"pick up the other black bowl, not the one {d[t]}, and place it on the plate")
+    add("self_correction", "discourse (repair)",
+        "The distractor is named first, then retracted. A policy that acts on the first location it reads "
+        "goes to the distractor.",
+        lambda t: f"pick up the black bowl {d[t]}, sorry, I mean the one {TASKS[t][2]}, and place it on the plate")
+    add("functional_landmark", "lexical (no landmark noun)",
+        "Landmarks are described by function instead of named, so no landmark noun is left to match. "
+        "Tasks 2 and 8 have only the plate (also the goal) and are skipped.",
+        lambda t: f"pick up the black bowl {substitute(TASKS[t][2], FUNCTIONAL)} and place it on the plate",
+        task_ids=fn_ids)
+    add("code_switch", "multilingual (mixed)",
+        "English syntax with Chinese noun phrases: sits between screen_default and translate_zh, locating "
+        "where the translation cost comes from.",
+        lambda t: substitute(f"pick up the black bowl {TASKS[t][2]} and place it on the plate", CODE_SWITCH))
     return c
 
 

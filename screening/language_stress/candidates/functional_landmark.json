@@ -1,0 +1,26 @@
+{
+  "condition": "functional_landmark",
+  "family": "lexical (no landmark noun)",
+  "hypothesis": "Landmarks are described by function instead of named, so no landmark noun is left to match. Tasks 2 and 8 have only the plate (also the goal) and are skipped.",
+  "swap_target": false,
+  "task_ids": [
+    0,
+    1,
+    3,
+    4,
+    5,
+    6,
+    7,
+    9
+  ],
+  "instructions": {
+    "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate": "pick up the black bowl between the plate and the small dish for baking single servings and place it on the plate",
+    "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate": "pick up the black bowl next to the small dish for baking single servings and place it on the plate",
+    "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate": "pick up the black bowl on the box that snacks come in and place it on the plate",
+    "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate": "pick up the black bowl in the top drawer of the piece of furniture you store things in and place it on the plate",
+    "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate": "pick up the black bowl on the small dish for baking single servings and place it on the plate",
+    "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate": "pick up the black bowl next to the box that snacks come in and place it on the plate",
+    "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate": "pick up the black bowl on the appliance you cook on and place it on the plate",
+    "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate": "pick up the black bowl on the piece of furniture you store things in and place it on the plate"
+  }
+}

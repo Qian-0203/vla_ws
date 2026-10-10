@@ -44,7 +44,7 @@ Applies to every condition below unless a section says otherwise.
 
 | Split | Registry status | Data status |
 |---|---|---|
-| 1. Prompt Sensitivity | 3/3 conditions implemented + 2 length controls (`length_control_infix`/`_suffix`, authored 2026-10-01) | 3/3 run (`default`, `negative_contrast`, `positive_contrast`); both length controls run 2026-10-01 — `length_control_infix` 62.8%, `length_control_suffix` 53.6% (500/500 each): a content-free clause alone costs 21–30 pts (§2) |
+| 1. Prompt Sensitivity | 3/3 conditions implemented + 2 length controls (`length_control_infix`/`_suffix`, authored 2026-10-01) + `negation_only` (authored 2026-10-10) | 3/3 run (`default`, `negative_contrast`, `positive_contrast`); both length controls run 2026-10-01 — `length_control_infix` 62.8%, `length_control_suffix` 53.6% (500/500 each): a content-free clause alone costs 21–30 pts (§2). `negation_only` run 2026-10-10: **2.6%** (13/500; pi05_libero 44.8%) |
 | 2. Distractor Placement | 3/4 conditions implemented (`path` not authored) | All implemented conditions run. `irrelevant` and `semantic` each redefined a second time (see §3) — current suites (`libero_spatial_3bowl_front` 85.2%, `libero_spatial_3bowl_semantic2` 85.2%, both 500/500) now run; prior data survives relabeled `irrelevant_v1_legacy` (88.8%) / `semantic_v1_legacy` (84.8%); original fixed-coordinate data survives as `center_fixed_legacy`. Only unauthored `path` remains beyond that |
 | 3. Scene Complexity | Implemented | Run (both conditions) |
 | 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b/4c fully run — 4c's `target_cue_proximity_novel` (53.0% pooled, tasks 3/5/7/9) came in *above* `target_cue_landmark` (30.5%), the opposite of the plan's predicted direction; full three-way synthesis in §5.4. 4b/4c paraphrase controls (`paraphrase_lexical`/`_syntactic`, `target_cue_region_v2`/`_v3`, `target_cue_proximity_beside`/`_near`/`_adjacent`) all run 2026-10-01 (§5.5): same-cue paraphrases 72.4% / 82.2%; region cue 17.0 / 20.0 / 18.8% across three wordings; novel proximity synonyms 37.5–53.0% |
@@ -52,7 +52,7 @@ Applies to every condition below unless a section says otherwise.
 | Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02/03/04, all 10 `libero_spatial` tasks for `default`+`negative_contrast` (280 rollouts); `target_cue_landmark` + `target_cue_proximity_novel` on the 4-task surface cohort (80 more). Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): pooled at full scale, "arm never approaches either bowl" is the *majority* failure mode (58.1% of `negative_contrast` failures) — success rates closely match the real 500/200-trial evals. `target_cue_proximity_novel` (no distractor, no misleading template) fails the same way as `target_cue_landmark` despite a much higher success rate — a second line of evidence against distractor-pull. Task 3 shows a persistent second mode (correct approach, still fails). See §8.6 for the synthesis and open gaps |
 | Cross-model reference: `pi05_libero` (§9) | Runs through the same registry via `--model_family openpi` | All 22 current conditions run 2026-09-30 → 2026-10-01 (8,300 rollouts). `spatial/default` 98.4%; prompt-only conditions 87–99% except the region cue (75–78%); 3-bowl scene conditions 43–91% |
 | Cross-model reference: official OpenVLA checkpoint (§10) | Same registry and code path as the reference; only `CHECKPOINT` differs | All 22 conditions run 2026-10-05 → 2026-10-07 (8,300 rollouts). Against our checkpoint: r = 0.980, mean absolute difference 4.0 pts, 20 of 22 within 7 pts. `spatial/default` 84.0% for both |
-| Language-stress screening (§12, not a `SPLITS` entry) | `screening/language_stress/` + `run_libero_eval.py --instruction_file` | 2026-10-10, 5 trials/task: `negation_only` official OpenVLA 82% → 2%, pi05_libero 100% → 44%; `translate_zh` 0% / 78%; `noun_synonym` 62% / 88%. `negation_only` promoted to `spatial/negation_only`; full runs for OpenVLA and pi05 launched 2026-10-10 |
+| Language-stress screening (§12, not a `SPLITS` entry) | `screening/language_stress/` + `run_libero_eval.py --instruction_file` | 2026-10-10, 5 trials/task, three batches, 14 candidates. Every negation/exclusion wording collapses both families (official OpenVLA 0–8%, pi05_libero 0–46%); `negation_swap` is 0% for both. `translate_zh` / `code_switch` separate them (OpenVLA 0–4%, pi05 78–80%). `negation_only` promoted to `spatial/negation_only` and run in full for OpenVLA (2.6%) and pi05 (44.8%). Batch D (2026-10-10/11): OpenVLA `target_swap` 52–54%, `no_location` 10–20% (pi05 60% / 82%) |
 | Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% |
 | Mechanistic Localization Probe (not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`) | Run 2026-09-04 → 2026-09-10 on task 5. Real, n=50-replicated early-window vision-attention/resolution-layer effects for `target_cue_landmark`; no layer/module localized; confidence diagnostic null. Full record: `mechanistic_localization.md` |
 
@@ -71,7 +71,7 @@ string** changes across conditions; scene and init states are identical.
 | `negative_contrast` — names + negates distractor ("…not the one…") | ✅ run | **36.8%** | 184/500 |
 | `length_control_infix` — native wording + content-free clause mid-sentence (+11 tokens) | ✅ run | **62.8%** | 314/500 |
 | `length_control_suffix` — native wording + content-free clause at the end (+13 tokens) | ✅ run | **53.6%** | 268/500 |
-| `negation_only` — target named only by negating the distractor's location (authored 2026-10-10, §12) | ⏳ running | — | — |
+| `negation_only` — target named only by negating the distractor's location (authored 2026-10-10, §12) | ✅ run | **2.6%** | 13/500 |
 
 Computed: `Negative Contrast Drop = 84.0 − 36.8 = 47.2 pts`. `Distractor Mention Drop = 84.0 − 32.4 =
 51.6 pts`. `Negation-specific Drop = 32.4 − 36.8 = −4.4 pts` — negative, meaning the negation clause
@@ -82,6 +82,9 @@ is not the source of the damage; bare mention of a second location does effectiv
 half of each contrast drop is reproduced by content-free text of the same length, and "bare mention
 does effectively all of it" above holds only for the half that remains (see the length-control
 setting below).
+
+`Negation-only Drop = 84.0 − 2.6 = 81.4 pts` (pi05_libero: 98.4 − 44.8 = 53.6 pts; see the
+`negation_only` setting below).
 
 **Split fully run.**
 
@@ -216,6 +219,53 @@ Content Drop (positive)   = SR(length_control_suffix: 53.6%) − SR(positive_con
    9.2 pts, so position, the 2 extra tokens, and the specific wording are not separated here.
 
 Results: `results/libero_spatial--length_control_{infix,suffix}--openvla-7b-libero-spatial-lora-r32--shard{0..3}of4.jsonl`.
+
+### Setting: `negation_only` (run 2026-10-10)
+
+- **Wording (task 7):** *"pick up the black bowl that is not on top of the wooden cabinet and place it
+  on the plate."* The target's own location is never stated; the only location named is the
+  distractor's, negated. Distractor phrases are the ones `negative_contrast` uses (table above).
+- Prompts: `instructions.py`, condition `negation_only` (openvla `62487f7`). Selected by the
+  language-stress screen (§12).
+- Scene: stock `libero_spatial` (2 bowls), unmodified — no render check needed.
+- Runs: our checkpoint on `berkeley` GPU 3 (2026-10-10 06:43 → 16:00 UTC); pi05_libero on
+  `berkeley-2`, policy server on GPU 3 (06:41 → 07:37 UTC). 50 trials/task, seed 7. `eval_log.md`
+  2026-10-11.
+
+| id | target | distractor negated in prompt | OpenVLA default | OpenVLA `negation_only` | pi05 default | pi05 `negation_only` |
+|--:|---|---|--:|--:|--:|--:|
+| 0 | between the plate and the ramekin | next to the ramekin | 92% | 10% | 100% | 98% |
+| 1 | next to the ramekin | next to the cookie box | 84% | 0% | 100% | 2% |
+| 2 | table center | next to the plate | 92% | 0% | 96% | 96% |
+| 3 | on the cookie box | on top of the wooden cabinet | 84% | 6% | 98% | 62% |
+| 4 | in the top drawer | on top of the cabinet | 76% | 8% | 98% | 90% |
+| 5 | on the ramekin | on top of the cookie box | 94% | 0% | 98% | 6% |
+| 6 | next to the cookie box | on the stove | 90% | 0% | 98% | 16% |
+| 7 | on the stove | on top of the wooden cabinet | 72% | 0% | 100% | 2% |
+| 8 | next to the plate | next to the ramekin | 84% | 2% | 100% | 76% |
+| 9 | on the wooden cabinet | on the stove | 72% | 0% | 96% | 0% |
+| **Overall** | | | **84.0%** | **2.6%** (13/500) | **98.4%** | **44.8%** (224/500) |
+
+**Analysis.**
+
+1. **OpenVLA collapses on every task** (−81.4 pts; no task above 10%). The screen's 2% on the official
+   checkpoint (§12) predicted this. These are outcome rates only: whether the arm goes to the negated
+   bowl or fails to commit was not instrumented (the §8.5 probe could answer that).
+2. **pi05's 44.8% is bimodal, and the high tasks are the ones where it ignores language.** Tasks 0, 2,
+   4 and 8 score 76–98%, tasks 1, 5, 6, 7 and 9 score 0–16%, task 3 sits between (62%). The pi05
+   `target_swap` screen (§12, batch 2) shows the mirror profile: on tasks 0, 2, 4 and 8 it delivers
+   the *named* bowl in 0–1 of 5 trials, on the other six in 4–5 of 5. Reading: on 0/2/4/8 pi05 runs
+   the layout's trained motion whatever the sentence says, which happens to be correct under
+   `negation_only`; on the rest it follows the location words to the named bowl, which under
+   `negation_only` is the wrong one. Its 44.8% therefore reflects layout-driven tasks, not grounded
+   negation. `negation_swap` (§12, batch 3) fits the same reading: 0/50 for both families. Caveat:
+   the `target_swap` side is 5 trials/task.
+3. **No conflict with finding 5.** There, the negated clause did no extra damage because the target's
+   own location was also given. Here negation is the only route to the target, and neither family
+   takes it.
+
+Results: `results/libero_spatial--negation_only--openvla-7b-libero-spatial-lora-r32.jsonl` (`berkeley`),
+`results/libero_spatial--negation_only--pi05_libero.jsonl` (`berkeley-2`); both in the HF mirror.
 
 ---
 
@@ -1126,6 +1176,34 @@ Results: `results/libero_spatial--{paraphrase_lexical,paraphrase_syntactic,targe
     gap averaged over wordings is 13.9 pts, not the 22.5 pts in finding 18, which used "close to"
     alone. Treat finding 18's size as an upper end.
 
+24. **Negation is the one language failure shared by both model families** (2026-10-10, §2 and §12).
+    `spatial/negation_only` takes our checkpoint from 84.0% to 2.6% and pi05_libero from 98.4% to
+    44.8%, its largest prompt drop by far (the region cue cost it 21–24 pts). Rewording the exclusion
+    does not help either family: "any … except the one …" and "the other …, not the one …" screen at
+    6–8% (official OpenVLA) and 44–46% (pi05). Negating the *target's* location (`negation_swap`,
+    success scored on the other bowl) gives 0/50 for both. pi05's residual 44.8% sits on tasks 0, 2, 4
+    and 8, where its `target_swap` screen shows it ignores the location words altogether (§2,
+    `negation_only` setting), so no run so far shows either family grounding a negation.
+
+25. **Language robustness separates the families only when the cue survives as English words**
+    (2026-10-10, §12, 5 trials/task). OpenVLA fails Chinese entirely, whether the whole sentence
+    (`translate_zh`, 0%) or only the nouns (`code_switch`, 4%), while pi05 keeps 78–80%. Self-repair
+    ("…, sorry, I mean the one …") and function-described landmarks cost OpenVLA about 50 pts and pi05
+    13–16. pi05 is also not purely language-driven: with the location removed it still scores 82%
+    (`no_location`), and told to fetch the *other* bowl it does so in 60% (`target_swap`), all of that
+    on six of the ten tasks. The four blind tasks (0, 2, 4, 8) carry about 40% of pi05's successes on
+    every 10-task prompt condition; restricted to the six language-following tasks, `negative_contrast`
+    is 81.0% and `negation_only` 14.7% (25.4% if task 4, which drops without the location, counts as
+    following; §12, blind-task table). Training differs (40 LIBERO tasks on a base co-trained with web data, vs.
+    `libero_spatial` only), so this is a reference point, not a controlled comparison.
+
+26. **The two families find the target by different routes** (2026-10-11, §12 batch D, 5 trials/task).
+    Without the location phrase OpenVLA keeps 10–20% (both checkpoints) and pi05 82%; told to fetch the
+    other bowl, OpenVLA does so on 24–25 of 35 trials outside the three cabinet-top swaps, while pi05
+    ignores the instruction on tasks 0, 2, 4 and 8. OpenVLA goes where the location words point; pi05
+    mixes that with repeating the layout's trained motion. Both routes fail `negation_only`, for
+    different reasons (§12 batch D, point 4). Which bowl each rollout delivered is not yet logged.
+
 ## 7. Render / contact-sheet check log
 
 Every new or previously-unchecked scene gets its init-state contact sheet rendered
@@ -1564,6 +1642,7 @@ the OpenVLA reference. Launch details: `eval_log.md`, 2026-09-30 → 2026-10-01.
 | `spatial_3bowl/drawer_open` | 3 · Clutter | 0–9 | 60.0% | **43.4%** | 217/500 |
 | `grounding/surface_landmark` | 4a · Scene | 0 | 88.0% | **100.0%** | 50/50 |
 | `grounding/region_surface` | 4a · Scene | 0 | 92.0% | **100.0%** | 50/50 |
+| `spatial/negation_only` (added 2026-10-10, §2) | 1 · Prompt | 0–9 | 2.6% | **44.8%** | 224/500 |
 
 ### 9.2 — Per-task: prompt-only conditions (stock 2-bowl scene)
 
@@ -1972,3 +2051,179 @@ batch the same day.
 
 Results: `results/libero_spatial--<candidate>--{openvla-official-libero-spatial,pi05_libero}--screen.jsonl`.
 
+**Batch 2** (pi05_libero only, `berkeley-2` GPU 1, 2026-10-10 06:41 → 06:58 UTC). `screen_default` was
+not re-run: `--resume` found batch 1's 50 rollouts complete.
+
+| Candidate (task 7 wording) | pi05_libero |
+|---|--:|
+| `target_swap` ("… the black bowl on top of the wooden cabinet …"; success = *that* bowl on the plate) | 60% (−40) |
+| `no_location` ("pick up the black bowl and place it on the plate") | 82% (−18) |
+
+**Batch 3** (v2 candidates, written after `negation_only`; pi05_libero `berkeley-2` GPU 1, 07:00 → 07:50
+UTC; official OpenVLA `berkeley-2` GPU 3, 10:20 → 12:52 UTC; OpenVLA's change is from its batch-1
+`screen_default`, 82%):
+
+| Candidate (task 7 wording) | OpenVLA, official | pi05_libero |
+|---|--:|--:|
+| `negation_swap` ("… the black bowl that is not on the stove …"; success = the *other* bowl) | 0% (−82) | 0% (−100) |
+| `negation_except` ("pick up any black bowl except the one on top of the wooden cabinet …") | 6% (−76) | 44% (−56) |
+| `negation_other` ("pick up the other black bowl, not the one on top of the wooden cabinet, …") | 8% (−74) | 46% (−54) |
+| `self_correction` ("… on top of the wooden cabinet, sorry, I mean the one on the stove, …") | 32% (−50) | 84% (−16) |
+| `functional_landmark` ("… on the appliance you cook on …"; 8 tasks) | 30% (−52) | 87.5% (−12.5) |
+| `code_switch` ("pick up the 黑色碗 on the 炉子 and place it on the 盘子") | 4% (−78) | 80% (−20) |
+
+Per-task successes out of 5 (pi05 / official OpenVLA; `target_swap` and `no_location` pi05 only):
+
+| id | `target_swap` | `no_location` | `negation_swap` | `negation_except` | `negation_other` | `self_correction` | `functional_landmark` | `code_switch` |
+|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| 0 | 0 | 5 | 0 / 0 | 5 / 2 | 5 / 1 | 5 / 3 | 5 / 2 | 4 / 1 |
+| 1 | 5 | 4 | 0 / 0 | 1 / 0 | 2 / 0 | 4 / 0 | 4 / 2 | 5 / 0 |
+| 2 | 0 | 5 | 0 / 0 | 5 / 0 | 5 / 1 | 5 / 0 | — | 5 / 0 |
+| 3 | 4 | 5 | 0 / 0 | 2 / 0 | 2 / 1 | 5 / 4 | 5 / 3 | 5 / 1 |
+| 4 | 0 | 2 | 0 / 0 | 4 / 1 | 4 / 1 | 5 / 2 | 5 / 1 | 2 / 0 |
+| 5 | 5 | 5 | 0 / 0 | 0 / 0 | 1 / 0 | 5 / 0 | 5 / 1 | 5 / 0 |
+| 6 | 5 | 5 | 0 / 0 | 1 / 0 | 1 / 0 | 5 / 4 | 5 / 3 | 5 / 0 |
+| 7 | 5 | 3 | 0 / 0 | 0 / 0 | 0 / 0 | 2 / 1 | 3 / 0 | 1 / 0 |
+| 8 | 1 | 5 | 0 / 0 | 4 / 0 | 3 / 0 | 5 / 2 | — | 5 / 0 |
+| 9 | 5 | 2 | 0 / 0 | 0 / 0 | 0 / 0 | 1 / 0 | 3 / 0 | 3 / 0 |
+
+**Reading (batches 2–3).**
+
+1. **Every exclusion wording fails.** `negation_except` and `negation_other` land where `negation_only`
+   did for both families (OpenVLA 2–8%, pi05 44–46%), with pi05's successes on the same tasks (0, 2,
+   4, 8). The failure is not tied to the word "not".
+2. **`negation_swap` is 0/50 for both.** Told which bowl *not* to take, each policy delivers that
+   bowl or nothing.
+3. **pi05 reads the location on six tasks and ignores it on four.** `target_swap` succeeds 4–5/5 on
+   tasks 1, 3, 5, 6, 7, 9 and 0–1/5 on 0, 2, 4, 8; `no_location` stays at 82%, so the layout alone
+   usually identifies the trained target. The four language-blind tasks are exactly where pi05 passes
+   every exclusion condition (§2, `negation_only` setting). Whether OpenVLA splits the same way was
+   untested here; batch D below screens it (it does not).
+4. **The non-negation candidates separate the families.** `code_switch` costs OpenVLA as much as full
+   translation (4% vs. 0%) and pi05 as little (80% vs. 78%). `self_correction` and
+   `functional_landmark` cost OpenVLA about 50 pts and pi05 12–16.
+5. **Promotion candidates:** `negation_swap` (a 0% floor for both, and a direct test of ignoring
+   "not") and one exclusion rewording as a robustness control for `negation_only`. Not yet promoted.
+   `distractor_first`, `coreference` and `translate_es` remain unscreened.
+
+Results: `results/libero_spatial--<candidate>--pi05_libero--screen.jsonl` and
+`--openvla-official-libero-spatial--screen.jsonl` (batch 3 on `berkeley-2`, batch 1 on `berkeley`; all in
+the HF mirror). Candidate JSONs: `screening/language_stress/candidates/` (v2 added 2026-10-10).
+
+**pi05 language-blind tasks: how much of each condition's SR they carry** (analysis added 2026-10-11;
+computed from the per-task tables in §2, §9.2 and §12, no new rollouts). A task is *language-blind* when
+pi05 fails `target_swap` on it: told to fetch the other bowl, it delivers the trained target anyway.
+On such a task pi05 succeeds whenever the correct bowl is the trained target, whatever the sentence
+says. That holds for every condition below, so successes there are not evidence of language grounding.
+The swap conditions (`target_swap`, `negation_swap`) are the exception: there the blind tasks fail by
+construction. `no_location` serves as a consistency check: if a task ignores language entirely,
+deleting the location should cost nothing.
+
+| id | `target_swap` (/5) | `no_location` (/5) | Class |
+|--:|--:|--:|---|
+| 0 | 0 | 5 | blind; consistent |
+| 2 | 0 | 5 | blind; consistent |
+| 8 | 1 | 5 | blind; consistent |
+| 4 | 0 | **2** | blind to the location *content*, but sensitive to sentence form (also 2/5 under `translate_zh` and `code_switch`) |
+| 1, 3, 5, 6 | 4–5 | 4–5 | following; the layout alone also identifies the target |
+| 7, 9 | 5 | 3, 2 | following; the layout alone does not suffice, so the most language-dependent tasks |
+
+The main table uses the `target_swap` definition, blind = {0, 2, 4, 8}. The two right-hand columns
+are the strict version, which also requires `no_location` to match default: blind = {0, 2, 8}, with
+task 4 moved to the following set.
+
+| Condition | Tasks | SR | Blind {0,2,4,8} | Following {1,3,5,6,7,9} | SR pts from blind tasks | Share of successes | Strict: following {1,3–7,9} | Strict: share |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| `default` | 10 | 98.4% | 98.5% | 98.3% | 39.4 | 40% | 98.3% | 30% |
+| `positive_contrast` | 10 | 92.2% | 97.0% | **89.0%** | 38.8 | 42% | 89.7% | 32% |
+| `negative_contrast` | 10 | 87.0% | 96.0% | **81.0%** | 38.4 | 44% | 82.9% | 33% |
+| `length_control_infix` / `_suffix` | 10 | 99.2% / 99.0% | 100% / 99.5% | 98.7% / 98.7% | 40.0 / 39.8 | 40% | 98.9% / 98.9% | 30% |
+| `paraphrase_lexical` / `_syntactic` | 10 | 97.2% / 97.8% | 98.5% / 98.5% | 96.3% / 97.3% | 39.4 | 40–41% | 96.3% / 96.9% | 31% |
+| `target_cue_region` / `_v2` / `_v3` | 8 | 75.5% / 77.5% / 74.8% | 100% (0, 8 only) | **67.3% / 70.0% / 66.3%** | 25.0 | 32–33% | same (no task 4) | 32–33% |
+| `negation_only` | 10 | 44.8% | 90.0% | **14.7%** | 36.0 | **80%** | **25.4%** | **60%** |
+| *Screen, 5 trials/task:* | | | | | | | | |
+| `translate_zh` | 10 | 78% | 85% | 73.3% | 34 | 44% | 68.6% | 38% |
+| `noun_synonym` | 8 | 87.5% | 100% (0, 4) | 83.3% | 25 | 29% | 85.7% | 14% |
+| `no_location` | 10 | 82% | 85% | 80.0% | 34 | 41% | 74.3% | 37% |
+| `negation_except` | 10 | 44% | 90% | **13.3%** | 36 | 82% | 22.9% | 64% |
+| `negation_other` | 10 | 46% | 85% | **20.0%** | 34 | 74% | 28.6% | 57% |
+| `self_correction` | 10 | 84% | 100% | 73.3% | 40 | 48% | 77.1% | 36% |
+| `functional_landmark` | 8 | 87.5% | 100% (0, 4) | 83.3% | 25 | 29% | 85.7% | 14% |
+| `code_switch` | 10 | 80% | 80% | 80.0% | 32 | 40% | 74.3% | 35% |
+
+"SR pts from blind tasks" is the blind tasks' summed per-task rate divided by the condition's task count:
+the part of the headline number a policy would score by ignoring language on those tasks. The
+`target_cue_landmark` and four proximity conditions (tasks 3, 5, 7, 9) contain no blind task under
+either definition, so their numbers stand as reported.
+
+**Reading.**
+
+1. **Most of pi05's exclusion-condition success is not grounded.** Under the `target_swap` definition,
+   74–82% of the successes in `negation_only`, `negation_except` and `negation_other` come from the
+   blind tasks. On the following tasks pi05 scores 13–20%, against OpenVLA's 2.6% on `negation_only`.
+   The strict definition softens this (57–64% of successes; 23–29% on the following tasks) without
+   changing the direction.
+2. **The headline SR understates pi05's language-condition drops.** On the following subset,
+   `negative_contrast` is 81.0% (strict 82.9%; headline 87.0%) and the region cue 66–70% (headline
+   75–78%); the blind tasks sit near 100% and dilute the drop.
+3. **Task 4 is blind to what the location says, not to the sentence.** It ignores a swapped location
+   but drops to 2/5 when the location is removed or the sentence is (partly) in Chinese, so its
+   successes depend on the prompt keeping its trained form.
+4. **Blind-task failures still carry information.** A drop on a blind task means the wording disturbed
+   execution rather than target choice (task 4 above; task 8 at 76% under `negation_only`).
+5. **Proposal:** report pi05 conditions with an extra "language-following subset" SR (tasks 1, 3, 5, 6,
+   7, 9) alongside the headline number, with the strict {1, 3–7, 9} value as a bound.
+
+Caveats: both the classification and the `no_location` check rest on 5 trials/task (task 3 at 4/5,
+task 8 at 1/5 and task 4's 2/5 are the closest calls); promoting `target_swap` and `no_location` to
+50-trial splits would firm it up. The classification is defined in the stock 2-bowl scene and is not
+applied to the 3-bowl scene conditions (§9.3), whose layouts differ. Whether OpenVLA has blind tasks
+is unknown: neither screen has been run on it.
+**Batch D** (`target_swap` and `no_location` on both OpenVLA checkpoints, `berkeley` GPU 1, openvla
+`62487f7`, 2026-10-10 UTC: official 17:53 → 19:27; ours 19:28 → 21:41, including its own
+`screen_default` so both checkpoints have a same-budget baseline):
+
+| Candidate | OpenVLA, ours (r32) | OpenVLA, official | pi05_libero (batch 2) |
+|---|--:|--:|--:|
+| `screen_default` | 82% | 82% (batch 1) | 100% |
+| `target_swap` (success = the *named* bowl) | 54% (−28) | 52% (−30) | 60% (−40) |
+| `no_location` | 10% (−72) | 20% (−62) | 82% (−18) |
+
+Per-task successes out of 5 (ours / official / pi05), with the bowl `target_swap` names:
+
+| id | bowl named by `target_swap` | `screen_default` | `target_swap` | `no_location` | ours `negation_only` (/50, §2) |
+|--:|---|--:|--:|--:|--:|
+| 0 | next to the ramekin | 3 / 4 / 5 | 5 / 2 / 0 | 2 / 1 / 5 | 5 |
+| 1 | next to the cookie box | 4 / 4 / 5 | 5 / 3 / 5 | 1 / 4 / 4 | 0 |
+| 2 | next to the plate | 5 / 5 / 5 | 4 / 3 / 0 | 0 / 2 / 5 | 0 |
+| 3 | on top of the wooden cabinet | 4 / 4 / 5 | 1 / 1 / 4 | 0 / 0 / 5 | 3 |
+| 4 | on top of the cabinet | 4 / 2 / 5 | 0 / 0 / 0 | 0 / 0 / 2 | 4 |
+| 5 | on top of the cookie box | 5 / 4 / 5 | 3 / 4 / 5 | 2 / 3 / 5 | 0 |
+| 6 | on the stove | 5 / 5 / 5 | 4 / 5 / 5 | 0 / 0 / 5 | 0 |
+| 7 | on top of the wooden cabinet | 5 / 5 / 5 | 1 / 1 / 5 | 0 / 0 / 3 | 0 |
+| 8 | next to the ramekin | 2 / 3 / 5 | 0 / 2 / 1 | 0 / 0 / 5 | 1 |
+| 9 | on the stove | 4 / 5 / 5 | 4 / 5 / 5 | 0 / 0 / 2 | 0 |
+
+**Reading (batch D).**
+
+1. **The two OpenVLA checkpoints agree** (82 / 82, 54 / 52, 10 / 20), as §10.2's r = 0.980 predicts.
+2. **OpenVLA follows the named location, and has no language-blind tasks in the sense of the
+   blind-task analysis above** (which noted OpenVLA had not been screened). Every task where it fails
+   `target_swap` (at most 1/5: tasks 3, 4, 7 for both checkpoints, plus 8 for ours) also scores 0/5 on
+   `no_location`, so none of them runs on the layout alone. Tasks 3, 4 and 7 are the three whose other
+   bowl is on top of the wooden cabinet; outside them it delivers the named bowl in 25/35 (ours) and
+   24/35 (official) trials. pi05's losses are on tasks 0, 2, 4 and
+   8 instead, where it repeats the trained motion. The cabinet-top pattern may be a reach problem
+   rather than a reading one; it is not separated here.
+3. **OpenVLA cannot find the target without the location phrase.** `no_location` keeps 10–20% of
+   OpenVLA's trials (successes only on tasks 0, 1, 2, 5), against pi05's 82%. The layout alone does
+   not drive it: it needs the sentence, and the sentence's location words decide where it goes.
+4. **What this says about `negation_only`.** For OpenVLA, a policy that goes where the location words
+   point would take the negated bowl, which fits its 2.6% (ours) and 2% (official). pi05 has two
+   routes, language-blind on four tasks (where it passes) and location-following on the rest (where it
+   fails), which fits its bimodal 44.8%. Neither reading is checked rollout by rollout: these runs log
+   success only, not which bowl reached the plate. openvla PR #3's outcome logging (merged as
+   `1e8544e`) is what the full 50-trial `target_swap` / `no_location` runs use, and those can check it.
+
+Results: `results/libero_spatial--{screen_default,target_swap,no_location}--openvla-7b-libero-spatial-lora-r32--screen.jsonl`
+and `--openvla-official-libero-spatial--screen.jsonl` (`berkeley`; in the HF mirror).
