@@ -1388,7 +1388,52 @@ notes. All four runs completed their full 500 rollouts and exited 0.
 
 ---
 
+## 2026-10-11 — Erratum E1: region-cue wording used swapped axes (no eval run; documentation and registry change)
+
+**What happened.** A visual check of the Split 4b region-cue prompts against the rendered init states
+(`LIBERO/scratch_render/libero_spatial/`, no simulator re-render; this machine has no mujoco and no
+`openvla-libero` image) found that their left/right/front/back words came from a swapped coordinate
+assumption. In the policy's image +x is toward the camera and +y is image-right. 7 of 8 tasks
+described the wrong place (only task 3 was true).
+
+**Affected runs (results unchanged on disk, now withdrawn as region-cue results).**
+
+| Condition | Runs | Rollouts withdrawn |
+|---|---|--:|
+| `grounding/target_cue_region` | ours, official OpenVLA, pi05_libero, QwenVLA | 4 × 400 |
+| `grounding/target_cue_region_v2` | same four | 4 × 400 |
+| `grounding/target_cue_region_v3` | same four | 4 × 400 |
+
+Per-model totals drop from 8,300 to 7,100 valid rollouts (QwenVLA 8,800 to 7,600). Original entries
+above are left as written: 2026-08-19 batch (`target_cue_region`, 17.0%), 2026-10-01 batch
+(`_v2` 20.0%, `_v3` 18.8%), 2026-09-30/10-01 pi05, 2026-10-05 official and 2026-10-06 QwenVLA entries.
+
+**Changes made (nothing launched).**
+
+- `openvla/experiments/robot/libero/instructions.py`: warning banners on the three old dicts; three
+  new dicts `LIBERO_SPATIAL_TARGET_CUE_REGION{,_V2,_V3}_IMG_INSTRUCTIONS` in the image frame.
+- `openvla/experiments/robot/libero/eval_registry.py`: conditions and splits `target_cue_region_img`,
+  `target_cue_region_v2_img`, `target_cue_region_v3_img`; old descriptions marked INVALID.
+- `scripts/check_region_wording.py` (new): keyword check against the bowl positions read off the
+  renders; old dicts pass 1/8 tasks each, new dicts 8/8.
+- `scripts/run_benchmark.sh`: `DEFAULT_SPLITS` now runs the `_img` conditions instead of the old ones.
+- `docs/figures/region_wording_check.png` (new): per-task render, target marked, old wording.
+- Docs: `benchmark_split_result.md` (Erratum E1 section, recomputed numbers, in-place flags),
+  `benchmark_split_plan.md` (axis orientation, corrected wording), `README.md`,
+  `openvla_language_weakness.md`, `pi05_language_weakness.md`.
+- Not regenerated: `docs/figures/*_language_heatmap.png` and `*_mirror_pair*.png` still contain the
+  withdrawn region rows; `language_weakness_figures.py` now skips them, but the raw results are not
+  on this machine, so the figures need a re-run where `results/` exists.
+
+**Status:** corrected conditions authored and saved, **not run** (deliberately deferred). Cost when
+run: 400 rollouts per condition and model.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
+
+`grounding/target_cue_region_img`, `_v2_img`, `_v3_img` (authored 2026-10-11, Erratum E1; 400 rollouts each,
+tasks 0,1,3,5–9): corrected image-frame region cue, not run on any model.
 
 `spatial/negation_only` (authored 2026-10-10): run for OpenVLA and `pi05_libero` (2026-10-11 entry);
 QwenVLA not yet requested. The official OpenVLA checkpoint's full run finished 2026-10-07; it has not

@@ -7,6 +7,10 @@ the per-policy heatmaps and mirror-pair (tasks 7/9) charts to the output directo
 
   uv run --with matplotlib --with numpy python scripts/language_stress/language_weakness_figures.py \
       <results_dir> docs/figures
+
+Note (Erratum E1, 2026-10-11): the withdrawn target_cue_region / _v2 / _v3 rows were removed from the
+heatmaps and the mirror-pair chart. The PNGs already in docs/figures were drawn before this and still
+show them until the script is re-run against a results directory.
 """
 import collections
 import glob
@@ -58,7 +62,7 @@ def heatmap(P, SC, title, fname):
     ('Content-free','length_control_infix',P,'length_control_infix'),('Content-free','length_control_suffix',P,'length_control_suffix'),
     ('Paraphrase','paraphrase_lexical',P,'paraphrase_lexical'),('Paraphrase','paraphrase_syntactic',P,'paraphrase_syntactic'),
     ('Lexical','noun_synonym',SC,'noun_synonym *'),('Lexical','functional_landmark',SC,'functional_landmark *'),('Lexical','code_switch',SC,'code_switch *'),('Lexical','translate_zh',SC,'translate_zh *'),
-    ('Cue type','target_cue_proximity_near',P,'target_cue_proximity_near'),('Cue type','target_cue_landmark',P,'target_cue_landmark'),('Cue type','target_cue_region',P,'target_cue_region'),('Cue type','target_cue_region_v2',P,'target_cue_region_v2'),
+    ('Cue type','target_cue_proximity_near',P,'target_cue_proximity_near'),('Cue type','target_cue_landmark',P,'target_cue_landmark'),
     ('Distractor mention','positive_contrast',P,'positive_contrast'),('Distractor mention','negative_contrast',P,'negative_contrast'),('Distractor mention','self_correction',SC,'self_correction *'),
     ('Exclusion','negation_only',P,'negation_only'),('Exclusion','negation_except',SC,'negation_except *'),('Exclusion','negation_other',SC,'negation_other *'),('Exclusion','negation_swap',SC,'negation_swap * (other bowl)'),
     ('Reliance probes','no_location',P,'no_location'),('Reliance probes','target_swap',P,'target_swap (other bowl)')]
@@ -111,7 +115,7 @@ heatmap(OV, OVS, 'OpenVLA (official checkpoint) success rate (%) by condition an
         'openvla_official_language_heatmap.png')
 
 # mirror-pair gradient
-items=[('default',P,'exact training wording'),('target_cue_proximity_near',P,'"near the stove" (relation synonym)'),('noun_synonym',SC,'"on the cooktop" (noun synonym)'),('target_cue_landmark',P,'"next to the stove"'),('negative_contrast',P,'target + "not the one on …"'),('functional_landmark',SC,'"the appliance you cook on"'),('no_location',P,'location removed'),('code_switch',SC,'"on the 炉子" (code-switch)'),('translate_zh',SC,'full Chinese'),('self_correction',SC,'distractor first, then "sorry, I mean …"'),('target_cue_region',P,'table-region cue ("front-left")'),('negation_only',P,'"the bowl that is not on …"')]
+items=[('default',P,'exact training wording'),('target_cue_proximity_near',P,'"near the stove" (relation synonym)'),('noun_synonym',SC,'"on the cooktop" (noun synonym)'),('target_cue_landmark',P,'"next to the stove"'),('negative_contrast',P,'target + "not the one on …"'),('functional_landmark',SC,'"the appliance you cook on"'),('no_location',P,'location removed'),('code_switch',SC,'"on the 炉子" (code-switch)'),('translate_zh',SC,'full Chinese'),('self_correction',SC,'distractor first, then "sorry, I mean …"'),('negation_only',P,'"the bowl that is not on …"')]
 def wil(k,n,z=1.96):
     p=k/n; d=1+z*z/n; c=(p+z*z/(2*n))/d; h=z*math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d; return c-h,c+h
 fig,ax=plt.subplots(figsize=(9,5.6),dpi=150)
@@ -137,7 +141,7 @@ items = [('default', '', 'exact training wording'), ('paraphrase_syntactic', '',
          ('target_cue_landmark', '', '"next to the stove"'), ('noun_synonym', 's', '"on the cooktop" *'),
          ('functional_landmark', 's', '"the appliance you cook on" *'), ('positive_contrast', '', 'distractor mentioned'),
          ('negative_contrast', '', 'target + "not the one on …"'), ('self_correction', 's', 'distractor first, "sorry, I mean …" *'),
-         ('target_cue_region', '', 'table-region cue'), ('code_switch', 's', '"on the 炉子" *'),
+         ('code_switch', 's', '"on the 炉子" *'),
          ('translate_zh', 's', 'full Chinese *'), ('negation_only', 's', '"the bowl that is not on …" *')]
 fig, ax = plt.subplots(figsize=(9, 7), dpi=150)
 ys = np.arange(len(items))[::-1]
