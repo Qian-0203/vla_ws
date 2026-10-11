@@ -1388,7 +1388,85 @@ notes. All four runs completed their full 500 rollouts and exited 0.
 
 ---
 
+## 2026-10-11 — pi05 re-run with which-bowl logging (`target_swap`, `no_location`, `negation_only`)
+
+The pi05 results of batch E and of the 2026-10-10 `negation_only` run recorded success only. This
+re-runs the same three conditions with the outcome logging that went into the OpenVLA batch-E runs, so
+which bowl pi05 reached for, lifted and delivered is observed rather than inferred.
+
+- **Machine:** `berkeley` (`g4-flexstart-mig-ussouth1-5tbf`), all four GPUs idle at launch. `uv`,
+  `~/openpi` (commit `215abfb`) and the `pi05_libero` checkpoint (`gs://openpi-assets`, cached under
+  `~/.cache/openpi`) were not present and were installed by the launch script.
+- **Code:** `~/vla_ws_e` (vla_ws `ecfb6f9`, openvla `1e8544e`, the same workspace as the OpenVLA batch-E
+  runs). The run metadata records `openvla_git_commit: null`, as for those runs.
+- **Launch:** `~/run_full_pi05_whichbowl.sh`, log `~/logs/full_pi05_whichbowl.log`. Four policy servers
+  (`GPUS=0,1,2,3`, ports 8000–8003, `scripts/serve_openpi.sh`), eval sharded `--shardXof4`, image
+  `openvla-libero:blackwell` / sdpa / bf16, seed 7, 50 trials/task. Run note `pi05_libero--whichbowl`,
+  so the files never collide with `berkeley-2`'s success-only `pi05_libero` shards in the HF mirror.
+  The script first ran a 1-rollout smoke (`target_swap` task 0, run note
+  `pi05_libero--whichbowl-smoke`) and checked the which-bowl fields before continuing; it passed.
+- **Order and times (UTC):** `target_swap` 08:51 → 09:11, `no_location` 09:11 → 09:27, `negation_only`
+  09:27 → 09:47. Script exited 0, results synced (2,501 rollouts in the mirror), servers stopped.
+- **Headline:** `target_swap` 56.8% (284/500, identical to the success-only run), `no_location` 80.4%
+  (402/500; 81.4% before), `negation_only` 43.4% (217/500; 44.8% before). All 1,500 rows carry
+  `target_object`, `bowls_on_plate`, `first_bowl_approached` and `first_bowl_grasped`. Under
+  `negation_only` pi05 delivers the *other* bowl in 255/500 rollouts, and the same bowl that
+  `target_swap` made it deliver in 251 of those 255 (same init states and seed).
+- **Results:** `berkeley:~/vla_ws_e/openvla/experiments/logs/results/libero_spatial--{target_swap,no_location,negation_only}--pi05_libero--whichbowl--shard{0..3}of4.jsonl`,
+  in the HF mirror. Detail: `benchmark_split_result.md` §12 batch E, finding 29.
+- The orphan `sleep 1800` left on `berkeley` is this script's sync loop (its subshell was killed, its
+  `sleep` child was not); harmless.
+
+**Status:** done.
+
+---
+
+## 2026-10-11 — Erratum E1: region-cue wording used swapped axes (no eval run; documentation and registry change)
+
+**What happened.** A visual check of the Split 4b region-cue prompts against the rendered init states
+(`LIBERO/scratch_render/libero_spatial/`, no simulator re-render; this machine has no mujoco and no
+`openvla-libero` image) found that their left/right/front/back words came from a swapped coordinate
+assumption. In the policy's image +x is toward the camera and +y is image-right. 7 of 8 tasks
+described the wrong place (only task 3 was true).
+
+**Affected runs (results unchanged on disk, now withdrawn as region-cue results).**
+
+| Condition | Runs | Rollouts withdrawn |
+|---|---|--:|
+| `grounding/target_cue_region` | ours, official OpenVLA, pi05_libero, QwenVLA | 4 × 400 |
+| `grounding/target_cue_region_v2` | same four | 4 × 400 |
+| `grounding/target_cue_region_v3` | same four | 4 × 400 |
+
+Per-model totals drop from 8,300 to 7,100 valid rollouts (QwenVLA 8,800 to 7,600). Original entries
+above are left as written: 2026-08-19 batch (`target_cue_region`, 17.0%), 2026-10-01 batch
+(`_v2` 20.0%, `_v3` 18.8%), 2026-09-30/10-01 pi05, 2026-10-05 official and 2026-10-06 QwenVLA entries.
+
+**Changes made (nothing launched).**
+
+- `openvla/experiments/robot/libero/instructions.py`: warning banners on the three old dicts; three
+  new dicts `LIBERO_SPATIAL_TARGET_CUE_REGION{,_V2,_V3}_IMG_INSTRUCTIONS` in the image frame.
+- `openvla/experiments/robot/libero/eval_registry.py`: conditions and splits `target_cue_region_img`,
+  `target_cue_region_v2_img`, `target_cue_region_v3_img`; old descriptions marked INVALID.
+- `scripts/check_region_wording.py` (new): keyword check against the bowl positions read off the
+  renders; old dicts pass 1/8 tasks each, new dicts 8/8.
+- `scripts/run_benchmark.sh`: `DEFAULT_SPLITS` now runs the `_img` conditions instead of the old ones.
+- `docs/figures/region_wording_check.png` (new): per-task render, target marked, old wording.
+- Docs: `benchmark_split_result.md` (Erratum E1 section, recomputed numbers, in-place flags),
+  `benchmark_split_plan.md` (axis orientation, corrected wording), `README.md`,
+  `openvla_language_weakness.md`, `pi05_language_weakness.md`.
+- Not regenerated: `docs/figures/*_language_heatmap.png` and `*_mirror_pair*.png` still contain the
+  withdrawn region rows; `language_weakness_figures.py` now skips them, but the raw results are not
+  on this machine, so the figures need a re-run where `results/` exists.
+
+**Status:** corrected conditions authored and saved, **not run** (deliberately deferred). Cost when
+run: 400 rollouts per condition and model.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
+
+`grounding/target_cue_region_img`, `_v2_img`, `_v3_img` (authored 2026-10-11, Erratum E1; 400 rollouts each,
+tasks 0,1,3,5–9): corrected image-frame region cue, not run on any model.
 
 `spatial/negation_only` (authored 2026-10-10): run for OpenVLA and `pi05_libero` (2026-10-11 entry);
 QwenVLA not yet requested. The official OpenVLA checkpoint's full run finished 2026-10-07; it has not
@@ -1414,7 +1492,7 @@ in place: update it when a machine is added or retired, and leave the dated entr
 | GCP replacement instance, same `berkeley` alias — replaced by 2026-09-30 | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-10 entries |
 | GCP `g4-flexstart-mig-uswest1-9dxc`, same `berkeley` alias — replaced by 2026-10-05. Shared host: other users' jobs run on the same GPUs. Workspace `/home/qian/vla_ws`, checkpoint `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32`, openpi checkout `/home/qian/openpi` | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-30 → 2026-10-03 entries |
 | GCP `g4-flexstart-mig-uswest1-15gr`, same `berkeley` alias — replaced by 2026-10-10 (its disk came back as `berkeley-2`). Shared host (`vaclis` runs training on the same GPUs). Workspace `/home/qian/vla_ws`; checkpoints `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32` and `openvla/checkpoint/openvla-7b-finetuned-libero-spatial` (official). No `uv` installed | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-10-05 onward |
-| GCP `g4-flexstart-mig-ussouth1-5tbf` (`34.174.233.202`), ssh alias `berkeley` — current. Shared host (`vaclis`, `ayushraj`): only GPU 3 had room on 2026-10-10. Docker installed 2026-10-10 | 4× RTX PRO 6000 Blackwell Server Edition, driver 580.178.04 | `openvla-libero:blackwell` (built 2026-10-10) / sdpa | bf16 | 2026-10-10 entry |
+| GCP `g4-flexstart-mig-ussouth1-5tbf` (`34.174.233.202`), ssh alias `berkeley` — current. Shared host (`vaclis`, `ayushraj`): only GPU 3 had room on 2026-10-10. Docker installed 2026-10-10; `uv`, `~/openpi` and the pi05 checkpoint installed 2026-10-11 | 4× RTX PRO 6000 Blackwell Server Edition, driver 580.178.04 | `openvla-libero:blackwell` (built 2026-10-10) / sdpa | bf16 | 2026-10-10 entry |
 | GCP `g4-15gr-1009-mig-uswest3-zzst` (`34.106.148.66`), ssh alias `berkeley-2` — current. Booted from `…-15gr`'s disk; `vaclis` uses about 83 GB per GPU | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa; openpi at `~/openpi` | bf16 | 2026-10-10 entry (pi05) |
 | Ken Zheng's machines: dgx1 (8× A100-SXM4-80GB) and an 8× H200 node — not ours | 8× A100 80 GB / 8× H200 | host conda env (`scripts/run_eval_qwenvla.sh`) / SDPA | not quantized (dtype not recorded) | QwenVLA runs, 2026-09-30 and 2026-10-05 (logged 2026-10-06) |
 | Laptop | 1× RTX 5060 Laptop, 8 GB, compute cap 12.0 | `openvla-libero:blackwell` / sdpa | 4-bit only | scene authoring, init states, contact sheets, smoke tests (no reported number comes from here) |

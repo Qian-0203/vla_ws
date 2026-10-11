@@ -40,6 +40,112 @@ Applies to every condition below unless a section says otherwise.
 - **Baseline reference:** `spatial/default` — 2 bowls, default prompt, `libero_spatial` scene, 84.0%
   (420/500) — everything below compares against this unless noted.
 
+## Erratum E1 — region-cue direction words used swapped axes (found 2026-10-11)
+
+**What was wrong.** The `target_cue_region` / `_v2` / `_v3` prompts (Split 4b) place the target bowl
+with left/right/front/back words. Those words were derived from the BDDL `(x, y)` signs under the
+assumption "+x = robot-right, +y = table-back" (`benchmark_split_plan.md`, Split 4b, which flagged it
+as "not yet confirmed against a fresh render"; the confirming check was not done before the runs).
+The rendered frames show the opposite. In the image the policy sees, **+x points toward the camera
+(front) and +y points to the image right**: plate and ramekin (y = +0.20) sit on the right of the
+image, the cabinet (y = −0.27) on the left, the ramekin (x = −0.20) is farther back than the plate
+(x = +0.06), and the stove (x = −0.41) is next to the robot base. Figure:
+`docs/figures/region_wording_check.png`; automated keyword check: `scripts/check_region_wording.py`.
+
+Per task (target position read off the init-state render, image frame; "old v1" is the prompt that
+was run; v2 and v3 use the same zones):
+
+| id | target | table (x, y) | where the bowl really is | old v1 wording | old wording true? |
+|--:|---|---|---|---|---|
+| 0 | between the plate and the ramekin | (−0.05, +0.20) | back half, right of center | back of the table, just **left** of center | no (side) |
+| 1 | next to the ramekin | (−0.18, +0.32) | far right, toward the back | far back-**left** | no (side) |
+| 3 | on the cookie box | (+0.07, +0.03) | center | near the center | **yes** |
+| 5 | on the ramekin | (−0.20, +0.20) | right side, toward the back | back-**left** | no (side) |
+| 6 | next to the cookie box | (+0.13, −0.07) | front, slightly left | front-**right** | no (side) |
+| 7 | on the stove | (−0.41, −0.14) | **back**-left, next to the robot base | **front**-left | no (depth) |
+| 8 | next to the plate | (+0.01, +0.31) | far right, mid-depth | far **back** | no (position) |
+| 9 | on the wooden cabinet | (+0.03, −0.27) | far left edge (cabinet top) | **front**, just **right** of center | no (both) |
+
+Only task 3 was a true description. If "left/right" were read from the robot's side (it faces the
+camera, so its left is image-right) tasks 0, 1, 5 and 6 would be right, but tasks 7, 8 and 9 are wrong
+in either frame, so no reading rescues the set. Checker result: old v1 / v2 / v3 pass 1 of 8 tasks each.
+
+**What this invalidates.** The plan called the region cue "exactly true" (§Split 4); for 7 of 8 tasks it
+was a false instruction. A low score under it mixes "the policy cannot use a region cue" with "the
+policy was told the wrong place", and those cannot be separated from the existing data.
+
+| Condition(s) | Status | Why |
+|---|---|---|
+| `target_cue_region`, `_v2`, `_v3` (all models) | **withdrawn** — numbers kept in the tables for the record, not to be cited as region-cue results | false direction words on tasks 0, 1, 5, 6, 7, 8, 9 |
+| Everything derived from them: Region-cue Drop, Cue-type Drop (excess), the family-pool drops, "region is the worst cue", the wording-independence claim, the mirror-pair region numbers | **withdrawn** | see "Withdrawn or revised claims" below |
+| `grounding/region_surface`, `grounding/surface_landmark` | unaffected | scene changes with the native prompts; "region" there is the native "from table center" |
+| `target_cue_landmark`, all `target_cue_proximity_*`, `paraphrase_*`, contrast / length / negation / language-stress conditions, all scene conditions | unaffected | none uses left/right/front/back words about the target |
+| Task 3 rows of the three region conditions | **valid** | "near the center" / "around the middle" / "roughly in the middle" is true for the bowl on the cookie box |
+
+**The only valid region-cue data: task 3** (50 rollouts per cell, so ±7 pts per cell):
+
+| Model | `default` (task 3) | region v1 | region v2 | region v3 | mean drop |
+|---|--:|--:|--:|--:|--:|
+| OpenVLA (ours) | 84% | 28% | 36% | 38% | −50.0 |
+| OpenVLA (official) | 96% | 26% | 24% | 30% | −69.3 |
+| QwenVLA | 88% | 12% | 18% | 12% | −74.0 |
+| pi05_libero | 98% | 96% | 100% | 98% | 0.0 |
+
+A true region description on a single, unambiguous target still collapses both OpenVLA checkpoints
+and QwenVLA, and leaves pi05 untouched. That is one task and one zone ("center"), so it supports the
+direction of the old conclusion for the OpenVLA family but not its 64–67-pt size.
+
+**Recomputed without the three region conditions** (all inputs are the per-condition success rates
+already tabulated in §9–§11; reproduced the old figures first):
+
+| Quantity | With region (22 conditions) | Without region (19 conditions) |
+|---|--:|--:|
+| Official vs ours: correlation r | 0.980 | **0.970** |
+| Official vs ours: mean abs. difference | 4.0 pts | **4.2 pts** |
+| Official vs ours: conditions within 7 pts | 20 of 22 | **17 of 19** (same two exceptions: "close to" 16.0, `region_surface` 10.0) |
+| Ours vs QwenVLA: r / mean abs. difference | 0.932 / 7.3 pts | **0.895 / 8.3 pts** |
+| Ours vs pi05_libero: r / mean abs. difference | 0.274 / 34.7 pts | **0.103 / 31.2 pts** |
+| Rollouts per OpenVLA / pi05 full benchmark | 8,300 | **7,100** |
+| Rollouts, QwenVLA (incl. `center_fixed_legacy`) | 8,800 | **7,600** |
+| Largest valid cue-type drop, ours (`target_cue_landmark`, tasks 3/5/7/9) | (region −67.0 on 8 tasks) | **−50.0** (official −60.0, QwenVLA −37.0, pi05 −11.0) |
+| Largest valid prompt drop, ours | (region −67.0) | **−81.4** (`negation_only`, 84.0 → 2.6) |
+| pi05_libero prompt-only conditions, without `negation_only` | 87–99% except region (75–78%) | **87.0–99.2%**, no exception |
+| pi05_libero largest valid prompt drops | region −21 to −24 | `negation_only` −53.6, `negative_contrast` −11.4, `target_cue_landmark` −11.0, `positive_contrast` −6.2 |
+| QwenVLA largest valid prompt drops | region −61 to −65 | `negative_contrast` −42.6, `target_cue_landmark` −37.0, novel synonyms −26.0 to −32.0, `positive_contrast` −25.0 |
+| Cue-type ranking on tasks 3/5/7/9, ours | default 80.5 > novel 53.0 > familiar 30.5 > region 14.0 | default 80.5 > novel 53.0 > familiar 30.5 (region not rankable) |
+
+**Withdrawn or revised claims.**
+
+- §5.2 "Region-cue Drop 67.0 pts" and the family-pool drops (67.5 / 66.5): withdrawn. The landmark-cue
+  drop (−50.0) stands.
+- §5.2 point 2 (no landmark-vs-surface asymmetry in the region cue) and point 3 (landmark cue hurts
+  less than the region cue): not testable until `_img` is run. The finding-11 comparison "−50.0 vs
+  −66.5" is withdrawn.
+- §5.4 test 2 ("`close to X` should score at or below region") and the sentence that region phrasing
+  is "worst of all": withdrawn. Novel > familiar (22.5 pts with "close to", 13.9 pts averaged over four
+  synonyms) does not use region data and stands.
+- §5.5 "the region-cue result does not depend on the wording" and "Cue-type Drop (excess)": withdrawn.
+  The three wordings share the same false zones, so their agreement says nothing about wording.
+  "Same-cue paraphrases cost little" (−1.8 / −11.6 pts) stands; "cross-cue rewording costs 64–67 pts"
+  now rests on `target_cue_landmark` (−50.0) and the proximity synonyms (−27.5 to −43.0) only.
+- §6 findings 10, 11, 21, 22, 24: region parts withdrawn (each is flagged in place).
+- §9.5 point 3, §10.2, §11.5 point 3 and §12 "Why": "the region cue is the one prompt manipulation
+  that clearly hurts pi05 / all three policies" is withdrawn. pi05's weak tasks under the old wording
+  are 7 (16–28%) and 9 (24–40%), exactly the two tasks whose wording was most wrong (stove "front-left"
+  for a back-left bowl; cabinet "front, right of center" for a far-left bowl), while its task 3 (true
+  wording) scores 96–100%. That is consistent with pi05 following the false instruction, but no
+  outcome logs exist for those runs, so it is a hypothesis, not a result.
+- `docs/openvla_language_weakness.md` O4 and `docs/pi05_language_weakness.md` W4: withdrawn (flagged in
+  place).
+
+**Fix and status.** Corrected wording, in the policy's image frame (left/right as seen, back = toward
+the robot base), is authored as `target_cue_region_img`, `target_cue_region_v2_img`,
+`target_cue_region_v3_img` (`instructions.py`, `eval_registry.py`; each phrase passes
+`scripts/check_region_wording.py`, 8/8 tasks). **Not yet run on any model.** The old conditions stay
+in the registry, marked invalid, so the old result files remain reproducible. When the `_img`
+conditions are run, report them as a new condition and compare against the numbers above; do not merge
+them with the withdrawn ones.
+
 ## 1. Status overview
 
 | Split | Registry status | Data status |
@@ -47,14 +153,15 @@ Applies to every condition below unless a section says otherwise.
 | 1. Prompt Sensitivity | 3/3 conditions implemented + 2 length controls (`length_control_infix`/`_suffix`, authored 2026-10-01) + `negation_only` (authored 2026-10-10) | 3/3 run (`default`, `negative_contrast`, `positive_contrast`); both length controls run 2026-10-01 — `length_control_infix` 62.8%, `length_control_suffix` 53.6% (500/500 each): a content-free clause alone costs 21–30 pts (§2). `negation_only` run 2026-10-10: **2.6%** (13/500; pi05_libero 44.8%) |
 | 2. Distractor Placement | 3/4 conditions implemented (`path` not authored) | All implemented conditions run. `irrelevant` and `semantic` each redefined a second time (see §3) — current suites (`libero_spatial_3bowl_front` 85.2%, `libero_spatial_3bowl_semantic2` 85.2%, both 500/500) now run; prior data survives relabeled `irrelevant_v1_legacy` (88.8%) / `semantic_v1_legacy` (84.8%); original fixed-coordinate data survives as `center_fixed_legacy`. Only unauthored `path` remains beyond that |
 | 3. Scene Complexity | Implemented | Run (both conditions) |
-| 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b/4c fully run — 4c's `target_cue_proximity_novel` (53.0% pooled, tasks 3/5/7/9) came in *above* `target_cue_landmark` (30.5%), the opposite of the plan's predicted direction; full three-way synthesis in §5.4. 4b/4c paraphrase controls (`paraphrase_lexical`/`_syntactic`, `target_cue_region_v2`/`_v3`, `target_cue_proximity_beside`/`_near`/`_adjacent`) all run 2026-10-01 (§5.5): same-cue paraphrases 72.4% / 82.2%; region cue 17.0 / 20.0 / 18.8% across three wordings; novel proximity synonyms 37.5–53.0% |
+| 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b/4c fully run (**4b's three region-cue conditions are withdrawn, Erratum E1; the landmark and proximity results stand**) — 4c's `target_cue_proximity_novel` (53.0% pooled, tasks 3/5/7/9) came in *above* `target_cue_landmark` (30.5%), the opposite of the plan's predicted direction; full three-way synthesis in §5.4. 4b/4c paraphrase controls (`paraphrase_lexical`/`_syntactic`, `target_cue_region_v2`/`_v3`, `target_cue_proximity_beside`/`_near`/`_adjacent`) all run 2026-10-01 (§5.5): same-cue paraphrases 72.4% / 82.2%; ~~region cue 17.0 / 20.0 / 18.8% across three wordings~~ (withdrawn, E1); novel proximity synonyms 37.5–53.0% |
 | VLM Bowl-Pointing Probe (§8, not a `SPLITS` entry) | Script implemented (`probe_bowl_pointing.py`) | OpenVLA itself: dead end confirmed on 3 angles — no language-responsive text channel. Qwen2-VL-7B alternative (§8.1): a marker-placement bug (§8.2) was found and fixed; re-run scores 70% on both 2-bowl distractor-mention conditions and `hardneg` (was 40-60%). `default`/`hardneg_default` no-mention baselines added (§8.3): 50% (2-bowl, exactly chance) and 60% (3-bowl, above chance) — distractor-mention phrasing is a mild *disambiguating* cue for Qwen in both scenes, not a difficulty source |
 | Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02/03/04, all 10 `libero_spatial` tasks for `default`+`negative_contrast` (280 rollouts); `target_cue_landmark` + `target_cue_proximity_novel` on the 4-task surface cohort (80 more). Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): pooled at full scale, "arm never approaches either bowl" is the *majority* failure mode (58.1% of `negative_contrast` failures) — success rates closely match the real 500/200-trial evals. `target_cue_proximity_novel` (no distractor, no misleading template) fails the same way as `target_cue_landmark` despite a much higher success rate — a second line of evidence against distractor-pull. Task 3 shows a persistent second mode (correct approach, still fails). See §8.6 for the synthesis and open gaps |
-| Cross-model reference: `pi05_libero` (§9) | Runs through the same registry via `--model_family openpi` | All 22 current conditions run 2026-09-30 → 2026-10-01 (8,300 rollouts). `spatial/default` 98.4%; prompt-only conditions 87–99% except the region cue (75–78%); 3-bowl scene conditions 43–91% |
-| Cross-model reference: official OpenVLA checkpoint (§10) | Same registry and code path as the reference; only `CHECKPOINT` differs | All 22 conditions run 2026-10-05 → 2026-10-07 (8,300 rollouts). Against our checkpoint: r = 0.980, mean absolute difference 4.0 pts, 20 of 22 within 7 pts. `spatial/default` 84.0% for both |
+| Cross-model reference: `pi05_libero` (§9) | Runs through the same registry via `--model_family openpi` | All 22 current conditions run 2026-09-30 → 2026-10-01 (8,300 rollouts). `spatial/default` 98.4%; prompt-only conditions 87–99% except the region cue (75–78%, **withdrawn, E1**; 19 valid conditions, 7,100 rollouts); 3-bowl scene conditions 43–91% |
+| Cross-model reference: official OpenVLA checkpoint (§10) | Same registry and code path as the reference; only `CHECKPOINT` differs | All 22 conditions run 2026-10-05 → 2026-10-07 (8,300 rollouts). Against our checkpoint: r = 0.980, mean absolute difference 4.0 pts, 20 of 22 within 7 pts (**E1, without the 3 withdrawn region conditions: r = 0.970, 4.2 pts, 17 of 19**). `spatial/default` 84.0% for both |
 | Language-stress screening (§12, not a `SPLITS` entry) | `screening/language_stress/` + `run_libero_eval.py --instruction_file` | 2026-10-10, 5 trials/task, three batches, 14 candidates. Every negation/exclusion wording collapses both families (official OpenVLA 0–8%, pi05_libero 0–46%); `negation_swap` is 0% for both. `translate_zh` / `code_switch` separate them (OpenVLA 0–4%, pi05 78–80%). `negation_only` promoted to `spatial/negation_only` and run in full for OpenVLA (2.6%) and pi05 (44.8%). Batch D (2026-10-10/11): OpenVLA `target_swap` 52–54%, `no_location` 10–20% (pi05 60% / 82%) |
-| Full `target_swap` / `no_location` runs (§12 batch E, not `SPLITS` entries) | Same candidate JSONs as the screens, 50 trials/task | pi05_libero done 2026-10-10: `target_swap` 56.8%, `no_location` 81.4% (1,000 rollouts). Both OpenVLA checkpoints done 2026-10-11 with per-rollout outcome logging (openvla `1e8544e`): `target_swap` 57.2% official / 62.0% ours, `no_location` 17.6% / 11.8% (2,000 rollouts); 79–83% of `no_location` failures approach neither bowl |
-| Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% |
+| Full `target_swap` / `no_location` runs (§12 batch E, not `SPLITS` entries) | Same candidate JSONs as the screens, 50 trials/task | pi05_libero done 2026-10-10: `target_swap` 56.8%, `no_location` 81.4% (1,000 rollouts). Both OpenVLA checkpoints done 2026-10-11 with per-rollout outcome logging (openvla `1e8544e`): `target_swap` 57.2% official / 62.0% ours, `no_location` 17.6% / 11.8% (2,000 rollouts); 79–83% of `no_location` failures approach neither bowl. pi05_libero re-run with the same logging 2026-10-11 (`target_swap` 56.8%, `no_location` 80.4%, `spatial/negation_only` 43.4%; 1,500 rollouts): under `negation_only` it delivers the named bowl in 255/500 (below, finding 29) |
+| Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% (**withdrawn, E1**) |
+| Corrected region cue `target_cue_region_img` / `_v2_img` / `_v3_img` (Erratum E1) | Authored 2026-10-11 in the image frame; 8/8 tasks pass `scripts/check_region_wording.py` | **Not run** (saved for later; 8 tasks × 50 trials = 400 rollouts per condition and model) |
 | Mechanistic Localization Probe (not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`) | Run 2026-09-04 → 2026-09-10 on task 5. Real, n=50-replicated early-window vision-attention/resolution-layer effects for `target_cue_landmark`; no layer/module localized; confidence diagnostic null. Full record: `mechanistic_localization.md` |
 
 ---
@@ -661,6 +768,9 @@ the far larger effect by orders of magnitude is *prompt phrasing*, not scene rel
 
 ### 5.2 — 4b: Target Cue-Type Probe (complete)
 
+> ⚠ **Erratum E1 (2026-10-11): the `target_cue_region` rows, the Region-cue Drop lines, analysis points 1–3's region comparisons and the statement that "all three sentences are true descriptions" are withdrawn: the region sentences were false for 7 of 8 tasks (task 5's "back-left" bowl is back-right). The `target_cue_landmark` rows and the −50.0-pt landmark drop stand. Valid region data: task 3 only (84% → 28 / 36 / 38%).**
+
+
 **Question.** Holding the scene and distractor completely fixed (distractor never mentioned), does
 rephrasing *only* how the target is described — landmark ("next to X") vs. surface ("on X") vs.
 region (table-zone) — change success, independent of what relation family the scene actually is?
@@ -804,6 +914,9 @@ empty by design).
 
 ### 5.4 — Synthesis: 4a + 4b + 4c together (complete)
 
+> ⚠ **Erratum E1 (2026-10-11): the `target_cue_region` row (14.0%), test 2's region comparison and the "region phrasing is worst of all" sentence are withdrawn. Without them the ranking is default 80.5% > novel 53.0% > familiar 30.5%, and the template-binding reading rests on 4a, 4c and the attraction probe alone.**
+
+
 All three legs of Split 4 are now run. Laid side by side, on the same 4 surface-family tasks
 (3, 5, 7, 9) where every leg overlaps:
 
@@ -868,8 +981,8 @@ are identical to `spatial/default`; the distractor is never mentioned.
 |---|---|---|--:|--:|
 | `paraphrase_lexical` | "on top of the ramekin" | 0–9 | **72.4%** | 362/500 |
 | `paraphrase_syntactic` | "that is on the ramekin" | 0–9 | **82.2%** | 411/500 |
-| `target_cue_region_v2` | "in the back-left area of the table" | 0,1,3,5–9 | **20.0%** | 80/400 |
-| `target_cue_region_v3` | "on the left side of the table, toward the back" | 0,1,3,5–9 | **18.8%** | 75/400 |
+| `target_cue_region_v2` (**withdrawn, E1**) | "in the back-left area of the table" | 0,1,3,5–9 | ~~**20.0%**~~ | 80/400 |
+| `target_cue_region_v3` (**withdrawn, E1**) | "on the left side of the table, toward the back" | 0,1,3,5–9 | ~~**18.8%**~~ | 75/400 |
 | `target_cue_proximity_beside` | "beside the ramekin" | 3,5,7,9 | **38.0%** | 76/200 |
 | `target_cue_proximity_near` | "near the ramekin" | 3,5,7,9 | **49.0%** | 98/200 |
 | `target_cue_proximity_adjacent` | "adjacent to the ramekin" | 3,5,7,9 | **37.5%** | 75/200 |
@@ -898,6 +1011,9 @@ the ramekin"; task 2: "from table center" → "that is at table center"). Prompt
 | **Overall** | | **84.0%** | **72.4%** | **−11.6** | **82.2%** | **−1.8** |
 
 #### Region cue, three wordings: `target_cue_region` / `_v2` / `_v3`
+
+> ⚠ **Erratum E1 (2026-10-11): withdrawn. The three wordings share the same swapped-axis zones (7 of 8 tasks false), so the 3-pt spread does not show wording independence. Only the task 3 row is a valid region cue. Corrected wording: `*_img` conditions, not yet run.**
+
 
 Same table zone per task, three phrasings (task 5: "at the back-left of the table" / "in the
 back-left area of the table" / "on the left side of the table, toward the back"). Prompts:
@@ -929,6 +1045,9 @@ back-left area of the table" / "on the left side of the table, toward the back")
 
 #### Metrics
 
+> ⚠ **Erratum E1 (2026-10-11): the `Region-cue Drop` and `Cue-type Drop (excess)` lines are withdrawn; the other lines stand.**
+
+
 ```
 Same-cue Paraphrase Drop = SR(default: 84.0%) − SR(paraphrase_lexical: 72.4%)   = 11.6 pts
                            SR(default: 84.0%) − SR(paraphrase_syntactic: 82.2%) =  1.8 pts
@@ -940,14 +1059,14 @@ Familiarity Gap (robust) = mean of 4 novel synonyms (44.4%) − SR(target_cue_la
 
 **Analysis.**
 
-1. **A same-cue rewording costs little; 4b's collapse is about the cue type.** The relative-clause
+1. **A same-cue rewording costs little; 4b's collapse is about the cue type.** *(E1: the 64–67-pt region comparison below is withdrawn; the cue-type claim now rests on `target_cue_landmark` and the proximity synonyms.)* The relative-clause
    paraphrase is inside the noise band (−1.8 pts). The synonym swap costs 11.6 pts. Against that, a
    region-cue rewording of the same 8 tasks costs 64–67 pts. So the checkpoint does not fail on
    every surface-form change, which rules out the strongest template-matching reading.
 2. **The lexical drop is concentrated.** Task 2 alone ("the middle of the table") loses 48 pts.
    Without it the other nine tasks go from 83.1% to 75.6% (−7.6). The three "beside" tasks (1, 6, 8)
    are essentially flat (−6, +2, 0), while "on" → "on top of" costs 6–20 pts on tasks 3/5/7/9.
-3. **The region-cue result does not depend on the wording.** Three phrasings give 17.0 / 20.0 /
+3. **(Withdrawn, E1.) The region-cue result does not depend on the wording.** Three phrasings give 17.0 / 20.0 /
    18.8%, a 3-pt spread, with the same per-task profile: task 0 survives (58–64%), tasks 3 and 5
    reach 28–40%, and tasks 1, 6, 7, 8, 9 are at 0–14%.
 4. **The novel proximity cue varies a lot with the synonym, and 4c's "novel beats familiar" result
@@ -1031,14 +1150,14 @@ Results: `results/libero_spatial--{paraphrase_lexical,paraphrase_syntactic,targe
    confusable distractor — it doesn't compound narrowly on the hard cases, it spreads damage to the
    whole suite. Strongest evidence in the project that this checkpoint's failures are fundamentally
    about prompt grounding, not scene design.
-10. **The single largest effect in the whole project: rephrasing the target's cue type — with the
+10. ⚠ **E1: the region-cue half of this finding is withdrawn; the landmark-cue half (−50.0 pts) stands.** **The single largest effect in the whole project: rephrasing the target's cue type — with the
     distractor never mentioned — costs 50 to 67 pts.** Split 4b held the scene, distractor, and the
     referenced fact's truth completely fixed, and varied only whether the target was described via
     its native relation-family wording or an alternate one (region-zone or a disclosed-approximate
     landmark phrasing). `target_cue_region` (8 tasks): 84.0%→17.0% (−67.0 pts). `target_cue_landmark`
     (4 surface-family tasks): 80.5%→30.5% (−50.0 pts). This *exceeds* finding 1's negative-contrast
     damage (−47.2 pts) despite never introducing a second referent — see §5.2.
-11. **Findings 1-9 already showed language dominates scene; finding 10 shows it's not really about
+11. ⚠ **E1: the region-vs-landmark comparison below (−67.5 / −66.5 / −66.5 pts) is withdrawn.** **Findings 1-9 already showed language dominates scene; finding 10 shows it's not really about
     "a second referent" at all — it's template matching on exact phrasing.** Region-cue damage is
     statistically indistinguishable between landmark-family targets (−67.5 pts) and surface-family
     targets (−66.5 pts) — ruling out relation-type difficulty as the mechanism. And landmark-cue
@@ -1158,12 +1277,12 @@ Results: `results/libero_spatial--{paraphrase_lexical,paraphrase_syntactic,targe
     content. This revises finding 1 and the "bare mention does all of it" reading of Split 1: the
     damage is part generic off-template text, part distractor mention. The per-task profile also
     differs — filler hits tasks 7 and 9, the contrast clauses additionally collapse task 5.
-21. **Same-cue paraphrases cost OpenVLA little; cross-cue rewordings cost a lot, whatever the
+21. ⚠ **E1: the "region cue costs 64–67 pts in three phrasings" part is withdrawn; cross-cue cost now rests on `target_cue_landmark` (−50.0) and the proximity synonyms (−27.5 to −43.0).** **Same-cue paraphrases cost OpenVLA little; cross-cue rewordings cost a lot, whatever the
     wording** (2026-10-01, §5.5). A relative-clause paraphrase costs 1.8 pts and a synonym swap
     11.6 pts, while the region cue costs 64–67 pts in each of three phrasings (17.0 / 20.0 / 18.8%).
     4b's collapse is therefore about cue type, and it is not an artifact of one hand-written
     phrasing. The checkpoint does not fail on every surface-form change.
-22. **`pi05_libero` is far more robust to prompts and less robust to an extra bowl** (2026-10-01,
+22. ⚠ **E1: "the region cue is its one clear prompt weakness" is withdrawn (its pi05 weak tasks 7 and 9 had the most wrong wording).** **`pi05_libero` is far more robust to prompts and less robust to an extra bowl** (2026-10-01,
     §9). Length controls and same-cue paraphrases cost it about 0–1 pt and the contrast prompts
     6–11 pts, where OpenVLA loses 2–52. The region cue is its one clear prompt weakness (75–78%
     across three wordings). On the 3-bowl scenes it scores below OpenVLA on `irrelevant`,
@@ -1177,7 +1296,7 @@ Results: `results/libero_spatial--{paraphrase_lexical,paraphrase_syntactic,targe
     gap averaged over wordings is 13.9 pts, not the 22.5 pts in finding 18, which used "close to"
     alone. Treat finding 18's size as an upper end.
 
-24. **Negation is the one language failure shared by both model families** (2026-10-10, §2 and §12).
+24. ⚠ **E1: the parenthetical "the region cue cost it 21–24 pts" is withdrawn.** **Negation is the one language failure shared by both model families** (2026-10-10, §2 and §12).
     `spatial/negation_only` takes our checkpoint from 84.0% to 2.6% and pi05_libero from 98.4% to
     44.8%, its largest prompt drop by far (the region cue cost it 21–24 pts). Rewording the exclusion
     does not help either family: "any … except the one …" and "the other …, not the one …" screen at
@@ -1220,6 +1339,16 @@ Results: `results/libero_spatial--{paraphrase_lexical,paraphrase_syntactic,targe
     cabinet top (2–52%), where most failures grasp nothing. `no_location` is 17.6% / 11.8%, and 79–83%
     of its failures approach neither bowl, so OpenVLA has no layout fallback either. pi05 has both
     (findings 26–27). This is the same "never commits" failure §8.5 found for off-template prompts.
+
+29. **Which-bowl logging confirms that pi05 takes the negated bowl, and that it commits where OpenVLA
+    does not** (2026-10-11, §12 batch E re-run, 50 trials/task). Under `negation_only` pi05 delivers
+    the other bowl in 255/500 rollouts, on tasks 1, 3, 5, 6, 7, 9; paired per rollout with
+    `target_swap`, 251 of those 255 put the same bowl on the plate. On the four blind tasks the
+    sentence changes the delivered bowl in under 5% of rollouts. With the location removed, tasks
+    7/9 split 36 trained / 42 other / 17 no grasp, so it picks about at random rather than defaulting.
+    pi05 fails 7 / 31 / 7 of 500 `target_swap` / `no_location` / `negation_only` rollouts without
+    lifting a bowl, against OpenVLA's no-grasp-and-approach-neither majority (finding 28).
+    Success rates match the earlier success-only runs within 1.4 pts (`target_swap` exactly).
 
 ## 7. Render / contact-sheet check log
 
@@ -1635,6 +1764,9 @@ the OpenVLA reference. Launch details: `eval_log.md`, 2026-09-30 → 2026-10-01.
 
 ### 9.1 — Overall, against the OpenVLA reference
 
+> ⚠ **Erratum E1 (2026-10-11): the three `target_cue_region*` rows are withdrawn (swapped-axis wording); do not use them as region-cue results.**
+
+
 | Split | Probe | Tasks | OpenVLA | pi05_libero | Rollouts (pi05) |
 |---|---|---|--:|--:|--:|
 | `spatial/default` | 1 · Prompt | 0–9 | 84.0% | **98.4%** | 492/500 |
@@ -1711,6 +1843,9 @@ gap-fill cells (`grounding/surface_landmark`, `grounding/region_surface`; task 0
 
 ### 9.4 — Metrics (same formulas as the plan)
 
+> ⚠ **Erratum E1 (2026-10-11): the `Region-cue Drop` and `Cue-type Drop (excess)` lines below are withdrawn (swapped-axis wording). The other lines are unchanged.**
+
+
 ```
 Split 1
   Negative Contrast Drop   = 98.4 − 87.0 = 11.4 pts      (OpenVLA: 47.2)
@@ -1734,6 +1869,9 @@ Splits 2 / 3 (against pi05's own 2-bowl default, 98.4%; pi05 has no closed-drawe
 ```
 
 ### 9.5 — What the pi05 numbers show
+
+> ⚠ **Erratum E1 (2026-10-11): point 3 ("the region cue is the one prompt manipulation that clearly hurts pi05") is withdrawn. Its weak tasks 7 and 9 had the most wrong wording, and task 3, whose wording was true, scores 96–100%.**
+
 
 1. **Prompt robustness is far higher.** Content-free added text costs pi05 nothing (99.2% / 99.0%
    against 98.4%), and same-cue paraphrases cost about 1 pt. The same conditions cost OpenVLA 21–30
@@ -1791,6 +1929,9 @@ reach ±10–14 pts (tasks 0, 1, 3, 7), the same size as our checkpoint's own ru
 is among the weakest for both checkpoints (68% / 72%).
 
 ### 10.2 — The other 21 conditions
+
+> ⚠ **Erratum E1 (2026-10-11): the three region rows below, and "region cue 15.0 / 16.5 / 17.0%" in the next paragraph, are withdrawn. Without them the two checkpoints agree at r = 0.970, mean absolute difference 4.2 pts, 17 of 19 within 7 pts (same two exceptions). On task 3 (true wording) the official checkpoint goes 96% → 26 / 24 / 30%.**
+
 
 All 22 conditions finished on 2026-10-07 02:23 UTC (8,300/8,300 rollouts). The results lived only on
 the eval server's disk until that disk reappeared on a new instance on 2026-10-10 (`eval_log.md`,
@@ -1897,6 +2038,9 @@ batches on his own machines and delivered the raw JSONL; launch details: `eval_l
 
 ### 11.1 — Overall, against OpenVLA and pi05
 
+> ⚠ **Erratum E1 (2026-10-11): the three `target_cue_region*` rows are withdrawn (swapped-axis wording).**
+
+
 | Split | Probe | Tasks | OpenVLA | pi05_libero | QwenVLA | Rollouts (QwenVLA) |
 |---|---|---|--:|--:|--:|--:|
 | `spatial/default` | 1 · Prompt | 0–9 | 84.0% | 98.4% | **79.8%** | 399/500 |
@@ -1971,6 +2115,9 @@ Suites as in §9.3, plus `center_fixed_legacy` = `libero_spatial_3bowl`.
 
 ### 11.4 — Metrics (same formulas as the plan; OpenVLA in parentheses)
 
+> ⚠ **Erratum E1 (2026-10-11): the `Region-cue Drop` line below is withdrawn.**
+
+
 ```
 Split 1
   Negative Contrast Drop   = 79.8 − 37.2 = 42.6 pts      (OpenVLA: 47.2)
@@ -1994,6 +2141,9 @@ Splits 2 / 3 (against QwenVLA's own 2-bowl default, 79.8%)
 ```
 
 ### 11.5 — What the QwenVLA numbers show
+
+> ⚠ **Erratum E1 (2026-10-11): point 3 (region cue "collapses QwenVLA exactly as it does OpenVLA", "hurts all three policies most") is withdrawn. On task 3 (true wording) QwenVLA goes 88% → 12 / 18 / 12%. QwenVLA's largest valid prompt drops are `negative_contrast` (−42.6) and `target_cue_landmark` (−37.0).**
+
 
 1. **The distractor-mention collapse is not OpenVLA-specific.** A Qwen3-VL-based VLA loses 25.0 pts
    to a bare mention and 42.6 pts with negation, concentrated on the same tasks as OpenVLA:
@@ -2024,6 +2174,9 @@ Results (local, not in the repo): `Archive 2/qwenvla_vla_ws_13-splits_dgx1_2026-
 files `results/*--qwenvla-78.6pct--shard{0..9}of10.jsonl`.
 
 ## 12. Language-stress screening (2026-10-10)
+
+> ⚠ **Erratum E1 (2026-10-11): the premise sentence below ("…except the region cue (75–78%)") and "its largest drop elsewhere is the region cue" refer to the withdrawn region numbers. pi05's valid prompt-only range is 87.0–99.2%, so the argument for a condition that moves every family stands even more clearly.**
+
 
 **Why.** pi05_libero scores 87–99% on every prompt condition above except the region cue (75–78%), so
 the benchmark had no language condition on which all model families fail. `screening/language_stress/`
@@ -2156,7 +2309,7 @@ task 4 moved to the following set.
 | `negative_contrast` | 10 | 87.0% | 96.0% | **81.0%** | 38.4 | 44% | 82.9% | 33% |
 | `length_control_infix` / `_suffix` | 10 | 99.2% / 99.0% | 100% / 99.5% | 98.7% / 98.7% | 40.0 / 39.8 | 40% | 98.9% / 98.9% | 30% |
 | `paraphrase_lexical` / `_syntactic` | 10 | 97.2% / 97.8% | 98.5% / 98.5% | 96.3% / 97.3% | 39.4 | 40–41% | 96.3% / 96.9% | 31% |
-| `target_cue_region` / `_v2` / `_v3` | 8 | 75.5% / 77.5% / 74.8% | 100% (0, 8 only) | **67.3% / 70.0% / 66.3%** | 25.0 | 32–33% | same (no task 4) | 32–33% |
+| ~~`target_cue_region` / `_v2` / `_v3`~~ (withdrawn, E1) | 8 | 75.5% / 77.5% / 74.8% | 100% (0, 8 only) | **67.3% / 70.0% / 66.3%** | 25.0 | 32–33% | same (no task 4) | 32–33% |
 | `negation_only` | 10 | 44.8% | 90.0% | **14.7%** | 36.0 | **80%** | **25.4%** | **60%** |
 | *Screen, 5 trials/task:* | | | | | | | | |
 | `translate_zh` | 10 | 78% | 85% | 73.3% | 34 | 44% | 68.6% | 38% |
@@ -2182,7 +2335,7 @@ either definition, so their numbers stand as reported.
    changing the direction.
 2. **The headline SR understates pi05's language-condition drops.** On the following subset,
    `negative_contrast` is 81.0% (strict 82.9%; headline 87.0%) and the region cue 66–70% (headline
-   75–78%); the blind tasks sit near 100% and dilute the drop.
+   75–78%; **region numbers withdrawn, E1**); the blind tasks sit near 100% and dilute the drop.
 3. **Task 4 is blind to what the location says, not to the sentence.** It ignores a swapped location
    but drops to 2/5 when the location is removed or the sentence is (partly) in Chinese, so its
    successes depend on the prompt keeping its trained form.
@@ -2194,8 +2347,10 @@ either definition, so their numbers stand as reported.
 Caveats: both the classification and the `no_location` check rest on 5 trials/task (task 3 at 4/5,
 task 8 at 1/5 and task 4's 2/5 are the closest calls); promoting `target_swap` and `no_location` to
 50-trial splits would firm it up. The classification is defined in the stock 2-bowl scene and is not
-applied to the 3-bowl scene conditions (§9.3), whose layouts differ. Whether OpenVLA has blind tasks
-is unknown: neither screen has been run on it.
+applied to the 3-bowl scene conditions (§9.3), whose layouts differ. OpenVLA has no blind tasks in
+this sense: batch D below shows every task where it fails `target_swap` also fails `no_location`, so
+the adjustment applies to pi05 only.
+
 **Batch D** (`target_swap` and `no_location` on both OpenVLA checkpoints, `berkeley` GPU 1, openvla
 `62487f7`, 2026-10-10 UTC: official 17:53 → 19:27; ours 19:28 → 21:41, including its own
 `screen_default` so both checkpoints have a same-budget baseline):
@@ -2238,9 +2393,10 @@ Per-task successes out of 5 (ours / official / pi05), with the bowl `target_swap
 4. **What this says about `negation_only`.** For OpenVLA, a policy that goes where the location words
    point would take the negated bowl, which fits its 2.6% (ours) and 2% (official). pi05 has two
    routes, language-blind on four tasks (where it passes) and location-following on the rest (where it
-   fails), which fits its bimodal 44.8%. Neither reading is checked rollout by rollout: these runs log
-   success only, not which bowl reached the plate. openvla PR #3's outcome logging (merged as
-   `1e8544e`) is what the full 50-trial `target_swap` / `no_location` runs use, and those can check it.
+   fails), which fits its bimodal 44.8%. Neither reading was checked rollout by rollout at the time: these
+   runs log success only, not which bowl reached the plate. openvla PR #3's outcome logging (merged as
+   `1e8544e`) is what the full 50-trial `target_swap` / `no_location` runs use. pi05's reading is now
+   observed, in the batch E re-run with logging (below); OpenVLA's `negation_only` is still unlogged.
 
 Results: `results/libero_spatial--{screen_default,target_swap,no_location}--openvla-7b-libero-spatial-lora-r32--screen.jsonl`
 and `--openvla-official-libero-spatial--screen.jsonl` (`berkeley`; in the HF mirror).
@@ -2283,7 +2439,7 @@ pi05_libero per task (successes out of 50; the screen's out of 5 in brackets):
    the named bowl under `target_swap` and its `negation_only` success add up to about 1 (0.90–1.22,
    r = −0.98, p < 10⁻⁶): it fails a negation exactly as often as it follows a location. This is
    inferred from success rates of two separate conditions; these pi05 runs do not log which bowl was
-   delivered.
+   delivered (the re-run below does, and confirms it).
 3. **Without the location, the shared-layout pair falls below chance.** `no_location` keeps 94% on the
    blind tasks and 90.5% on tasks 1, 3, 5, 6, but 38/100 (95% CI 29–48%) on tasks 7 and 9, whose
    layouts are identical. Both tasks are low (36%, 40%), so pi05 is not defaulting to one bowl; part of
@@ -2350,3 +2506,71 @@ i.e. the other bowl under `target_swap` and the trained target under `no_locatio
 Results: `results/libero_spatial--target_swap--{openvla-official-libero-spatial,openvla-7b-libero-spatial-lora-r32}--shard{0,1}of2.jsonl`
 (`berkeley:~/vla_ws_e`) and `results/libero_spatial--no_location--{…}--shard{0..3}of4.jsonl`
 (`berkeley-2:~/vla_ws_e`); all in the HF mirror.
+
+**Batch E re-run: pi05 with which-bowl logging** (2026-10-11, `berkeley`, openvla `1e8544e`, seed 7,
+4 shards on GPUs 0–3, run note `pi05_libero--whichbowl`; launch details: `eval_log.md` 2026-10-11 pi05
+re-run). The same candidate JSONs and `spatial/negation_only`, 50 trials/task, 1,500 rollouts; every row
+carries the outcome fields (`target_object`, `bowls_on_plate`, `first_bowl_approached`,
+`first_bowl_grasped`, …). "Named" is the bowl the run scores on, as in the OpenVLA table above:
+the bowl the sentence names under `target_swap`, the trained target under `no_location` and
+`negation_only`. "Other" is the remaining bowl.
+
+| Condition | Success | Failures | Other delivered | Other lifted only | Named lifted, not delivered | No grasp: approached other first | No grasp: approached named first | No grasp: approached neither |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| `target_swap` | 56.8% (284) [56.8%] | 216 | 188 | 19 | 2 | 4 | 0 | 3 |
+| `no_location` | 80.4% (402) [81.4%] | 98 | 53 | 5 | 9 | 0 | 4 | 27 |
+| `negation_only` | 43.4% (217) [44.8%] | 283 | 255 | 6 | 15 | 0 | 6 | 1 |
+
+(Bracketed: the success-only run of the same condition. `target_swap` is identical; the other two differ
+by 1.0 and 1.4 pts, i.e. 5 and 7 rollouts out of 500, which is sampling noise at one seed.)
+
+Per task (counts out of 50). `target_swap`: the sentence's named bowl delivered. `negation_only`: trained
+bowl delivered / the other bowl delivered. `no_location`: trained bowl delivered / other bowl delivered /
+no grasp.
+
+| id | Class | `target_swap` named delivered | `negation_only` trained / other | `no_location` trained / other / no grasp |
+|--:|---|--:|--:|--:|
+| 0 | blind | 0 | 50 / 0 | 50 / 0 / 0 |
+| 2 | blind | 2 | 48 / 2 | 50 / 0 / 0 |
+| 4 | blind (form-sensitive) | 0 | 44 / 0 | 38 / 0 / 11 |
+| 8 | blind | 7 | 35 / 8 | 49 / 0 / 0 |
+| 1 | following | 49 | 1 / 45 | 40 / 3 / 3 |
+| 3 | following | 29 | 30 / 16 | 48 / 0 / 0 |
+| 5 | following | 49 | 3 / 46 | 47 / 3 / 0 |
+| 6 | following | 50 | 6 / 42 | 44 / 5 / 0 |
+| 7 | following, shared layout | 48 | 0 / 46 | 18 / 19 / 11 |
+| 9 | following, shared layout | 50 | 0 / 50 | 18 / 23 / 6 |
+
+**Reading (batch E re-run, pi05).**
+
+1. **`negation_only` is observed to fail by delivering the bowl the sentence points at.** 255 of 500
+   rollouts deliver the other bowl, 245 of them on tasks 1, 3, 5, 6, 7, 9. Paired on (task, episode) with
+   the `target_swap` run, 251 of those 255 are rollouts in which `target_swap` also put that same bowl
+   on the plate; across all 500 pairs the same bowl is on the plate in 431. The inferred "negated phrase
+   acts as a pointer" (finding 27) is therefore an observation: pi05 goes to the place named and drops
+   "not".
+2. **The blind tasks are layout-driven in the delivery, not just the score.** On tasks 0, 2, 4, 8,
+   `target_swap` delivers the trained bowl in 168/200 rollouts (the named bowl in 9) and `negation_only`
+   the trained bowl in 177/200 (the other bowl in 10). The sentence changes which bowl is delivered on
+   those four tasks in under 5% of rollouts.
+3. **`no_location` on tasks 7 and 9 is a split, not a default.** Out of 100 rollouts: 36 deliver the
+   trained bowl, 42 the other one, 17 grasp nothing. The first bowl approached is also split (task 7:
+   18 / 21 / none 11; task 9: 19 / 25 / none 6). With the shared layout and no location pi05 neither
+   defaults to one bowl nor stalls: of the 78 rollouts that deliver, 46% deliver the trained bowl, about a
+   coin toss. The 38% from the success-only run is that coin toss plus the 17 non-starts.
+4. **pi05 almost always commits to a bowl.** Failures without any grasp are 7, 31 and 7 of 500 for
+   `target_swap`, `no_location` and `negation_only`, against 79–94 of 500 approaching neither bowl for
+   OpenVLA's `target_swap` and 327–368 for its `no_location` (table above). 27 of pi05's 31 `no_location`
+   no-grasp rollouts approach neither bowl, 24 of them on tasks 4, 7 and 9. pi05's failures are
+   wrong-bowl deliveries (188 / 53 / 255 of 216 / 98 / 283 failures); OpenVLA's are non-starts. That is
+   finding 26's "two routes", now seen in the failure categories.
+5. **Task 8 under `target_swap` fails differently from the other blind tasks.** Of its 50 rollouts, 26
+   deliver the trained bowl, 15 lift it without delivering (15 of the condition's 19 `other lifted
+   only` rollouts) and 7 deliver the named bowl (against 0–2 on tasks 0, 2, 4). It is the one blind
+   task where the sentence sometimes wins, and where the trained route itself often fails to finish.
+6. **Task 3 is a mixture per rollout.** `target_swap` delivers the named bowl in 29 and the trained one
+   in 19; `negation_only` delivers the trained bowl in 30 and the other in 16. Neither condition is
+   dominated by one route there.
+
+Results: `results/libero_spatial--{target_swap,no_location,negation_only}--pi05_libero--whichbowl--shard{0..3}of4.jsonl`
+(`berkeley:~/vla_ws_e`; in the HF mirror). `--whichbowl-smoke` is the 1-rollout check, not a result.
