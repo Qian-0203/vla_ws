@@ -29,6 +29,10 @@ vla_ws/                    <- THIS repo. Docs, config, docker orchestration. No 
                                 ("Servers & environments reference", maintained in place)
   docs/mechanistic_localization.md   mechanistic-localization probe: design, runs §8.9+, current
                                 conclusion (update after every probe run)
+  docs/pi05_language_weakness.md, docs/openvla_language_weakness.md   cross-condition
+                                language-weakness analyses per policy (figures in docs/figures/, script
+                                scripts/language_stress/language_weakness_figures.py; numbers trace to
+                                benchmark_split_result.md)
   config/                      machine profiles (laptop.env, server.env.example)
   docker/openvla_libero/       Dockerfiles + run_eval.sh (the one eval launcher)
   scripts/                     run_benchmark.sh (all current splits), aggregate_results.py, preflight.py

@@ -67,8 +67,8 @@ task, and π0.5's prompt robustness is that, not better grounding.
 | `negation_only` | 2% (−80) | 44% (−56) |
 | `translate_zh` | 0% (−82) | 78% (−22) |
 | `noun_synonym` | 62% (−20) | 88% (−12) |
-| `target_swap` | — | 60% (−40) |
-| `no_location` | — | 82% (−18) |
+| `target_swap` | 52% (−30) | 60% (−40) |
+| `no_location` | 20% (−62) | 82% (−18) |
 | `negation_swap` | 0% (−82) | 0% (−100) |
 | `negation_except` | 6% (−76) | 44% (−56) |
 | `negation_other` | 8% (−74) | 46% (−54) |
@@ -76,7 +76,9 @@ task, and π0.5's prompt robustness is that, not better grounding.
 | `functional_landmark` | 30% (−52) | 87.5% (−12.5) |
 | `code_switch` | 4% (−78) | 80% (−20) |
 
-Results: `results/libero_spatial--<candidate>--{openvla-official-libero-spatial,pi05_libero}--screen.jsonl`
+Our checkpoint (r32) on the same budget: `screen_default` 82%, `target_swap` 54%, `no_location` 10%.
+
+Results: `results/libero_spatial--<candidate>--{openvla-official-libero-spatial,openvla-7b-libero-spatial-lora-r32,pi05_libero}--screen.jsonl`
 (HF mirror `Qian0203/vla_ws-eval-results`). Launch details: `docs/eval_log.md`, 2026-10-10.
 
 **Promoted:** `negation_only` → `spatial/negation_only` (openvla `62487f7`). `make_candidates.py`
