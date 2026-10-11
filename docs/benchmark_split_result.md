@@ -2177,8 +2177,10 @@ either definition, so their numbers stand as reported.
 Caveats: both the classification and the `no_location` check rest on 5 trials/task (task 3 at 4/5,
 task 8 at 1/5 and task 4's 2/5 are the closest calls); promoting `target_swap` and `no_location` to
 50-trial splits would firm it up. The classification is defined in the stock 2-bowl scene and is not
-applied to the 3-bowl scene conditions (§9.3), whose layouts differ. Whether OpenVLA has blind tasks
-is unknown: neither screen has been run on it.
+applied to the 3-bowl scene conditions (§9.3), whose layouts differ. OpenVLA has no blind tasks in
+this sense: batch D below shows every task where it fails `target_swap` also fails `no_location`, so
+the adjustment applies to pi05 only.
+
 **Batch D** (`target_swap` and `no_location` on both OpenVLA checkpoints, `berkeley` GPU 1, openvla
 `62487f7`, 2026-10-10 UTC: official 17:53 → 19:27; ours 19:28 → 21:41, including its own
 `screen_default` so both checkpoints have a same-budget baseline):
