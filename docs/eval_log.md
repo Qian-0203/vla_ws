@@ -1321,6 +1321,73 @@ batch D, §6 finding 26.
 
 ---
 
+## 2026-10-11 — Full 50-trial `target_swap` / `no_location` (batch E): pi05 done, both OpenVLA checkpoints running
+
+Promotes the two layout-reliance screens (batches 2 and D) to the full 50 trials/task, so the
+blind/following task classification (`benchmark_split_result.md` §12) no longer rests on 5 trials.
+Same candidate JSONs (`screening/language_stress/candidates/{target_swap,no_location}.json`, sha256
+`3cccd982…` / `5df13c4f…`), run through `run_eval.sh --instruction_file`, seed 7, image
+`openvla-libero:blackwell` / sdpa / bf16. Run notes without `--screen`, so no file is shared with the
+screens.
+
+- **pi05_libero** (`berkeley-2`, `~/run_full_pi05_e.sh`, log `~/logs/full_pi05_e.log`): two policy
+  servers started with `GPUS=0,3 scripts/serve_openpi.sh` (ports 8000/8001), eval sharded over the same
+  GPUs, openvla `62487f7` (success only). `target_swap` 2026-10-10 19:19 → 19:51 UTC, `no_location`
+  19:51 → 20:17 UTC; script exited 0, results synced, both servers stopped. **`target_swap` 56.8%**
+  (284/500), **`no_location` 81.4%** (407/500). The first launch failed before any rollout: `uv` is not
+  on the non-interactive PATH, so the script now prepends `~/.local/bin`.
+- **Both OpenVLA checkpoints** run on openvla `1e8544e` (openvla PR #3, per-rollout outcome logging:
+  `target_object`, `bowls_on_plate`, `first_bowl_approached`, `first_bowl_grasped`, …) from a separate
+  workspace `~/vla_ws_e` on each server (git worktree of `~/vla_ws` at `ecfb6f9` with openvla checked
+  out at `1e8544e`; checkpoints mounted read-only from `~/vla_ws/openvla/checkpoint/`), so the batch-D
+  screens running in `~/vla_ws` kept `62487f7`.
+  - `target_swap`, `berkeley` (GPUs shared with other users at 96–99% load): official checkpoint on
+    GPUs 0,2 from 2026-10-10 19:27 UTC, ours on GPUs 1,2 from about 21:42 UTC (after its batch-D screen).
+  - `no_location`, both checkpoints in parallel on `berkeley-2` GPUs 0 and 3, 4 shards each
+    (`GPUS=0,3,0,3`), from about 22:45 UTC (`~/run_full_nl_b2_e.sh`, logs `~/logs/full_nl_{official,r32}_b2.log`).
+    Moved here from `berkeley`, where it was queued after `target_swap`, to finish sooner; the
+    `berkeley` wrappers were stopped after their `target_swap` runs started and `~/watch_ts_e.sh` waits
+    for those runs and syncs. Shard files are `--shardXof4` (`no_location`) and `--shardXof2`
+    (`target_swap`), so the two machines never write the same file name.
+  - A relaunch on `berkeley` at about 19:20 UTC ran `pkill -f run_full_…`, which also matched the ssh
+    shell issuing it and cut that command short; only this batch's own waiting scripts were stopped,
+    and the batch-D screen processes were untouched. Relaunched by PID.
+- **Results:** pi05 `results/libero_spatial--{target_swap,no_location}--pi05_libero--shard{0,1}of2.jsonl`
+  (`berkeley-2:~/vla_ws`); OpenVLA under `~/vla_ws_e/openvla/experiments/logs/results/` on each server,
+  run notes `openvla-official-libero-spatial` and `openvla-7b-libero-spatial-lora-r32`. All mirrored to
+  the HF dataset (pi05 at the end of its run, OpenVLA every 30 min). Detail: `benchmark_split_result.md`
+  §12 batch E, finding 27.
+
+**Status:** open. The OpenVLA results get added to this entry's follow-up.
+
+---
+
+## 2026-10-11 — Batch E finished: OpenVLA full `target_swap` / `no_location` (both checkpoints)
+
+Follow-up to the batch E entry above (whose status line reads "open"); same scripts, workspaces and run
+notes. All four runs completed their full 500 rollouts and exited 0.
+
+- **`target_swap`** (`berkeley`, `~/watch_ts_e.sh` log `~/logs/watch_ts_e.log`): official checkpoint
+  2026-10-10 19:27 → 23:14 UTC, **57.2%** (286/500); ours 21:42 → 2026-10-11 01:16 UTC, **62.0%**
+  (310/500).
+- **`no_location`** (`berkeley-2`, `~/run_full_nl_b2_e.sh`, logs `~/logs/full_nl_{official,r32}_b2.log`,
+  final line `FULL NL B2 E DONE official=0 r32=0`): both 2026-10-10 22:45 → 2026-10-11 02:21 UTC;
+  official **17.6%** (88/500), ours **11.8%** (59/500).
+- **Outcome logging worked on every rollout** (all 2,000 rows carry `target_object`, `bowls_on_plate`,
+  `first_bowl_approached`, `first_bowl_grasped`). The run metadata records `openvla_git_commit: null`:
+  the container could not read the git metadata of the `~/vla_ws_e` worktree. The code was openvla
+  `1e8544e`, checked on the host before launch.
+- **Headline:** OpenVLA delivers the trained, unnamed bowl in only 11 / 8 of 500 `target_swap`
+  rollouts (no layout-driven tasks), and 79% / 83% of `no_location` failures approach neither bowl (no
+  layout fallback). Detail: `benchmark_split_result.md` §12 batch E, finding 28.
+- **Results:** `~/vla_ws_e/openvla/experiments/logs/results/` on each server (`target_swap` shards
+  `0,1of2` on `berkeley`, `no_location` shards `0..3of4` on `berkeley-2`), all in the HF mirror. The
+  separate workspaces `~/vla_ws_e` on both servers are left in place.
+
+**Status:** done; closes the batch E entry above.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 `spatial/negation_only` (authored 2026-10-10): run for OpenVLA and `pi05_libero` (2026-10-11 entry);
