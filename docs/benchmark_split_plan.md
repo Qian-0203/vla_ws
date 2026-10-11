@@ -29,7 +29,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | 1. Prompt Sensitivity | Does naming/negating a distractor in the prompt help or hurt? | 3/3 conditions implemented, plus 2 length controls (authored 2026-10-01, run 2026-10-01) |
 | 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` and `semantic` each redefined a second time (see Split 2 below) -- both current suites run 2026-08-27, 85.2% each |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
-| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`); 4c: `grounding/target_cue_proximity_novel`. All run. 4b/4c paraphrase controls (7 conditions) authored and run 2026-10-01 (`benchmark_split_result.md` §5.5) |
+| 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`); 4c: `grounding/target_cue_proximity_novel`. All run. 4b/4c paraphrase controls (7 conditions) authored and run 2026-10-01 (`benchmark_split_result.md` §5.5). **Erratum E1 (2026-10-11): the three region-cue conditions (`target_cue_region`, `_v2`, `_v3`) used swapped-axis direction words and are withdrawn; corrected `*_img` conditions are authored, not run** |
 | VLM Bowl-Pointing / Bowl-Attraction Probes (§11, not a `SPLITS` entry) | Is the distractor-mention collapse (Splits 1/2) a grounding failure or an action-decoding failure? | Standalone diagnostic scripts, run directly — not registered in `eval_registry.py`. Both probes run to completion on their respective batteries; open gaps listed in §11.3 |
 
 "Implemented" = task suite + prompts exist in the registry and can be run with one `run_eval.sh`
@@ -143,6 +143,13 @@ different failure mode:
 For several tasks `irrelevant` and `semantic` land on the *same coordinate* (e.g. task 0's
 `next_to_box_region`) — the two conditions are distinguished by *why* that region was chosen (least-
 crowded neutral spot vs. deliberately a named non-target landmark), not by geometry alone.
+
+**Axis orientation (confirmed against the renders 2026-10-11; see `benchmark_split_result.md`
+Erratum E1).** In the image the policy sees, **+x points toward the camera (front of the table) and
++y points to the image right**; −x is toward the robot base (back) and −y is image-left. The
+robot-facing frame therefore has its left on +y. Earlier text in this plan assumed "+x = right,
++y = back"; that was wrong and is corrected below. All left/right/front/back words in prompts should
+be written in the image frame (left/right as seen; back = toward the robot base).
 
 **Bowl coordinates** (all ranges are `[x1,y1]`–`[x2,y2]` meters relative to `main_table`'s
 origin; shared region catalog, identical across suites unless noted):
@@ -345,6 +352,12 @@ was already checked against):
 | `target_cue_region` | 0, 1, 3, 5, 6, 7, 8, 9 (landmark- and surface-family tasks; excludes task 2 — already native region — and task 4, containment) | table-zone description instead of the native landmark/surface phrasing |
 | `target_cue_landmark` | 3, 5, 7, 9 (surface-family tasks only; landmark-family tasks already use this cue natively, region-family task 2 has no nearby nameable object) | "next to `<the object the bowl rests on>`" instead of "on `<object>`" |
 
+> ⚠ **Erratum E1 (2026-10-11): the table below is the WRONG-AXIS wording that was run in
+> 2026-09/10 and is withdrawn.** It was derived from the assumption "+x = robot-right, +y =
+> table-back", which the renders show is swapped (+x = front, +y = image-right). 7 of its 8 tasks
+> describe the wrong place (only task 3 is true). The corrected wording follows this table. Results
+> from the old wording are not region-cue results; see `benchmark_split_result.md` Erratum E1.
+
 Proposed instruction text (region-zone wording derived from each region's `(x,y)` sign in the
 shared catalog above — positive x = robot-right, positive y = table-back, inferred from the
 relative positions of `stove_region`/`cabinet_region`/`box_region` vs. `ramekin_region`/
@@ -361,6 +374,27 @@ checklist item below):
 | 7 | on the stove | at the front-left of the table | next to the stove |
 | 8 | next to the plate | at the far back of the table | — (already landmark) |
 | 9 | on the wooden cabinet | at the front of the table, just right of center | next to the wooden cabinet |
+
+**Corrected `target_cue_region_img` wording (image frame; authored 2026-10-11, not yet run).** Same
+zones, same task subset (0, 1, 3, 5–9), direction words checked against the rendered init states
+(`docs/figures/region_wording_check.png`, `scripts/check_region_wording.py`: 8/8 tasks). Only the
+direction words change; task 3 is unchanged. `_v2_img` / `_v3_img` keep the v2 ("... area/part of
+the table") and v3 (side-first) styles; all three live in `instructions.py`.
+
+| id | native target phrase | where the bowl is (image) | `target_cue_region_img` (v1) |
+|--:|---|---|---|
+| 0 | between the plate and the ramekin | back half, right of center | at the back of the table, just right of center |
+| 1 | next to the ramekin | far right, toward the back | at the far back-right of the table |
+| 3 | on the cookie box | center | near the center of the table |
+| 5 | on the ramekin | right side, toward the back | at the back-right of the table |
+| 6 | next to the cookie box | front, slightly left | at the front of the table, just left of center |
+| 7 | on the stove | back-left (next to robot base) | at the back-left of the table |
+| 8 | next to the plate | far right, mid-depth | at the far right of the table, midway between front and back |
+| 9 | on the wooden cabinet | far left edge (cabinet top) | at the far left of the table |
+
+Task 9's bowl sits on top of the cabinet at the left edge of the table, so "of the table" is a loose
+description and its depth is left unstated on purpose; task 0's bowl is mid-back rather than at the
+very back.
 
 **Metrics:**
 
@@ -393,7 +427,7 @@ conditions **must** be run with `--task_ids` restricted to their covered subset 
 and `3 5 7 9`) — `run_libero_eval.py` asserts `task.name in instruction_map` and does not skip
 missing tasks, so running the full 10-task suite would hard-fail on tasks 2/4 (region_cue) or
 0/1/2/4/6/8 (landmark_cue). Still needed before this is "run" per this doc's own bar: (i) sanity-
-check the region-zone directional wording against a render (see §9), (ii) merge/deploy the branch,
+check the region-zone directional wording against a render (see §9; done 2026-10-11, it failed: Erratum E1), (ii) merge/deploy the branch,
 (iii) launch via `run_eval.sh --split grounding/target_cue_region --task_ids 0 1 3 5 6 7 8 9` and
 the analogous command for `grounding/target_cue_landmark`.
 
@@ -470,8 +504,8 @@ to `spatial/default`.
 |---|---|---|---|--:|
 | `paraphrase_lexical` | same cue, one synonym swap / argument reorder | "on top of the ramekin"; task 1: "beside the ramekin"; task 0: "between the ramekin and the plate" | 0–9 | 500 |
 | `paraphrase_syntactic` | same cue, native words, relative clause | "that is on the ramekin" | 0–9 | 500 |
-| `target_cue_region_v2` | region cue, 2nd wording (same zones as `target_cue_region`) | "in the back-left area of the table" | 0,1,3,5–9 | 400 |
-| `target_cue_region_v3` | region cue, 3rd wording (side-first) | "on the left side of the table, toward the back" | 0,1,3,5–9 | 400 |
+| `target_cue_region_v2` (withdrawn, E1; corrected: `_v2_img`) | region cue, 2nd wording (same zones as `target_cue_region`) | "in the back-left area of the table" | 0,1,3,5–9 | 400 |
+| `target_cue_region_v3` (withdrawn, E1; corrected: `_v3_img`) | region cue, 3rd wording (side-first) | "on the left side of the table, toward the back" | 0,1,3,5–9 | 400 |
 | `target_cue_proximity_beside` | novel proximity synonym | "beside the ramekin" | 3,5,7,9 | 200 |
 | `target_cue_proximity_near` | novel proximity synonym | "near the ramekin" | 3,5,7,9 | 200 |
 | `target_cue_proximity_adjacent` | novel proximity synonym | "adjacent to the ramekin" | 3,5,7,9 | 200 |
@@ -482,12 +516,12 @@ middle of the table"; task 4 "in" -> "inside"; tasks 1/6/8 "next to" -> "beside"
 so this condition also bounds how much of that drop comes from the target rewording rather than
 the added clause. `paraphrase_syntactic`'s only extra edit is task 2's "from table center" -> "that
 is at table center". The region variants reuse `target_cue_region`'s zone per task, so they inherit
-its truthfulness check. All four proximity synonyms ("close to", "beside", "near", "adjacent to")
+its truthfulness check (**E1: and its error: those zones were mislabeled, so the old v2/v3 are not truthful either**). All four proximity synonyms ("close to", "beside", "near", "adjacent to")
 appear in none of the 10 native prompts.
 
 ```
 Same-cue Paraphrase Drop = SR(default) - SR(paraphrase_{lexical,syntactic})
-Cue-type Drop (excess)   = SR(paraphrase_lexical) - SR(target_cue_region*)       [same tasks]
+Cue-type Drop (excess)   = SR(paraphrase_lexical) - SR(target_cue_region*)       [same tasks; E1: only meaningful with the `_img` wording]
 Familiarity Gap (robust) = mean over 4 novel synonyms of SR(novel) - SR(target_cue_landmark)
 ```
 
@@ -503,7 +537,7 @@ the `--task_ids` listed above.
 explicitly optional follow-on, not part of 4b's core design: a full truthful 3x3 would need a
 purpose-built pilot scene (e.g. relocating `cookies_1` adjacent to `ramekin_region` so a single
 bowl sitting on the cookie box is simultaneously "on the cookie box" (surface), "next to the
-ramekin" (landmark), and "at the back-left of the table" (region) — all exactly true at once,
+ramekin" (landmark), and "at the back-right of the table" (region; the 2026-10 text said back-left, which was the E1 error) — all exactly true at once,
 for both target and distractor). That's new-geometry work at the same scope as Split 2's
 unauthored `path` distractor (§9) — a new per-task numeric region, not reusable from the shared
 catalog, needing `gen_suite_init_states.py` + `verify_suite_init_states.py` + a contact-sheet
@@ -574,7 +608,7 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
    metrics — is written up in Split 4's 4b section above; the two instruction dicts and two
    `SPLITS`/`CONDITIONS` entries are implemented on `openvla` `main`
    (merged from `worktree-split4-target-cue-probe`). The pre-run checklist, kept for the record: (i)
-   sanity-check the inferred region-zone directional wording (back-left, front-right, etc.)
+   sanity-check the inferred region-zone directional wording (back-left, front-right, etc.) — **done 2026-10-11 after the runs: the wording failed (Erratum E1)**;
    against `libero_spatial`'s existing contact sheet (`LIBERO/scratch_render/libero_spatial/`) —
    those phrasings were derived from BDDL coordinate signs, not confirmed visually; (ii) merge the
    branch; (iii) launch both conditions with `--task_ids` restricted per their `SPLITS`

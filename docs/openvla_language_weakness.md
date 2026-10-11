@@ -27,6 +27,9 @@ assumption: the two tasks share one layout with the target swapped, for every po
 
 ![OpenVLA official heatmap](figures/openvla_official_language_heatmap.png)
 
+> ⚠ Erratum E1: this figure still contains the withdrawn `target_cue_region` row(s); ignore them. The figure script no longer draws them and needs a re-run where the raw results exist.
+
+
 ## 1. Summary
 
 1. **OpenVLA's main weakness is surface form, not meaning.** Content-free filler costs it 12–26 pts on
@@ -39,10 +42,10 @@ assumption: the two tasks share one layout with the target swapped, for every po
 3. **Chinese gives 0%, code-switching 1/50**, on every task. pi05 stays at 78–80% by falling back on the
    layout. OpenVLA never had a layout fallback: with the location removed it scores 11.8–17.6%, and
    79–83% of those failures never approach either bowl (§2a).
-4. **Region cues, distractor mentions and self-correction** cost OpenVLA 50–70 pts, far more than pi05,
-   and reach 0–10% on the mirror pair.
-5. **Shared with pi05:** exclusion (0–1% on the mirror pair for both), region cues being the worst cue
-   type, the "next to X" familiarity penalty, and distractor-mention losses concentrated on tasks 5 and
+4. **Distractor mentions and self-correction** cost OpenVLA 50–70 pts, far more than pi05, and reach
+   0–10% on the mirror pair. (~~Region cues~~ withdrawn: E1, the region prompts named the wrong place.)
+5. **Shared with pi05:** exclusion (0–1% on the mirror pair for both), ~~region cues being the worst cue
+   type~~ (withdrawn, E1), the "next to X" familiarity penalty, and distractor-mention losses concentrated on tasks 5 and
    9. **OpenVLA only:** sensitivity to content-free text, to lexical paraphrase, and to non-English.
 6. **OpenVLA follows the sentence's location, never the layout** (§2a). Told to fetch the other bowl,
    it delivers the trained bowl in 8–11 of 500 rollouts; pi05 does so on four whole tasks.
@@ -142,7 +145,10 @@ single tasks hard: task 2 "from the middle of the table" 44% (ours) / 70% (offic
   (§2a). What makes tasks 0, 2, 4, 8 resist distractor words is still open.
 - `self_correction` zeroes tasks 1, 2, 5 and 9; the same tasks fail under distractor mention.
 
-### 3.4 O4 — Region cues: content-specific and total on the mirror pair
+### 3.4 O4 — Region cues: content-specific and total on the mirror pair (WITHDRAWN, Erratum E1)
+
+> ⚠ **Erratum E1 (2026-10-11): this section is withdrawn. The mirror pair is tasks 7 and 9, the two tasks whose region wording was most wrong (stove "front-left" for a back-left bowl; cabinet "front, just right of center" for a far-left bowl). A 0/100 result there measures a false instruction, not a blind spot for region words. The corrected `target_cue_region_img` conditions are authored and not run; until they are, there is no valid region-cue claim for this checkpoint beyond task 3 (84% → 28–38%, true wording).** See `benchmark_split_result.md`, Erratum E1.
+
 
 `target_cue_region` 15.0% (official) / 17.0% (ours), against 51–64% for the length controls. The mirror
 pair is 0/100 on both checkpoints in every wording (ours v3: 1/100). pi05 has its worst prompt-type
@@ -175,6 +181,9 @@ appears to recall their motions.
 
 ![Mirror pair, pi05 vs OpenVLA](figures/mirror_pair_pi05_vs_openvla.png)
 
+> ⚠ Erratum E1: this figure still contains the withdrawn `target_cue_region` row(s); ignore them. The figure script no longer draws them and needs a re-run where the raw results exist.
+
+
 | Kind of change | OpenVLA official | pi05 | Shared weakness? |
 |---|--:|--:|---|
 | None (default) | 77% | 98% | — |
@@ -185,13 +194,13 @@ appears to recall their motions.
 | Noun synonym * | 3/10 | 8/10 | both, OpenVLA larger |
 | Distractor mentioned (positive / negative contrast) | 3 / 7% | 89 / 75% | both, OpenVLA far larger |
 | Self-correction * | 1/10 | 3/10 | **both** |
-| Region cue | 0% | 25% | **both** |
+| ~~Region cue~~ (withdrawn, E1) | ~~0%~~ | ~~25%~~ | ~~both~~ |
 | Chinese / code-switch * | 0 / 0 of 10 | 3 / 4 of 10 | both on the mirror pair; only OpenVLA elsewhere |
 | Exclusion (`negation_only` *) | 0/10 | 0/10 | **both, total** |
 
 Reading: pi05 removed OpenVLA's dependence on exact wording, but not its inability to compose
-exclusion, to ground table-region words, or to handle a retracted reference. Those three are the
-benchmark's model-independent language failures so far.
+exclusion or to handle a retracted reference. Those two are the benchmark's model-independent
+language failures so far. (The earlier third, grounding table-region words, is withdrawn: E1.)
 
 ## 5. Our checkpoint against the official one
 
@@ -202,7 +211,7 @@ benchmark's model-independent language failures so far.
 | `paraphrase_lexical` | 79.0% | 72.4% | 0.70 |
 | `positive_contrast` | 32.8% | 32.4% | 0.83 |
 | `negative_contrast` | 42.4% | 36.8% | 0.83 |
-| `target_cue_region` | 15.0% | 17.0% | 0.84 |
+| ~~`target_cue_region`~~ (withdrawn, E1) | ~~15.0%~~ | ~~17.0%~~ | ~~0.84~~ |
 
 Both default to 84.0%. The checkpoints differ by at most 7 pts per condition and fail on the same
 tasks.
@@ -222,10 +231,10 @@ tasks.
 1. ~~`target_swap` and `no_location` on both OpenVLA checkpoints.~~ Done at 50 trials/task with
    which-bowl logging (§2a): no layout-driven tasks, no layout fallback.
 2. With the which-bowl logging now merged (openvla `1e8544e`), re-run `negation_only` and
-   `target_cue_region` on the mirror pair for OpenVLA and pi05 together: wrong bowl vs. no commitment
+   `target_cue_region_img` (corrected wording, E1) on the mirror pair for OpenVLA and pi05 together: wrong bowl vs. no commitment
    is the open question for every shared weakness in §4.
 3. Run the bowl-attraction probe on the length controls (open since §8.6) to confirm whether the
    mirror-pair filler collapse is the same "never commits" mode.
-4. Shared failures (exclusion, region cue, self-correction) are the candidates for model-independent
+4. Shared failures (exclusion, self-correction; region cue once `_img` is run) are the candidates for model-independent
    benchmark splits; `negation_swap` and a mirror-pair-only `self_correction` run are the cheapest next
    promotions.
