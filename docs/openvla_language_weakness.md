@@ -17,11 +17,12 @@ Figures: `docs/figures/openvla_official_language_heatmap.png`,
 | Official | Language-stress screen, batches 1 and 3 (2026-10-10, jsonl) | 10 candidates, 5 trials/task | 480 |
 | LoRA (ours) | HF mirror jsonl, 2026-10-01 → 10-10 | 10 conditions incl. `negation_only` | 3,900 |
 | LoRA (ours) | Per-task tables in `benchmark_split_result.md` (pre-jsonl runs) | `default`, contrasts, region, landmark, "close to" | — |
+| Both | Full `target_swap` + `no_location` with which-bowl logging (batch E, 2026-10-10/11) | 2 conditions, 50 trials/task | 2 × 1,000 |
 
-**Not run on any OpenVLA checkpoint:** `target_swap` and `no_location`, the two probes that split pi05's
-tasks into layout-driven and language-read. So OpenVLA's own task grouping is unknown. The group columns
-below use pi05's grouping as fixed task sets (0/2/4/8, 1/3/5/6, 7/9) for a like-for-like comparison,
-not as a claim about how OpenVLA uses the layout. The **mirror pair (tasks 7/9)** needs no such
+**OpenVLA has no layout-driven tasks** (added 2026-10-11, §2a below). The full `target_swap` and
+`no_location` runs show it follows the named location on every task and does not act without one. The
+group columns below therefore use pi05's grouping as fixed task sets (0/2/4/8, 1/3/5/6, 7/9) for a
+like-for-like comparison only. The **mirror pair (tasks 7/9)** needs no such
 assumption: the two tasks share one layout with the target swapped, for every policy.
 
 ![OpenVLA official heatmap](figures/openvla_official_language_heatmap.png)
@@ -36,14 +37,16 @@ assumption: the two tasks share one layout with the target swapped, for every po
    tasks; OpenVLA fails those too. The drop is far larger than OpenVLA's own surface-form cost (length
    controls keep 51–64%), so it is content-specific.
 3. **Chinese gives 0%, code-switching 1/50**, on every task. pi05 stays at 78–80% by falling back on the
-   layout. OpenVLA has no such fallback when it does not recognise the instruction, or never had a
-   layout fallback to begin with; `no_location` would tell which.
+   layout. OpenVLA never had a layout fallback: with the location removed it scores 11.8–17.6%, and
+   79–83% of those failures never approach either bowl (§2a).
 4. **Region cues, distractor mentions and self-correction** cost OpenVLA 50–70 pts, far more than pi05,
    and reach 0–10% on the mirror pair.
 5. **Shared with pi05:** exclusion (0–1% on the mirror pair for both), region cues being the worst cue
    type, the "next to X" familiarity penalty, and distractor-mention losses concentrated on tasks 5 and
    9. **OpenVLA only:** sensitivity to content-free text, to lexical paraphrase, and to non-English.
-6. **Both checkpoints show the same profile.** Per-task drops correlate at r = 0.70–0.84 across the
+6. **OpenVLA follows the sentence's location, never the layout** (§2a). Told to fetch the other bowl,
+   it delivers the trained bowl in 8–11 of 500 rollouts; pi05 does so on four whole tasks.
+7. **Both checkpoints show the same profile.** Per-task drops correlate at r = 0.70–0.84 across the
    official and our checkpoint on five of the six conditions compared (content-free suffix: 0.40).
    The weaknesses belong to OpenVLA trained on LIBERO-Spatial, not to our LoRA run.
 
@@ -55,8 +58,29 @@ assumption: the two tasks share one layout with the target swapped, for every po
   the arm went: among `negative_contrast` failures, 58.1% never came within 8 cm of either bowl and only
   14.5% approached the distractor first. Below-50% scores for OpenVLA mostly mean *no commitment*, not
   *wrong bowl*.
-- **The layout-driven/language-read split cannot be checked.** OpenVLA has no `target_swap` or
-  `no_location` data (§0).
+- **The layout-driven/language-read split does not apply.** OpenVLA has no layout-driven tasks (§2a).
+
+## 2a. Layout reliance, measured (full runs, 2026-10-11)
+
+Both checkpoints, 50 trials/task, with the bowl approached, lifted and delivered logged per rollout
+(`benchmark_split_result.md` §12 batch E, finding 28).
+
+| | `target_swap` official / ours | pi05 | `no_location` official / ours | pi05 |
+|---|--:|--:|--:|--:|
+| Tasks 0, 2, 4, 8 (pi05's layout-driven set) | 39.0% / 53.5% | **5.5%** | 15.5% / 15.0% | 94.0% |
+| Tasks 1, 3, 5, 6 | 69.5% / 68.5% | 88.0% | 27.0% / 13.0% | 90.5% |
+| Tasks 7, 9 | 69.0% / 66.0% | 97.0% | **3.0% / 3.0%** | 38.0% |
+| All | 57.2% / 62.0% | 56.8% | 17.6% / 11.8% | 81.4% |
+| Trained (unnamed) bowl delivered | 11 / 8 of 500 | not logged | — | — |
+| Failures that approach neither bowl | 37% / 49% | not logged | **79% / 83%** | not logged |
+
+- **Under `target_swap` OpenVLA goes for the named bowl.** It rarely touches the trained bowl (50 and 21
+  of 500 rollouts approach, lift or deliver it first) and fails mostly by not finishing: no approach at
+  all, or the named bowl lifted but not delivered (27–28% of failures). The low tasks are the three
+  whose named bowl is on the cabinet top (3, 4, 7: 2–52%), which reads as a reach problem.
+- **Under `no_location` OpenVLA does not start.** It never approaches a bowl in about four of every five
+  failures and delivers the wrong bowl in 5 and 7 of 500. The words, not the layout, launch its motion,
+  which also explains 0% on Chinese and the mirror-pair collapse under content-free filler (§3.1).
 
 ## 3. Weaknesses
 
@@ -114,8 +138,8 @@ single tasks hard: task 2 "from the middle of the table" 44% (ours) / 70% (offic
 - **The tasks that are layout-driven for pi05 are also OpenVLA's most robust under
   `positive_contrast`** (56–58% vs 22–23% on 1/3/5/6; Fisher p ≈ 3e-12 on both checkpoints; weaker
   under `negative_contrast`, p = 0.005 official, 0.09 ours), but *not* under content-free filler
-  (p = 0.2–0.3). Some layout cue on tasks 0, 2, 4, 8 may also stabilise OpenVLA
-  when distractor words compete. `no_location` on OpenVLA would test this directly.
+  (p = 0.2–0.3). It is not a layout fallback: `no_location` gives OpenVLA only 15% on those tasks
+  (§2a). What makes tasks 0, 2, 4, 8 resist distractor words is still open.
 - `self_correction` zeroes tasks 1, 2, 5 and 9; the same tasks fail under distractor mention.
 
 ### 3.4 O4 — Region cues: content-specific and total on the mirror pair
@@ -136,9 +160,9 @@ result here as well (25–34% on the mirror pair). Region words are the shared b
 The gradient has the same order as pi05's (exact > synonym > functional > code-switch ≈ Chinese) and
 falls much faster. The decisive difference is that the Chinese prompts also zero OpenVLA on the unique
 layouts (0/20 on tasks 0, 2, 4, 8 under `translate_zh`), where pi05 keeps 85%. For pi05 the Chinese
-result tracks `no_location`. For OpenVLA either no layout fallback exists, or a Chinese sentence is
-worse than no location at all (Llama-2's tokenizer splits Chinese into many byte-level tokens, so the
-input is far off-distribution). `no_location` on OpenVLA separates the two.
+result tracks `no_location`. For OpenVLA no layout fallback exists: without the location
+it scores 11.8–17.6% and mostly never moves toward a bowl (§2a), so a Chinese sentence, whose landmark
+words it cannot match, leaves it at 0%.
 
 ### 3.6 O6 — "next to X" is worse than novel proximity words
 
@@ -185,8 +209,8 @@ tasks.
 
 ## 6. Limitations
 
-- No `target_swap` / `no_location` on OpenVLA, so its layout reliance is inferred only indirectly (O3,
-  O5).
+- Which bowl the arm went for is logged only in the batch E runs (§2a) and §8.5's probe; every other
+  condition here is outcome-only.
 - Outcome-only results in the main eval. §8.5's instrumented probe covers our checkpoint on `default`,
   `negative_contrast`, `target_cue_landmark` and `target_cue_proximity_novel` only, 10 episodes/task.
 - Screens are 5 trials/task (10 rollouts on the mirror pair). Our checkpoint's early per-task numbers
@@ -195,10 +219,9 @@ tasks.
 
 ## 7. Next steps
 
-1. **Screen `target_swap` and `no_location` on both OpenVLA checkpoints** (100 rollouts each, 5/task).
-   This is the largest gap. It answers whether OpenVLA has layout-driven tasks at all, and whether its
-   0% on Chinese means "no fallback" or "worse than no location".
-2. With the which-bowl logging now being added in a separate session, re-run `negation_only` and
+1. ~~`target_swap` and `no_location` on both OpenVLA checkpoints.~~ Done at 50 trials/task with
+   which-bowl logging (§2a): no layout-driven tasks, no layout fallback.
+2. With the which-bowl logging now merged (openvla `1e8544e`), re-run `negation_only` and
    `target_cue_region` on the mirror pair for OpenVLA and pi05 together: wrong bowl vs. no commitment
    is the open question for every shared weakness in §4.
 3. Run the bowl-attraction probe on the length controls (open since §8.6) to confirm whether the
