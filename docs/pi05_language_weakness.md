@@ -137,7 +137,9 @@ Success rates per group; 95% Wilson intervals for the cells the argument rests o
   245/300 on the six language-read tasks (tasks 1, 5, 6: 42–46 of 50; task 3: 16 of 50, the mixed
   case). Paired per rollout with `target_swap`, 251 of the 255 put the same bowl on the plate. On the
   layout-driven four it delivers the trained bowl in 177/200 and the other bowl in 10. Success was
-  43.4% in this run (44.8% before).
+  43.4% in this run (44.8% before). Both OpenVLA checkpoints deliver the negated bowl at the same rate
+  (236 and 253 of 500, logged the same day), so the pointer behaviour is not specific to pi05; what
+  differs is that pi05 has the layout-driven tasks to succeed on (`openvla_language_weakness.md` §3.2).
 - **Not a "not" problem.** "except" and "the other …, not the one" track `negation_only` per task
   (r = 0.97 and 0.92). Any referent defined by exclusion fails.
 - **`negation_swap` closes the alternative.** If pi05 used negation at all, some task would deliver the
