@@ -1463,14 +1463,54 @@ run: 400 rollouts per condition and model.
 
 ---
 
+## 2026-10-11 — `spatial/negation_only` with which-bowl logging: official OpenVLA (first full run) and our r32
+
+Re-runs `spatial/negation_only` (the target is named only by negating the other bowl's location) on both
+OpenVLA checkpoints with the per-rollout outcome logging of openvla PR #3 (`target_object`,
+`distractor_objects`, `bowls_on_plate`, `first_bowl_approached`, `first_bowl_grasped`, per-bowl
+approach/grasp steps), so the question left open in `benchmark_split_result.md` §2 / §12 batch D point 4,
+"does the arm go to the negated bowl or fail to commit", can be answered per rollout. The official
+checkpoint had only a 5-trial screen (2.0%); this is its first full `negation_only` run.
+
+- **Host / code:** `berkeley` (`g4-flexstart-mig-ussouth1-5tbf`), 4x RTX PRO 6000 Blackwell, all idle at
+  launch. Workspace `~/vla_ws_e` (vla_ws `ecfb6f9`, openvla `1e8544e`), image `openvla-libero:blackwell`,
+  `OPENVLA_ATTN_IMPLEMENTATION=sdpa`, bf16, seed 7, 50 trials/task, `--split spatial/negation_only`.
+  Checkpoints mounted read-only from `~/vla_ws/openvla/checkpoint/`.
+- **Launch:** `~/run_negation_whichbowl_openvla.sh` (own 30-minute HF sync loop, every call `--resume
+  True`), log `~/logs/negation_whichbowl_openvla.log`. Official on GPUs 0,1 (`--shard{0,1}of2`, run note
+  `openvla-official-libero-spatial`); ours on GPUs 2,3 (`--shard{0,1}of2`, run note
+  `openvla-7b-libero-spatial-lora-r32--whichbowl`), concurrently. The `--whichbowl` note keeps these
+  shards out of the older success-only `libero_spatial--negation_only--openvla-7b-libero-spatial-lora-r32.jsonl`,
+  which `aggregate_results.py` would otherwise merge them into (it strips `--shardXofN`).
+- **Times (UTC):** smoke (ours, task 0, 1 trial, GPU 0) 11:06 → 11:07, row carried every outcome field;
+  full runs 11:11:34 → 13:30:18 (2 h 19 min, about 3.6 rollouts/min per run); both exited 0; final HF sync
+  13:30:18 (3,502 rollouts in the workspace). No shard restarts, no mid-run errors; the
+  `EGLError ... Exception ignored in MjRenderContext.__del__` lines at container exit are teardown noise.
+- **Headline:** official **5.0%** (25/500), ours **2.6%** (13/500; per-(task, episode) identical to the
+  earlier success-only run, 500/500, so the logging does not change behaviour; the official screen's 1/50
+  is likewise identical on its 50 rollouts). The negated bowl reaches the plate in **236/500** (official)
+  and **253/500** (ours), against 255/500 for `pi05_libero` (which-bowl re-run, 2026-10-11,
+  `libero_spatial--negation_only--pi05_libero--whichbowl--shard{0..3}of4.jsonl`). Detail:
+  `benchmark_split_result.md` §2 `negation_only` which-bowl run and finding 29.
+- **Results:** `~/vla_ws_e/openvla/experiments/logs/results/libero_spatial--negation_only--openvla-official-libero-spatial--shard{0,1}of2.{jsonl,meta.json}`
+  and `...--openvla-7b-libero-spatial-lora-r32--whichbowl--shard{0,1}of2.{jsonl,meta.json}`; smoke
+  `...--openvla-7b-libero-spatial-lora-r32--whichbowl-smoke.jsonl`. All in the HF mirror.
+- **Notes:** (1) `~/vla_ws_e/scripts/aggregate_results.py` at `ecfb6f9` predates `--outcomes`; the
+  aggregation was done on copies of the JSONL with the newer script (nothing was changed on the server).
+  (2) QwenVLA was not run: Ken's checkpoint and environment are not on any of our servers.
+
+**Status:** done.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 `grounding/target_cue_region_img`, `_v2_img`, `_v3_img` (authored 2026-10-11, Erratum E1; 400 rollouts each,
 tasks 0,1,3,5–9): corrected image-frame region cue, not run on any model.
 
-`spatial/negation_only` (authored 2026-10-10): run for OpenVLA and `pi05_libero` (2026-10-11 entry);
-QwenVLA not yet requested. The official OpenVLA checkpoint's full run finished 2026-10-07; it has not
-run `spatial/negation_only` (only the 5-trial screen).
+`spatial/negation_only` (authored 2026-10-10): run for our OpenVLA checkpoint, the official OpenVLA
+checkpoint (full, 2026-10-11, with which-bowl logging) and `pi05_libero`; QwenVLA not yet run (needs
+Ken's checkpoint and environment on one of our servers).
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.
