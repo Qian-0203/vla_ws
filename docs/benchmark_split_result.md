@@ -44,7 +44,7 @@ Applies to every condition below unless a section says otherwise.
 
 | Split | Registry status | Data status |
 |---|---|---|
-| 1. Prompt Sensitivity | 3/3 conditions implemented + 2 length controls (`length_control_infix`/`_suffix`, authored 2026-10-01) + `negation_only` (authored 2026-10-10) | 3/3 run (`default`, `negative_contrast`, `positive_contrast`); both length controls run 2026-10-01 — `length_control_infix` 62.8%, `length_control_suffix` 53.6% (500/500 each): a content-free clause alone costs 21–30 pts (§2). `negation_only` run 2026-10-10: **2.6%** (13/500; pi05_libero 44.8%) |
+| 1. Prompt Sensitivity | 3/3 conditions implemented + 2 length controls (`length_control_infix`/`_suffix`, authored 2026-10-01) + `negation_only` (authored 2026-10-10) | 3/3 run (`default`, `negative_contrast`, `positive_contrast`); both length controls run 2026-10-01 — `length_control_infix` 62.8%, `length_control_suffix` 53.6% (500/500 each): a content-free clause alone costs 21–30 pts (§2). `negation_only` run 2026-10-10: **2.6%** (13/500; pi05_libero 44.8%); official OpenVLA **5.0%** (25/500, 2026-10-11; with which-bowl logging, §2) |
 | 2. Distractor Placement | 3/4 conditions implemented (`path` not authored) | All implemented conditions run. `irrelevant` and `semantic` each redefined a second time (see §3) — current suites (`libero_spatial_3bowl_front` 85.2%, `libero_spatial_3bowl_semantic2` 85.2%, both 500/500) now run; prior data survives relabeled `irrelevant_v1_legacy` (88.8%) / `semantic_v1_legacy` (84.8%); original fixed-coordinate data survives as `center_fixed_legacy`. Only unauthored `path` remains beyond that |
 | 3. Scene Complexity | Implemented | Run (both conditions) |
 | 4. Surface vs. Landmark Grounding | 4a: all 6 cells implemented; 4b: implemented as a target cue-type probe; 4c: implemented as a familiar-vs-novel proximity-cue probe | 4a/4b/4c fully run — 4c's `target_cue_proximity_novel` (53.0% pooled, tasks 3/5/7/9) came in *above* `target_cue_landmark` (30.5%), the opposite of the plan's predicted direction; full three-way synthesis in §5.4. 4b/4c paraphrase controls (`paraphrase_lexical`/`_syntactic`, `target_cue_region_v2`/`_v3`, `target_cue_proximity_beside`/`_near`/`_adjacent`) all run 2026-10-01 (§5.5): same-cue paraphrases 72.4% / 82.2%; region cue 17.0 / 20.0 / 18.8% across three wordings; novel proximity synonyms 37.5–53.0% |
@@ -52,7 +52,7 @@ Applies to every condition below unless a section says otherwise.
 | Bowl-Attraction Probe (§8.5, not a `SPLITS` entry) | Script implemented (`probe_bowl_attraction.py`) | Run 2026-09-02/03/04, all 10 `libero_spatial` tasks for `default`+`negative_contrast` (280 rollouts); `target_cue_landmark` + `target_cue_proximity_novel` on the 4-task surface cohort (80 more). Reads OpenVLA's own failure mode via instrumented action rollouts (not VQA): pooled at full scale, "arm never approaches either bowl" is the *majority* failure mode (58.1% of `negative_contrast` failures) — success rates closely match the real 500/200-trial evals. `target_cue_proximity_novel` (no distractor, no misleading template) fails the same way as `target_cue_landmark` despite a much higher success rate — a second line of evidence against distractor-pull. Task 3 shows a persistent second mode (correct approach, still fails). See §8.6 for the synthesis and open gaps |
 | Cross-model reference: `pi05_libero` (§9) | Runs through the same registry via `--model_family openpi` | All 22 current conditions run 2026-09-30 → 2026-10-01 (8,300 rollouts). `spatial/default` 98.4%; prompt-only conditions 87–99% except the region cue (75–78%); 3-bowl scene conditions 43–91% |
 | Cross-model reference: official OpenVLA checkpoint (§10) | Same registry and code path as the reference; only `CHECKPOINT` differs | All 22 conditions run 2026-10-05 → 2026-10-07 (8,300 rollouts). Against our checkpoint: r = 0.980, mean absolute difference 4.0 pts, 20 of 22 within 7 pts. `spatial/default` 84.0% for both |
-| Language-stress screening (§12, not a `SPLITS` entry) | `screening/language_stress/` + `run_libero_eval.py --instruction_file` | 2026-10-10, 5 trials/task, three batches, 14 candidates. Every negation/exclusion wording collapses both families (official OpenVLA 0–8%, pi05_libero 0–46%); `negation_swap` is 0% for both. `translate_zh` / `code_switch` separate them (OpenVLA 0–4%, pi05 78–80%). `negation_only` promoted to `spatial/negation_only` and run in full for OpenVLA (2.6%) and pi05 (44.8%). Batch D (2026-10-10/11): OpenVLA `target_swap` 52–54%, `no_location` 10–20% (pi05 60% / 82%) |
+| Language-stress screening (§12, not a `SPLITS` entry) | `screening/language_stress/` + `run_libero_eval.py --instruction_file` | 2026-10-10, 5 trials/task, three batches, 14 candidates. Every negation/exclusion wording collapses both families (official OpenVLA 0–8%, pi05_libero 0–46%); `negation_swap` is 0% for both. `translate_zh` / `code_switch` separate them (OpenVLA 0–4%, pi05 78–80%). `negation_only` promoted to `spatial/negation_only` and run in full for OpenVLA (2.6%) and pi05 (44.8%); the official OpenVLA checkpoint followed on 2026-10-11 (5.0%, §2). Batch D (2026-10-10/11): OpenVLA `target_swap` 52–54%, `no_location` 10–20% (pi05 60% / 82%) |
 | Full `target_swap` / `no_location` runs (§12 batch E, not `SPLITS` entries) | Same candidate JSONs as the screens, 50 trials/task | pi05_libero done 2026-10-10: `target_swap` 56.8%, `no_location` 81.4% (1,000 rollouts). Both OpenVLA checkpoints done 2026-10-11 with per-rollout outcome logging (openvla `1e8544e`): `target_swap` 57.2% official / 62.0% ours, `no_location` 17.6% / 11.8% (2,000 rollouts); 79–83% of `no_location` failures approach neither bowl |
 | Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% |
 | Mechanistic Localization Probe (not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`) | Run 2026-09-04 → 2026-09-10 on task 5. Real, n=50-replicated early-window vision-attention/resolution-layer effects for `target_cue_landmark`; no layer/module localized; confidence diagnostic null. Full record: `mechanistic_localization.md` |
@@ -73,6 +73,7 @@ string** changes across conditions; scene and init states are identical.
 | `length_control_infix` — native wording + content-free clause mid-sentence (+11 tokens) | ✅ run | **62.8%** | 314/500 |
 | `length_control_suffix` — native wording + content-free clause at the end (+13 tokens) | ✅ run | **53.6%** | 268/500 |
 | `negation_only` — target named only by negating the distractor's location (authored 2026-10-10, §12) | ✅ run | **2.6%** | 13/500 |
+| `negation_only`, official OpenVLA checkpoint (run 2026-10-11, which bowl logged; §10) | ✅ run | **5.0%** | 25/500 |
 
 Computed: `Negative Contrast Drop = 84.0 − 36.8 = 47.2 pts`. `Distractor Mention Drop = 84.0 − 32.4 =
 51.6 pts`. `Negation-specific Drop = 32.4 − 36.8 = −4.4 pts` — negative, meaning the negation clause
@@ -84,7 +85,7 @@ half of each contrast drop is reproduced by content-free text of the same length
 does effectively all of it" above holds only for the half that remains (see the length-control
 setting below).
 
-`Negation-only Drop = 84.0 − 2.6 = 81.4 pts` (pi05_libero: 98.4 − 44.8 = 53.6 pts; see the
+`Negation-only Drop = 84.0 − 2.6 = 81.4 pts` (pi05_libero: 98.4 − 44.8 = 53.6 pts; official OpenVLA: 84.0 − 5.0 = 79.0 pts; see the
 `negation_only` setting below).
 
 **Split fully run.**
@@ -267,6 +268,84 @@ Results: `results/libero_spatial--length_control_{infix,suffix}--openvla-7b-libe
 
 Results: `results/libero_spatial--negation_only--openvla-7b-libero-spatial-lora-r32.jsonl` (`berkeley`),
 `results/libero_spatial--negation_only--pi05_libero.jsonl` (`berkeley-2`); both in the HF mirror.
+
+**Which-bowl run (2026-10-11).** Analysis point 1 above ends "whether the arm goes to the negated bowl or
+fails to commit was not instrumented"; this run instruments it. Same wording, 50 trials/task, seed 7,
+openvla `1e8544e` (outcome logging); `berkeley`, 11:11 → 13:30 UTC (`eval_log.md` 2026-10-11). "Negated
+bowl" is the bowl whose location the prompt negates, i.e. the bowl `target_swap` names; "trained bowl" is
+the goal bowl. Categories follow `scripts/aggregate_results.py --outcomes`. The pi05 columns come from
+its which-bowl re-runs of 2026-10-11 (`libero_spatial--{negation_only,target_swap}--pi05_libero--whichbowl--shard{0..3}of4.jsonl`):
+`negation_only` is 43.4% (217/500) there, against the 44.8% (224/500) of the earlier success-only run
+above, and its per-task `target_swap` counts differ from the batch E table by at most 2 (284/500 in
+both).
+
+| | Success | Negated bowl delivered | Negated bowl lifted only | Trained bowl lifted, not delivered | No grasp |
+|---|--:|--:|--:|--:|--:|
+| OpenVLA official | 25/500 (5.0%) | 236 (47.2%) | 42 | 28 | 169 (33.8%) |
+| OpenVLA ours (r32) | 13/500 (2.6%) | 253 (50.6%) | 64 | 4 | 166 (33.2%) |
+| pi05_libero (which-bowl re-run) | 217/500 (43.4%) | 255 (51.0%) | 6 | 15 | 7 (1.4%) |
+
+95% CIs (Wilson, rollouts treated as independent) for "negated bowl delivered": 42.9–51.6%,
+46.2–55.0%, 46.6–55.4%; they overlap. The same failures with "no grasp" split by the first bowl
+approached (within 8 cm, the §8.5 rule), as in the §12 batch E table:
+
+| Run | Failures | Negated delivered | Negated lifted only | Trained lifted, not delivered | No grasp: negated approached first | No grasp: trained approached first | No grasp: approached neither |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| official | 475 | 236 | 42 | 28 | 29 | 19 | **121** |
+| ours | 487 | 253 | 64 | 4 | 22 | 13 | **131** |
+| pi05 | 283 | 255 | 6 | 15 | 0 | 6 | 1 |
+
+Per task (successes out of 50; official / ours / pi05), with `target_swap` (named bowl delivered):
+
+| id | Success | Negated bowl delivered | No grasp | `target_swap` |
+|--:|--:|--:|--:|--:|
+| 0 | 9 / 5 / 50 | 20 / 25 / 0 | 10 / 9 / 0 | 20 / 39 / 0 |
+| 1 | 0 / 0 / 1 | 40 / 38 / 45 | 9 / 9 / 0 | 42 / 43 / 49 |
+| 2 | 0 / 0 / 48 | 19 / 32 / 2 | 27 / 16 / 0 | 38 / 42 / 2 |
+| 3 | 5 / 3 / 30 | 7 / 11 / 16 | 27 / 27 / 0 | 13 / 17 / 29 |
+| 4 | 11 / 4 / 44 | 0 / 3 / 0 | 31 / 36 / 6 | 1 / 1 / 0 |
+| 5 | 0 / 0 / 3 | 44 / 36 / 46 | 5 / 9 / 0 | 42 / 40 / 49 |
+| 6 | 0 / 0 / 6 | 34 / 34 / 42 | 10 / 12 / 0 | 42 / 37 / 50 |
+| 7 | 0 / 0 / 0 | 21 / 19 / 46 | 24 / 25 / 1 | 26 / 23 / 48 |
+| 8 | 0 / 1 / 35 | 6 / 12 / 8 | 23 / 19 / 0 | 19 / 25 / 7 |
+| 9 | 0 / 0 / 0 | 45 / 43 / 50 | 3 / 4 / 0 | 43 / 43 / 50 |
+| **All** | **25 / 13 / 217** | **236 / 253 / 255** | **169 / 166 / 7** | **286 / 310 / 284** |
+
+**Reading.**
+
+1. **OpenVLA takes the negated bowl as often as pi05 does.** 47–51% of rollouts deliver it for all
+   three policies, and OpenVLA's first bowl within 8 cm is the negated one in 305 (official) and 337
+   (ours) of 500 rollouts, against 261 for pi05. None of the three follows the negation.
+2. **It is the other half that differs.** pi05 delivers the trained bowl in 217/500, 177 of them on the
+   blind tasks 0, 2, 4, 8 (50, 48, 44, 35 of 50; §12 blind-task table). OpenVLA has no such tasks
+   (finding 28): it delivers the trained bowl in 25 and 13 of 500, and in 33–34% of rollouts never
+   lifts a bowl (pi05: 1.4%). The trained bowl is the first one approached, lifted or delivered in
+   73 (official) and 30 (ours) of 500 rollouts.
+3. **The location words still steer it.** In the same (task, episode), `target_swap` delivered the named
+   bowl in 199 of the 236 (official, 84%) and 207 of the 253 (ours, 82%) rollouts that delivered the
+   negated bowl here; pi05: 251 of 255 (98%). Across the ten tasks the negated-bowl delivery rate
+   tracks the `target_swap` rate (r = 0.91, 0.93, 0.98 for official, ours, pi05).
+4. **A sentence with a location word keeps OpenVLA committing.** 121 of 475 (25%) and 131 of 487 (27%)
+   of its failures lift nothing and approach neither bowl, against 37% / 49% under `target_swap` and
+   79% / 83% under `no_location` (§12 batch E). "Never commits" is the no-location failure; under
+   `negation_only` OpenVLA commits, to the wrong bowl.
+5. **Where the negated bowl is hard to reach, the trained bowl is sometimes delivered.** Tasks 0 and 4
+   hold nearly all of OpenVLA's successes (official 20 of 25, ours 9 of 13); on task 4 the negated bowl
+   is delivered in 0 and 3 of 50 and 31 / 36 rollouts lift nothing, the same task where `target_swap`
+   is 1/50. This is §12 batch E's reading point 3 (OpenVLA) seen from the other side; it does not show
+   grounding.
+6. **Closes §12 batch D's reading point 4.** A policy that goes where the location words point would take
+   the negated bowl: confirmed at rollout level for about half of the rollouts; the rest mostly fail to
+   grasp.
+
+Caveats: one seed (7), 50 trials/task. "Delivered" is the goal's own On(bowl, plate) predicate at
+episode end; a rollout with both bowls on the plate would count as a success (none occurred in any of
+the three runs).
+
+Results: `results/libero_spatial--negation_only--openvla-official-libero-spatial--shard{0,1}of2.jsonl`,
+`results/libero_spatial--negation_only--openvla-7b-libero-spatial-lora-r32--whichbowl--shard{0,1}of2.jsonl`
+(`berkeley:~/vla_ws_e`); in the HF mirror. The older success-only `…-lora-r32.jsonl` above is
+per-rollout identical in success (500/500) and is kept.
 
 ---
 
@@ -1221,6 +1300,17 @@ Results: `results/libero_spatial--{paraphrase_lexical,paraphrase_syntactic,targe
     of its failures approach neither bowl, so OpenVLA has no layout fallback either. pi05 has both
     (findings 26–27). This is the same "never commits" failure §8.5 found for off-template prompts.
 
+29. **Under `negation_only` all three policies take the negated bowl about half the time; they differ
+    in what the other half does** (2026-10-11, §2 which-bowl run, 50 trials/task, which bowl logged per
+    rollout). The negated bowl reaches the plate in 236/500 (official OpenVLA, 47.2%), 253/500 (ours,
+    50.6%) and 255/500 (pi05, 51.0%); in 199, 207 and 251 of those, `target_swap` delivered the same
+    bowl in the same task and episode. pi05's other half is the trained bowl on its four blind tasks
+    (217/500, 43.4%). OpenVLA has no blind tasks (finding 28): it delivers the trained bowl in 25 and
+    13 of 500 (5.0%, 2.6%), never lifts a bowl in 33–34% of rollouts (pi05: 1.4%) and lifts the negated
+    bowl without delivering it in 42 and 64. Only 25–27% of its failures approach neither bowl, against
+    79–83% under `no_location`, so the location words keep it committing, to the bowl they negate. No
+    run shows either family grounding a negation (finding 24 stands).
+
 ## 7. Render / contact-sheet check log
 
 Every new or previously-unchecked scene gets its init-state contact sheet rendered
@@ -1874,6 +1964,12 @@ Per-task, official checkpoint (prompt-only conditions; cue-type conditions; scen
 
 Results: `results/*--openvla-official-libero-spatial--shard{0..3}of4.jsonl`.
 
+Added 2026-10-11, outside the 22 conditions above (the statistics in this section are unchanged):
+`spatial/negation_only`, authored after this batch, scores 5.0% (25/500) on the official checkpoint
+against 2.6% (13/500) on ours (Δ +2.4). Both deliver the negated bowl in about half of their rollouts
+(236 and 253 of 500); see §2, "Which-bowl run", and finding 29.
+Results: `results/libero_spatial--negation_only--openvla-official-libero-spatial--shard{0,1}of2.jsonl`.
+
 ## 11. Cross-model reference: QwenVLA on the whole benchmark (run by Ken Zheng, 2026-09-30 and 2026-10-05)
 
 **What this is.** A second non-OpenVLA policy: Ken Zheng's QwenVLA LIBERO-Spatial checkpoint
@@ -2241,6 +2337,8 @@ Per-task successes out of 5 (ours / official / pi05), with the bowl `target_swap
    fails), which fits its bimodal 44.8%. Neither reading is checked rollout by rollout: these runs log
    success only, not which bowl reached the plate. openvla PR #3's outcome logging (merged as
    `1e8544e`) is what the full 50-trial `target_swap` / `no_location` runs use, and those can check it.
+   (Checked 2026-10-11 by a `negation_only` re-run with that logging: §2, "Which-bowl run", and
+   finding 29.)
 
 Results: `results/libero_spatial--{screen_default,target_swap,no_location}--openvla-7b-libero-spatial-lora-r32--screen.jsonl`
 and `--openvla-official-libero-spatial--screen.jsonl` (`berkeley`; in the HF mirror).
