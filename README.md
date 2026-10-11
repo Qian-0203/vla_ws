@@ -78,9 +78,12 @@ roughly by how much each group moved the reference model. Task ids are the same 
 | `spatial/length_control_suffix` | 1 · Length control | native prompt + a content-free clause at the end (+13 tokens, matches `positive_contrast`'s length) | 0–9 | 53.6% |
 | `spatial/length_control_infix` | 1 · Length control | native prompt + a content-free clause mid-sentence (+11 tokens, matches `negative_contrast`'s length) | 0–9 | 62.8% |
 | `spatial/negation_only` | 1 · Prompt | target named only by negating the distractor ("the black bowl that is not on …") | 0–9 | 2.6% |
-| `grounding/target_cue_region` | 4b · Cue type | target described as a table zone ("back-left of the table") | 0,1,3,5–9 | 17.0% |
-| `grounding/target_cue_region_v2` | 4b · Cue type | same table zone, 2nd wording ("in the back-left area of the table") | 0,1,3,5–9 | 20.0% |
-| `grounding/target_cue_region_v3` | 4b · Cue type | same table zone, 3rd wording ("on the left side of the table, toward the back") | 0,1,3,5–9 | 18.8% |
+| `grounding/target_cue_region` | 4b · Cue type | **withdrawn (wording used swapped axes, see below)** — superseded by `grounding/target_cue_region_img` | 0,1,3,5–9 | ~~17.0%~~ |
+| `grounding/target_cue_region_v2` | 4b · Cue type | **withdrawn** — superseded by `grounding/target_cue_region_v2_img` | 0,1,3,5–9 | ~~20.0%~~ |
+| `grounding/target_cue_region_v3` | 4b · Cue type | **withdrawn** — superseded by `grounding/target_cue_region_v3_img` | 0,1,3,5–9 | ~~18.8%~~ |
+| `grounding/target_cue_region_img` | 4b · Cue type | target described as a table zone, direction words in the policy's image frame ("at the back-right of the table") | 0,1,3,5–9 | not yet run |
+| `grounding/target_cue_region_v2_img` | 4b · Cue type | same zones, 2nd wording ("in the back-right area of the table") | 0,1,3,5–9 | not yet run |
+| `grounding/target_cue_region_v3_img` | 4b · Cue type | same zones, 3rd wording (side-first) | 0,1,3,5–9 | not yet run |
 | `grounding/target_cue_landmark` | 4b · Cue type | "on X" rephrased as "next to X" | 3,5,7,9 | 30.5% (default on these tasks: 80.5%) |
 | `grounding/target_cue_proximity_novel` | 4c · Cue type | "on X" rephrased as "close to X" (never seen in training) | 3,5,7,9 | 53.0% |
 | `grounding/target_cue_proximity_beside` | 4c · Cue type | "on X" rephrased as "beside X" | 3,5,7,9 | 38.0% |
@@ -95,6 +98,13 @@ roughly by how much each group moved the reference model. Task ids are the same 
 | `grounding/paraphrase_syntactic` | 4 · Same-cue paraphrase | native words in a relative clause ("the black bowl that is on X") | 0–9 | 82.2% |
 | `grounding/surface_landmark` | 4a · Scene | surface-cue target + landmark-cue distractor | 0 (1-task suite) | 88.0% |
 | `grounding/region_surface` | 4a · Scene | region-cue target + surface-cue distractor | 0 (1-task suite) | 92.0% |
+
+**Region-cue erratum (2026-10-11).** The first three `target_cue_region*` rows used left/right and
+front/back words derived from a swapped coordinate assumption (+x is toward the camera and +y is
+image-right, not the reverse), so 7 of 8 prompts named the wrong place. Their numbers are struck
+through and must not be used as reference values; `run_benchmark.sh` now runs the corrected `_img`
+conditions instead, which have no reference number yet. Details: `docs/benchmark_split_result.md`,
+Erratum E1.
 
 `run_benchmark.sh` skips the `*_legacy` splits in the registry. They are retired scene definitions,
 kept only so that old numbers stay traceable. The one exception you might want is the closed-drawer

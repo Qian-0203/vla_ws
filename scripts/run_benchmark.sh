@@ -29,7 +29,10 @@ RUN_NOTE="${RUN_NOTE:-$(basename "${CHECKPOINT}" | tr -c 'A-Za-z0-9._\n-' '_' | 
 # success rate (docs/benchmark_split_result.md), after the spatial/default sanity gate.
 # Split 4b/4c instruction dicts only cover a task subset -- those ids are required.
 declare -A TASK_IDS=(
-  [grounding/target_cue_region]=0,1,3,5,6,7,8,9
+  [grounding/target_cue_region]=0,1,3,5,6,7,8,9        # withdrawn (Erratum E1): swapped-axis wording, not in DEFAULT_SPLITS
+  [grounding/target_cue_region_img]=0,1,3,5,6,7,8,9
+  [grounding/target_cue_region_v2_img]=0,1,3,5,6,7,8,9
+  [grounding/target_cue_region_v3_img]=0,1,3,5,6,7,8,9
   [grounding/target_cue_landmark]=3,5,7,9
   [grounding/target_cue_proximity_novel]=3,5,7,9
   [grounding/target_cue_region_v2]=0,1,3,5,6,7,8,9
@@ -39,11 +42,12 @@ declare -A TASK_IDS=(
   [grounding/target_cue_proximity_adjacent]=3,5,7,9
 )
 # The 9 conditions added 2026-10-01, runnable on their own with SPLITS=new (docs/eval_log.md's
-# launch commands for that batch use it). They are all in DEFAULT_SPLITS as well.
+# launch commands for that batch use it). They are all in DEFAULT_SPLITS as well. The two old
+# region-v2/v3 entries were swapped for their corrected *_img counterparts on 2026-10-11 (Erratum E1).
 NEW_SPLITS=(
   spatial/length_control_infix spatial/length_control_suffix
   grounding/paraphrase_lexical grounding/paraphrase_syntactic
-  grounding/target_cue_region_v2 grounding/target_cue_region_v3
+  grounding/target_cue_region_v2_img grounding/target_cue_region_v3_img
   grounding/target_cue_proximity_beside grounding/target_cue_proximity_near grounding/target_cue_proximity_adjacent
 )
 DEFAULT_SPLITS=(
@@ -53,9 +57,9 @@ DEFAULT_SPLITS=(
   spatial/length_control_suffix               # Split 1 length control (for positive_contrast)
   spatial/length_control_infix                # Split 1 length control (for negative_contrast)
   spatial/negation_only                       # Split 1 negation-only reference (2026-10-10)
-  grounding/target_cue_region                 # Split 4b
-  grounding/target_cue_region_v2              # Split 4b, 2nd wording
-  grounding/target_cue_region_v3              # Split 4b, 3rd wording
+  grounding/target_cue_region_img             # Split 4b, corrected image-frame wording (Erratum E1; the old
+  grounding/target_cue_region_v2_img          #   target_cue_region{,_v2,_v3} are withdrawn and no longer run here)
+  grounding/target_cue_region_v3_img          # Split 4b, 3rd wording
   grounding/target_cue_landmark               # Split 4b
   grounding/target_cue_proximity_novel        # Split 4c ("close to")
   grounding/target_cue_proximity_beside       # Split 4c synonym
