@@ -44,13 +44,15 @@ for idx in "${!GPU_ARR[@]}"; do
     esac
   done
   docker rm -f "${name}" >/dev/null 2>&1 || true
+  # --entrypoint: the image's own entrypoint rewrites /workspace/.libero, and the workspace is mounted read-only
+  # here; the repo's .libero/config.yaml is already in place.
   docker run -d --rm --name "${name}" --network host --gpus "device=${GPU_ARR[$idx]}" --ipc=host \
-    --user "$(id -u):$(id -g)" -w /vla_adapter \
+    --user "$(id -u):$(id -g)" -w /vla_adapter --entrypoint python3 \
     -e PYTHONPATH=/vla_adapter:/workspace/LIBERO -e HOME=/tmp -e PYTHONNOUSERSITE=1 -e HF_HOME=/tmp/hf \
     -e KMP_DUPLICATE_LIB_OK=TRUE -e WANDB_MODE=disabled -e LIBERO_CONFIG_PATH=/workspace/.libero \
     -v "${ROOT}:/workspace:ro" -v "${VLA_ADAPTER_DIR}:/vla_adapter:ro" -v "${ROOT}/scripts/policy_servers:/serve:ro" \
     -v "${CKPT}:${CKPT}:ro" -v "${work}:${work}" \
-    "${IMAGE_NAME}" python3 /serve/serve_vla_adapter.py --checkpoint "${work}" --port "${port}" \
+    "${IMAGE_NAME}" /serve/serve_vla_adapter.py --checkpoint "${work}" --port "${port}" \
       --use_pro_version "${PRO}" --task_suite_name libero_spatial >/dev/null
   names+=("${name}")
   echo "server ${idx}: GPU ${GPU_ARR[$idx]}, port ${port}, container ${name}"

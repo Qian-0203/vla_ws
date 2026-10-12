@@ -33,9 +33,25 @@ import traceback
 import numpy as np
 
 
+def _stub_client_only_imports() -> None:
+    """VLA-Adapter's utils import two packages only its HTTP *client* path uses (msgpack_numpy, json_numpy; the
+    latter is also patched at import). The eval image has neither, and the server never touches them."""
+    import types
+
+    for name in ("msgpack_numpy", "json_numpy"):
+        try:
+            __import__(name)
+        except ImportError:
+            stub = types.ModuleType(name)
+            stub.patch = lambda *a, **k: None
+            stub.encode = stub.decode = lambda *a, **k: None
+            sys.modules[name] = stub
+
+
 def build_policy(checkpoint: str, suite: str, pro: bool):
     # Imported late: PYTHONPATH must put the VLA-Adapter checkout first, and argv must mention "libero"
     # (its constants module picks the LIBERO constants from sys.argv).
+    _stub_client_only_imports()
     from experiments.robot.libero.run_libero_eval import GenerateConfig, initialize_model
     from experiments.robot.openvla_utils import resize_image_for_policy
     from experiments.robot.robot_utils import get_action, invert_gripper_action, normalize_gripper_action
