@@ -1537,7 +1537,7 @@ All runs completed and exited 0 (`EXCHANGE ALL DONE official=0 r32=0 pi05=0`, `~
   Copied to `~/vla_results_backup/landmark_exchange_2026-10-12/` with `SHA256SUMS`. Not synced to the HF
   mirror (the script did not run the sync on purpose; the cron sync covers `~/vla_ws`, not `~/vla_ws_e`).
   The run metadata records `openvla_git_commit: null` (same worktree limitation as batch E); the code was
-  openvla `1e8544e` plus the registry entry, committed as `40b0d66`.
+  openvla `1e8544e` plus the registry entry, committed as `40b0d66`. (Note added 2026-10-13: `40b0d66` stayed local; the same registry entry is on the fork as `7c5a8c4`, branch `landmark-exchange-split`, and LIBERO `9d61c63` as `63b26c5`, branch `landmark-exchange-suite`.)
 
 **Status:** done; closes the entry above. **Exploratory: not part of the official data** (author's decision
 2026-10-12; see `benchmark_split_result.md` §14 for why and what promotion needs).
@@ -1636,6 +1636,27 @@ which-bowl logging. Not registry splits (see `benchmark_split_result.md` §12 ba
   `~/vla_results_backup/libero_ckpt_campaign_2026-10-12/<host>/vla_ws_lang/results`. Data package
   `full_data_v3` (same builder and `--max-steps 230` as v1; excludes `vla_ws_lang2`; identical numbers to the
   concurrent session's `full_data_v2` except that v2 flags pi0 `no_location` for the duplicate rows).
+
+---
+
+## 2026-10-11 (recorded 2026-10-13) — QwenVLA on `negation_only`, `target_swap`, `no_location` (run by Ken Zheng)
+
+- **Recorded late:** the package arrived 2026-10-11 and was checked 2026-10-12, but had no entry here until
+  2026-10-13. The launch was not ours; this entry reproduces what the package's README and meta files say.
+- **Hardware / code:** H200, SDPA, torch 2.11.0+cu130; vla_ws `a6f3f90`, openvla `6c74029`, LIBERO `b794927`;
+  `scripts/run_eval_qwenvla.sh`, run note `qwenvla-78.6pct` (checkpoint `finetune-merged-libero_spatial-78.6pct.pt`,
+  same as the 2026-09-30 / 2026-10-05 packages), seed 7, 50 trials/task, `center_crop=True`,
+  `env_recreate_every=15`. One job per (condition, task), 8 slots on 4 shared GPUs; meta timestamps 2026-10-11 22:42.
+- **Invocation:** `--split spatial/negation_only`; `target_swap` / `no_location` via `--instruction_file
+  screening/language_stress/candidates/{target_swap,no_location}.json` (sha256 `3cccd982…` / `5df13c4f…`, the same
+  files as batches D–F).
+- **Headline:** `negation_only` 1.8%, `target_swap` 50.2%, `no_location` 27.6% (500 rollouts each; recomputed
+  with `aggregate_results.py --outcomes`, identical to the package). Detail: `benchmark_split_result.md` §11
+  addendum.
+- **Results:** primary checkout `qwenvla_vla_ws_language-screens_2026-10-11/` (tarball sha256 verified
+  2026-10-13), `results/libero_spatial--{negation_only,target_swap,no_location}--qwenvla-78.6pct--shard{0..9}of10.{jsonl,meta.json}`.
+
+**Status:** done (recorded after the fact).
 
 ---
 

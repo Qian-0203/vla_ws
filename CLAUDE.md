@@ -29,6 +29,8 @@ vla_ws/                    <- THIS repo. Docs, config, docker orchestration. No 
                                 ("Servers & environments reference", maintained in place)
   docs/mechanistic_localization.md   mechanistic-localization probe: design, runs §8.9+, current
                                 conclusion (update after every probe run)
+  docs/data_status_2026-10-13.md   inventory snapshot: coverage per checkpoint, data not in the tables
+                                (exploratory/withdrawn/excluded), repeated runs, raw-data locations
   docs/pi05_language_weakness.md, docs/openvla_language_weakness.md   cross-condition
                                 language-weakness analyses per policy (figures in docs/figures/, script
                                 scripts/language_stress/language_weakness_figures.py; numbers trace to

@@ -161,7 +161,7 @@ them with the withdrawn ones.
 | Language-stress screening (§12, not a `SPLITS` entry) | `screening/language_stress/` + `run_libero_eval.py --instruction_file` | 2026-10-10, 5 trials/task, three batches, 14 candidates. Every negation/exclusion wording collapses both families (official OpenVLA 0–8%, pi05_libero 0–46%); `negation_swap` is 0% for both. `translate_zh` / `code_switch` separate them (OpenVLA 0–4%, pi05 78–80%). `negation_only` promoted to `spatial/negation_only` and run in full for OpenVLA (2.6%) and pi05 (44.8%); the official OpenVLA checkpoint followed on 2026-10-11 (5.0%, §2). Batch D (2026-10-10/11): OpenVLA `target_swap` 52–54%, `no_location` 10–20% (pi05 60% / 82%) |
 | Full `target_swap` / `no_location` runs (§12 batch E, not `SPLITS` entries) | Same candidate JSONs as the screens, 50 trials/task | pi05_libero done 2026-10-10: `target_swap` 56.8%, `no_location` 81.4% (1,000 rollouts). Both OpenVLA checkpoints done 2026-10-11 with per-rollout outcome logging (openvla `1e8544e`): `target_swap` 57.2% official / 62.0% ours, `no_location` 17.6% / 11.8% (2,000 rollouts); 79–83% of `no_location` failures approach neither bowl. pi05_libero re-run with the same logging 2026-10-11 (`target_swap` 56.8%, `no_location` 80.4%, `spatial/negation_only` 43.4%; 1,500 rollouts): under `negation_only` it delivers the negated bowl in 255/500, as do the official and our OpenVLA checkpoints in 236 and 253 of 500 (§2 and below, finding 29) |
 | Full `target_swap` / `no_location` on six more checkpoints (§12 batch F, not `SPLITS` entries) | Same candidate JSONs (sha256 checked on both servers), 50 trials/task, which-bowl logging, horizon 220 | Done 2026-10-12 UTC (6,000 rollouts): `target_swap` pi0 68.2%, OFT 37.4%, VLA-Adapter 36.4%, VLA-Adapter-Pro 51.2%, X-VLA 32.2%, GR00T N1.5 40.8%; `no_location` 51.2 / 66.0 / 30.2 / 63.0 / 59.6 / 65.8%. Under `target_swap` all six deliver the trained, unnamed bowl in 69–207 of 500 rollouts (OpenVLA 8–11); on pi05's blind tasks 0, 2, 4, 8 every model but pi0 scores 0–7% |
-| Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% (**withdrawn, E1**) |
+| Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% (**withdrawn, E1**). `negation_only` / `target_swap` / `no_location` (2026-10-11, 1,500 rollouts, which-bowl logged): 1.8 / 50.2 / 27.6% (§11 addendum) |
 | Corrected region cue `target_cue_region_img` / `_v2_img` / `_v3_img` (Erratum E1) | Authored 2026-10-11 in the image frame; 8/8 tasks pass `scripts/check_region_wording.py` | Run 2026-10-12 → 2026-10-13 on the six public checkpoints (§13; 400 rollouts per condition and model): `target_cue_region_img` 31.5–71.8%, `_v2_img` 30.5–73.8%, `_v3_img` 29.0–72.2%. **Not run** on the OpenVLA, pi05 and QwenVLA checkpoints |
 | Cross-model references: six public LIBERO checkpoints (§13) | Same registry; per-family clients in the openvla fork (`openvla_oft`, `openpi`, `xvla`), policy servers for VLA-Adapter / X-VLA / GR00T | 23 conditions + `no_location` / `target_swap` run 2026-10-12 → 2026-10-13 (9,800 reported rollouts per checkpoint). `spatial/default` 89.0–98.2%; mean drop over the other 19 valid conditions 13.0–28.2 pts (OpenVLA official 28.8, pi05 11.9); `negation_only` 22.6–65.8%, 31–69 pts below the same checkpoint's lowest length control. `pi0_fast_libero` excluded (gate 16.0%) |
 | **Exploratory, not part of the official data** (author's decision 2026-10-12): landmark-exchange probe (`grounding/landmark_exchange`, plan Split 5; §14) | Cookie box and ramekin swap places, native sentences; 4 tasks (libero_spatial ids 1, 3, 5, 6), 50 trials/task, seed 7, with which-bowl logging | Run 2026-10-12 on `berkeley` (official OpenVLA, ours r32, pi05_libero; 600 rollouts). **The described bowl is delivered in 0 of 600.** The bowl at the sentence's trained coordinate is approached first in 585, lifted first in 561 and delivered in 502 (official 163/200, ours 151/200, pi05 188/200), on both layouts |
@@ -2269,6 +2269,33 @@ Splits 2 / 3 (against QwenVLA's own 2-bowl default, 79.8%)
 Results (local, not in the repo): `Archive 2/qwenvla_vla_ws_13-splits_dgx1_2026-09-30/` and
 `Archive 2/qwenvla_vla_ws_new-splits_2026-10-05/` (tarball + sha256 + README + `summary.txt`),
 files `results/*--qwenvla-78.6pct--shard{0..9}of10.jsonl`.
+
+**Addendum (recorded 2026-10-13): QwenVLA on `negation_only`, `target_swap`, `no_location`** (run by Ken
+Zheng, H200, timestamps 2026-10-11 22:42; same checkpoint and run note `qwenvla-78.6pct` as above; seed 7,
+50 trials/task, `center_crop=True`, `env_recreate_every=15`, SDPA; openvla `6c74029`; instruction files with
+the same sha256 as batches D–F). Every row carries the which-bowl fields. Numbers recomputed here with
+`scripts/aggregate_results.py --outcomes` from the package and identical to its `summary.txt`.
+
+| Condition | Success | Target delivered | Other bowl delivered | Other bowl grasped, not delivered | Target grasped only | No grasp |
+|---|--:|--:|--:|--:|--:|--:|
+| `negation_only` | 1.8% | 9 | 211 | 65 | 17 | 198 |
+| `target_swap` | 50.2% | 251 | 5 | 12 | 68 | 164 |
+| `no_location` | 27.6% | 138 | 5 | 13 | 61 | 283 |
+
+("Target" is the bowl the run scores: the trained target for `negation_only` and `no_location`, the named
+bowl for `target_swap`. Counts out of 500.)
+
+Per task, successes in % (task 0..9):
+
+| Condition | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| `negation_only` | 12 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 2 | 0 |
+| `target_swap` | 6 | 74 | 38 | 46 | 14 | 78 | 86 | 48 | 26 | 86 |
+| `no_location` | 70 | 4 | 40 | 18 | 0 | 68 | 16 | 0 | 48 | 12 |
+
+These three runs are not in `docs/result_tables/` (built before they were recorded here).
+Results (local, not in the repo): `qwenvla_vla_ws_language-screens_2026-10-11/` in the primary checkout
+(tarball + sha256 + README + `summary.txt`), files `results/*--qwenvla-78.6pct--shard{0..9}of10.jsonl`.
 
 ## 12. Language-stress screening (2026-10-10)
 
