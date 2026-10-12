@@ -11,7 +11,7 @@ run_libero_eval.py already has, so scripts/aggregate_results.py reads the result
       --checkpoint gs://openpi-assets/checkpoints/pi0_libero --splits spatial/default,grounding/landmark_exchange
 
 Families: `openpi` (a resident policy server per slot; {port} is filled by gpu_queue.py) and
-`openvla` (the model loads inside the eval container; CHECKPOINT is a host path).
+`openvla` / `openvla_oft` (the model loads inside the eval container; CHECKPOINT is a host path).
 Extra settings go in with --env KEY=VALUE (e.g. --env CENTER_CROP=False) and --extra '<flags>'.
 """
 import argparse
@@ -40,7 +40,7 @@ def suite_sizes(libero_root: Path):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--note", required=True, help="run_id_note: tags every results file of this checkpoint")
-    ap.add_argument("--family", choices=["openvla", "openpi"], required=True)
+    ap.add_argument("--family", choices=["openvla", "openvla_oft", "openpi"], required=True)
     ap.add_argument("--checkpoint", required=True)
     ap.add_argument("--splits", default="", help="comma list; default = run_benchmark.sh DEFAULT_SPLITS")
     ap.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]))

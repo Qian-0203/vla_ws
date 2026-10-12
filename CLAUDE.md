@@ -145,6 +145,12 @@ server ~9 GB). On a shared host check what else holds the GPUs first; `--min-fre
 never frees memory. Results land in the usual files (`--shard{task}of{n_tasks}`), so
 `aggregate_results.py --filter=--<note>` reads them unchanged. Re-running resumes.
 
+**OpenVLA-OFT checkpoints** (`moojink/openvla-7b-oft-finetuned-libero-*`: merged weights plus
+`action_head--*_checkpoint.pt` and `proprio_projector--*_checkpoint.pt` in one directory) run with
+`MODEL_FAMILY=openvla_oft` (or `--family openvla_oft` above): two images + proprio in, an 8-action chunk
+out. The family lives in the openvla fork (`experiments/robot/oft_utils.py`); it needs fork commit
+`0cafe50` or later. Gate it against the checkpoint's published `libero_spatial` number before trusting it.
+
 ## Results & logs
 
 - Text log: `openvla/experiments/logs/EVAL-{suite}-openvla-{timestamp}[--note][--shardXofY].txt`

@@ -72,14 +72,17 @@ SEED="${SEED:-7}"
 
 EXTRA_ARGS=("$@") # forwarded to run_libero_eval.py verbatim (e.g. --split spatial/default)
 
+# openvla_oft = OpenVLA-OFT (merged VLA + action head + proprio projector in one directory, run in-container
+# like openvla); everything below that treats "openvla" as "a checkpoint directory" applies to it too.
+LOCAL_CKPT=false
 case "${MODEL_FAMILY}" in
-  openvla) ;;
+  openvla|openvla_oft) LOCAL_CKPT=true ;;
   openpi) CHECKPOINT="${OPENPI_CHECKPOINT}" ;; # recorded in run metadata only; nothing to mount
-  *) echo "Unknown MODEL_FAMILY '${MODEL_FAMILY}' (expected openvla or openpi)." >&2; exit 1 ;;
+  *) echo "Unknown MODEL_FAMILY '${MODEL_FAMILY}' (expected openvla, openvla_oft or openpi)." >&2; exit 1 ;;
 esac
 
 # --- checkpoint integrity check (unchanged from the original per-suite scripts) ---
-if [[ "${MODEL_FAMILY}" == openvla && -f "${CHECKPOINT}/model.safetensors.index.json" ]]; then
+if [[ "${LOCAL_CKPT}" == true && -f "${CHECKPOINT}/model.safetensors.index.json" ]]; then
   python3 - "${CHECKPOINT}" <<'PY'
 import glob, json, os, sys
 checkpoint = sys.argv[1]
@@ -114,7 +117,7 @@ DOCKER_TTY_ARGS=()
 DOCKER_MOUNTS=(-v "${WORKSPACE_ROOT}:/workspace")
 [[ -n "${SERVER_ROOT}" && -d "${SERVER_ROOT}" ]] && DOCKER_MOUNTS+=(-v "${SERVER_ROOT}:${SERVER_ROOT}:ro")
 # A checkpoint anywhere else on the host is identity-mounted read-only on its own.
-if [[ "${MODEL_FAMILY}" == openvla && "${CHECKPOINT}" != "${WORKSPACE_ROOT}"/* && ( -z "${SERVER_ROOT}" || "${CHECKPOINT}" != "${SERVER_ROOT}"/* ) ]]; then
+if [[ "${LOCAL_CKPT}" == true && "${CHECKPOINT}" != "${WORKSPACE_ROOT}"/* && ( -z "${SERVER_ROOT}" || "${CHECKPOINT}" != "${SERVER_ROOT}"/* ) ]]; then
   DOCKER_MOUNTS+=(-v "${CHECKPOINT}:${CHECKPOINT}:ro")
 fi
 DOCKER_MOUNTS+=(-v "${SCRIPT_DIR}/10_nvidia_egl.json:/etc/glvnd/egl_vendor.d/10_nvidia.json:ro")
