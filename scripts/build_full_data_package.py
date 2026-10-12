@@ -15,7 +15,10 @@ Which rows count (the rules, because they decide the numbers):
     stopped under it) is dropped and counted, never scored;
   - success = LIBERO `done`; `--max-steps N` recounts success only if num_steps <= N (X-VLA's gate splits were
     run at horizon 800; every success there is inside 230 steps, so N = 230 is the standard 220-step protocol);
-  - the cell is the mean of per-task success rates, like aggregate_results.py and benchmark_split_result.md.
+  - the cell is the mean of per-task success rates, like aggregate_results.py and benchmark_split_result.md;
+  - `--exclude SUBSTR` leaves out every results file whose path contains SUBSTR (a workspace known to hold a
+    contaminated duplicate copy; the cells it duplicated are then served by the clean copy and the exclusion is part
+    of the command that built the package).
 """
 import argparse
 import collections
@@ -103,13 +106,15 @@ def main() -> int:
     ap.add_argument("--results-dir", action="append", required=True)
     ap.add_argument("--max-steps", type=int, default=0)
     ap.add_argument("--stamp", default="")
+    ap.add_argument("--exclude", action="append", default=[], help="skip results files whose path contains this")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
     files = []
     for d in args.results_dir:
         for dd in sorted(glob.glob(os.path.expanduser(d))):
-            files += glob.glob(os.path.join(dd, "*.jsonl"))
+            files += [f for f in glob.glob(os.path.join(dd, "*.jsonl"))
+                      if not any(x in f for x in args.exclude)]
     # (model, condition) -> run extra -> task -> episode -> row
     runs = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
     dropped = collections.Counter()
