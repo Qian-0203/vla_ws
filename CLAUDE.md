@@ -149,7 +149,10 @@ never frees memory. Results land in the usual files (`--shard{task}of{n_tasks}`)
 `action_head--*_checkpoint.pt` and `proprio_projector--*_checkpoint.pt` in one directory) run with
 `MODEL_FAMILY=openvla_oft` (or `--family openvla_oft` above): two images + proprio in, an 8-action chunk
 out. The family lives in the openvla fork (`experiments/robot/oft_utils.py`); it needs fork commit
-`0cafe50` or later. Gate it against the checkpoint's published `libero_spatial` number before trusting it.
+`0cafe50` or later. It also needs the OFT authors' transformers fork (bidirectional Llama attention):
+build `docker/openvla_libero/Dockerfile.oft` and run with `IMAGE_NAME=openvla-libero:oft`. On the stock
+image the checkpoint runs but scores ~10-20% on `libero_spatial` tasks 1 and 5 (20/20 with the fork;
+2026-10-12). Gate it against the checkpoint's published `libero_spatial` number before trusting it.
 
 ## Results & logs
 
