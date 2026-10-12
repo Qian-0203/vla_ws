@@ -135,6 +135,12 @@ DOCKER_ENV_COMMON=(
   # their init order races and intermittently aborts with "OMP: Error #15". Allow
   # the duplicate runtime so the process continues (the documented workaround).
   -e KMP_DUPLICATE_LIB_OK=TRUE
+  # Cap CPU thread pools: with 8+ containers per host every TF / torch process otherwise spawns one thread per
+  # core (load average 870 on 192 cores, 2026-10-12) and the jobs slow each other down.
+  -e OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}"
+  -e MKL_NUM_THREADS="${MKL_NUM_THREADS:-4}"
+  -e TF_NUM_INTRAOP_THREADS="${TF_NUM_INTRAOP_THREADS:-4}"
+  -e TF_NUM_INTEROP_THREADS="${TF_NUM_INTEROP_THREADS:-2}"
   -e WANDB_MODE="${WANDB_MODE:-disabled}"
   -e OPENVLA_ATTN_IMPLEMENTATION="${OPENVLA_ATTN_IMPLEMENTATION}"
   # Run as the host user so eval outputs (logs, rollouts) aren't root-owned. HOME

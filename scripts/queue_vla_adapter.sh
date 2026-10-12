@@ -50,6 +50,8 @@ for idx in "${!GPU_ARR[@]}"; do
     --user "$(id -u):$(id -g)" -w /vla_adapter --entrypoint python3 \
     -e PYTHONPATH=/vla_adapter:/workspace/LIBERO -e HOME=/tmp -e PYTHONNOUSERSITE=1 -e HF_HOME=/tmp/hf \
     -e KMP_DUPLICATE_LIB_OK=TRUE -e WANDB_MODE=disabled -e LIBERO_CONFIG_PATH=/workspace/.libero \
+    -e OMP_NUM_THREADS="${THREADS:-4}" -e MKL_NUM_THREADS="${THREADS:-4}" \
+    -e TF_NUM_INTRAOP_THREADS="${THREADS:-4}" -e TF_NUM_INTEROP_THREADS=2 \
     -v "${ROOT}:/workspace:ro" -v "${VLA_ADAPTER_DIR}:/vla_adapter:ro" -v "${ROOT}/scripts/policy_servers:/serve:ro" \
     -v "${CKPT}:${CKPT}:ro" -v "${work}:${work}" \
     "${IMAGE_NAME}" /serve/serve_vla_adapter.py --checkpoint "${work}" --port "${port}" \

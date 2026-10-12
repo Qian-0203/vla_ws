@@ -40,6 +40,8 @@ for idx in "${!GPU_ARR[@]}"; do
   docker run -d --rm --name "${name}" --network host --gpus "device=${GPU_ARR[$idx]}" --ipc=host \
     --user "$(id -u):$(id -g)" -w /xvla \
     -e PYTHONPATH=/xvla -e HOME=/tmp -e HF_HOME=/tmp/hf -e PYTHONNOUSERSITE=1 \
+    -e OMP_NUM_THREADS="${THREADS:-4}" -e MKL_NUM_THREADS="${THREADS:-4}" \
+    -e TF_NUM_INTRAOP_THREADS="${THREADS:-4}" -e TF_NUM_INTEROP_THREADS=2 \
     -v "${XVLA_DIR}:/xvla:ro" -v "${ROOT}/scripts/policy_servers:/serve:ro" -v "${CKPT}:${CKPT}:ro" \
     ${LORA:+-v "${LORA}:${LORA}:ro"} \
     "${SERVER_IMAGE}" python3 /serve/serve_xvla.py --model_path "${CKPT}" --port "${port}" "${lora_args[@]}" >/dev/null
