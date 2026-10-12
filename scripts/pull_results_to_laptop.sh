@@ -13,7 +13,7 @@ set -uo pipefail
 
 DEST="${DEST:-$HOME/vla_results_backup/libero_ckpt_campaign_2026-10-12}"
 HOSTS="${HOSTS:-berkeley berkeley-2}"
-WORKSPACES="${WORKSPACES:-vla_ws vla_ws_oft2 vla_ws_va}"
+WORKSPACES="${WORKSPACES:-vla_ws vla_ws_oft2 vla_ws_va vla_ws_va2 vla_ws_xvla vla_ws_gr00t vla_ws_lang}"
 SSH=(ssh -o BatchMode=yes -o ConnectTimeout=20)
 STAMP="$(date -u +%FT%TZ)"
 mkdir -p "${DEST}"
