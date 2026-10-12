@@ -18,7 +18,9 @@ Which rows count (the rules, because they decide the numbers):
   - the cell is the mean of per-task success rates, like aggregate_results.py and benchmark_split_result.md;
   - `--exclude SUBSTR` leaves out every results file whose path contains SUBSTR (a workspace known to hold a
     contaminated duplicate copy; the cells it duplicated are then served by the clean copy and the exclusion is part
-    of the command that built the package).
+    of the command that built the package);
+  - `--drop-condition NAME` leaves out one canonical condition everywhere (e.g. an exploratory split that is
+    not reported).
 """
 import argparse
 import collections
@@ -107,6 +109,7 @@ def main() -> int:
     ap.add_argument("--max-steps", type=int, default=0)
     ap.add_argument("--stamp", default="")
     ap.add_argument("--exclude", action="append", default=[], help="skip results files whose path contains this")
+    ap.add_argument("--drop-condition", action="append", default=[], help="canonical condition name to leave out")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
@@ -125,6 +128,8 @@ def main() -> int:
             continue
         c = canon(suite, cond)
         if cond in WITHDRAWN and suite == "libero_spatial":
+            continue
+        if c in args.drop_condition:
             continue
         model = MODELS[note]
         for line in open(f):

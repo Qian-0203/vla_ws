@@ -1430,10 +1430,66 @@ run: 400 rollouts per condition and model.
 
 ---
 
+## 2026-10-12 → 2026-10-13 — Public LIBERO-finetuned checkpoints on the whole benchmark (pi0, OpenVLA-OFT, VLA-Adapter ×2, X-VLA, GR00T N1.5)
+
+- **Why:** the benchmark so far covered one LoRA checkpoint, the official OpenVLA checkpoint, `pi05_libero` and
+  QwenVLA. This batch runs the six other public LIBERO checkpoints that could be stood up in a day, on
+  the same registry, seed (7), 50 trials/task and 220-step horizon, with per-rollout which-bowl outcome logging.
+- **Machines:** `berkeley` (`g4-flexstart-mig-ussouth1-5tbf`) and `berkeley-2` (`g4-15gr-1009-mig-uswest3-zzst`),
+  4× RTX PRO 6000 Blackwell each, driver 580.178.04, bf16. Jobs = (split, task); `scripts/make_eval_jobs.py`
+  + `scripts/gpu_queue.py`, policy servers resident (openpi websocket protocol), 2 shards per GPU.
+- **Checkpoints, gates and full runs** (gate = `spatial/default`, 500 rollouts, plus `grounding/landmark_exchange`, an exploratory
+  probe whose results are not tabulated in the result docs; full = the other 22 splits; 24 conditions, 9,000
+  rollouts per checkpoint):
+
+  | Run note | Checkpoint | Stack / image | Gate `default` | Queue window (UTC, 2026-10-12) | Host |
+  |---|---|---|--:|---|---|
+  | `pi0_libero` | openpi `pi0_libero` | openpi server, `~/openpi` | 96.4% (482/500) | 09:25 → 13:15 (gate + full) | berkeley-2 |
+  | `oft_libero_spatial` | `moojink/openvla-7b-oft-finetuned-libero-spatial` | `openvla_oft` family, `openvla-libero:oft` | 98.2% (491/500) | gate 11:32–11:52; full 11:59 → 13:46 | berkeley-2 (gate), both (full) |
+  | `vla_adapter_spatial` | VLA-Adapter LIBERO-Spatial | authors' eval code behind a server | 95.8% (479/500) | gate 12:35–12:59; full 13:27 → 15:20 | berkeley (gate), berkeley-2 (full) |
+  | `vla_adapter_pro_spatial` | VLA-Adapter LIBERO-Spatial-Pro | same | 97.8% (489/500) | gate 12:35–13:01; full 13:28 → 15:16 | berkeley (gate), berkeley-2 (full) |
+  | `xvla_libero` | `2toINF/X-VLA-Libero` | `xvla` family, `openvla-libero:xvla` | 97.4% (487/500) | 12:44 → 15:46 (gate + full) | berkeley |
+  | `gr00t_n15_spatial` | `youliangtan/gr00t-n1.5-libero-spatial-posttrain` | Isaac-GR00T `n1.5-release`, `openvla-libero:gr00t` | 89.0% (445/500) | gate 13:17–13:53; full → 16:58, split over both hosts | berkeley (gate), both (full) |
+
+  Published numbers for comparison: VLA-Adapter 97.8 / 99.6; X-VLA 98.1 for `X-VLA-Libero` (the model-card
+  figure for the LIBERO benchmark as a whole: one model for all four suites) and 96.2 for the separate
+  `X-VLA-libero-spatial-peft`; GR00T N1.5 92 (46/50). No published number was at hand for pi0 on this suite; OFT's paper figure is ~97.6 (from memory).
+- **Language conditions** (instruction files `screening/language_stress/candidates/{no_location,target_swap}.json`,
+  10 tasks × 50 trials each, same run notes): berkeley 16:27 → 17:13 UTC (X-VLA, OFT, GR00T), berkeley-2 16:29 →
+  17:03 UTC (pi0, VLA-Adapter ×2), from workspace `~/vla_ws_lang` (`~/launch_lang.sh`).
+- **Excluded:** `pi0_fast_libero` — gate 16.0% (80/500), cause unresolved (2% FAST decode errors; matmul precision
+  had no effect). Not a reference point; the full set was not run.
+- **Incidents** (all repaired before the numbers were taken; details in memory notes, not repeated here):
+  1. *OFT needs the authors' transformers fork.* On stock transformers tasks 1 and 5 scored 3/20; with the fork
+     (bidirectional Llama attention, `bc339d9`) 20/20, and our adapter agrees with the official code episode by
+     episode.
+  2. *`run_eval.sh` edited while jobs ran.* 12 job wrappers exited rc=2 after finishing 50/50; rows verified and
+     markers converted `.fail` → `.done` (`OFT FULL DONE rc=1` on both hosts is this).
+  3. *VLA-Adapter servers restarted under running clients.* Orphaned clients wrote 158 failed rows with
+     `num_steps == 10` (56 Spatial, 102 Pro) that `--resume` counted as finished; removed (originals in
+     `results/_garbage_rows_backup_2026-10-12` on `berkeley`) and re-run. First gate 87.5% / 82.1% → 95.8% / 97.8%.
+  4. *CPU oversubscription* (load ≈ 870): thread pools capped at 4 in `run_eval.sh` and
+     the launchers (`708ee1b`); load fell to 12–20.
+  5. *Shared PID file.* Two launchers on `berkeley-2` used the same `LOG_DIR`, so one queue's shutdown killed the
+     other's servers: `~/vla_ws_lang2` holds 100 duplicate rows of pi0 `no_location` (shards 8, 9) with 42
+     lost-server rows. The complete clean copy in `~/vla_ws_lang` is the authoritative one; the package builder
+     excludes `/vla_ws_lang2/`. Four idle pi0 servers (ports 8700–8703) were left running (still up when this entry was written).
+- **Code:** vla_ws `9f10df8` (branch `claude/libero-finetuned-ckpt-benchmark-4f7040`); openvla fork branch
+  `xvla-client` @ `77e1579` (families `openvla_oft`, `openpi` raw obs, `xvla`, `--max_steps`); LIBERO
+  `landmark-exchange-suite` @ `63b26c5`. Dockerfiles `Dockerfile.oft|.xvla|.gr00t`, servers `scripts/policy_servers/`.
+- **Results:** per host `~/vla_ws{,_oft2,_va,_va2,_xvla,_gr00t,_lang}/openvla/experiments/logs/results/`
+  (`{suite}--{condition}--{run note}--shard{i}of{n}.jsonl`); HF mirror `Qian0203/vla_ws-eval-results`; laptop copy
+  `~/vla_results_backup/libero_ckpt_campaign_2026-10-12/`; tables in `docs/result_tables/`.
+
+**Status:** done; 60,000 rollouts (6 checkpoints × 10,000).
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 `grounding/target_cue_region_img`, `_v2_img`, `_v3_img` (authored 2026-10-11, Erratum E1; 400 rollouts each,
-tasks 0,1,3,5–9): corrected image-frame region cue, not run on any model.
+tasks 0,1,3,5–9): corrected image-frame region cue; not run on the OpenVLA, pi05 or QwenVLA
+checkpoints (run on six other public checkpoints 2026-10-12 → 2026-10-13, entry above).
 
 `spatial/negation_only` (authored 2026-10-10): run for OpenVLA and `pi05_libero` (2026-10-11 entry);
 QwenVLA not yet requested. The official OpenVLA checkpoint's full run finished 2026-10-07; it has not
@@ -1459,8 +1515,8 @@ in place: update it when a machine is added or retired, and leave the dated entr
 | GCP replacement instance, same `berkeley` alias — replaced by 2026-09-30 | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-10 entries |
 | GCP `g4-flexstart-mig-uswest1-9dxc`, same `berkeley` alias — replaced by 2026-10-05. Shared host: other users' jobs run on the same GPUs. Workspace `/home/qian/vla_ws`, checkpoint `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32`, openpi checkout `/home/qian/openpi` | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-30 → 2026-10-03 entries |
 | GCP `g4-flexstart-mig-uswest1-15gr`, same `berkeley` alias — replaced by 2026-10-10 (its disk came back as `berkeley-2`). Shared host (`vaclis` runs training on the same GPUs). Workspace `/home/qian/vla_ws`; checkpoints `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32` and `openvla/checkpoint/openvla-7b-finetuned-libero-spatial` (official). No `uv` installed | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-10-05 onward |
-| GCP `g4-flexstart-mig-ussouth1-5tbf` (`34.174.233.202`), ssh alias `berkeley` — current. Shared host (`vaclis`, `ayushraj`): only GPU 3 had room on 2026-10-10. Docker installed 2026-10-10 | 4× RTX PRO 6000 Blackwell Server Edition, driver 580.178.04 | `openvla-libero:blackwell` (built 2026-10-10) / sdpa | bf16 | 2026-10-10 entry |
-| GCP `g4-15gr-1009-mig-uswest3-zzst` (`34.106.148.66`), ssh alias `berkeley-2` — current. Booted from `…-15gr`'s disk; `vaclis` uses about 83 GB per GPU | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa; openpi at `~/openpi` | bf16 | 2026-10-10 entry (pi05) |
+| GCP `g4-flexstart-mig-ussouth1-5tbf` (`34.174.233.202`), ssh alias `berkeley` — current. Shared host (`vaclis`, `ayushraj`): only GPU 3 had room on 2026-10-10. Docker installed 2026-10-10 | 4× RTX PRO 6000 Blackwell Server Edition, driver 580.178.04 | `openvla-libero:blackwell` (built 2026-10-10) / sdpa | bf16 | 2026-10-10 entry; 2026-10-12 → 2026-10-13 public-checkpoint batch (images `openvla-libero:oft`, `:xvla`, `:gr00t`) |
+| GCP `g4-15gr-1009-mig-uswest3-zzst` (`34.106.148.66`), ssh alias `berkeley-2` — current. Booted from `…-15gr`'s disk; `vaclis` uses about 83 GB per GPU | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa; openpi at `~/openpi` | bf16 | 2026-10-10 entry (pi05); 2026-10-12 → 2026-10-13 public-checkpoint batch (pi0, OFT, VLA-Adapter, GR00T N1.5) |
 | Ken Zheng's machines: dgx1 (8× A100-SXM4-80GB) and an 8× H200 node — not ours | 8× A100 80 GB / 8× H200 | host conda env (`scripts/run_eval_qwenvla.sh`) / SDPA | not quantized (dtype not recorded) | QwenVLA runs, 2026-09-30 and 2026-10-05 (logged 2026-10-06) |
 | Laptop | 1× RTX 5060 Laptop, 8 GB, compute cap 12.0 | `openvla-libero:blackwell` / sdpa | 4-bit only | scene authoring, init states, contact sheets, smoke tests (no reported number comes from here) |
 

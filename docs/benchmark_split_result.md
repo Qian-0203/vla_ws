@@ -161,7 +161,8 @@ them with the withdrawn ones.
 | Language-stress screening (§12, not a `SPLITS` entry) | `screening/language_stress/` + `run_libero_eval.py --instruction_file` | 2026-10-10, 5 trials/task, three batches, 14 candidates. Every negation/exclusion wording collapses both families (official OpenVLA 0–8%, pi05_libero 0–46%); `negation_swap` is 0% for both. `translate_zh` / `code_switch` separate them (OpenVLA 0–4%, pi05 78–80%). `negation_only` promoted to `spatial/negation_only` and run in full for OpenVLA (2.6%) and pi05 (44.8%). Batch D (2026-10-10/11): OpenVLA `target_swap` 52–54%, `no_location` 10–20% (pi05 60% / 82%) |
 | Full `target_swap` / `no_location` runs (§12 batch E, not `SPLITS` entries) | Same candidate JSONs as the screens, 50 trials/task | pi05_libero done 2026-10-10: `target_swap` 56.8%, `no_location` 81.4% (1,000 rollouts). Both OpenVLA checkpoints done 2026-10-11 with per-rollout outcome logging (openvla `1e8544e`): `target_swap` 57.2% official / 62.0% ours, `no_location` 17.6% / 11.8% (2,000 rollouts); 79–83% of `no_location` failures approach neither bowl |
 | Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% (**withdrawn, E1**) |
-| Corrected region cue `target_cue_region_img` / `_v2_img` / `_v3_img` (Erratum E1) | Authored 2026-10-11 in the image frame; 8/8 tasks pass `scripts/check_region_wording.py` | **Not run** (saved for later; 8 tasks × 50 trials = 400 rollouts per condition and model) |
+| Corrected region cue `target_cue_region_img` / `_v2_img` / `_v3_img` (Erratum E1) | Authored 2026-10-11 in the image frame; 8/8 tasks pass `scripts/check_region_wording.py` | Run 2026-10-12 → 2026-10-13 on the six public checkpoints (§13; 400 rollouts per condition and model): `target_cue_region_img` 31.5–71.8%, `_v2_img` 30.5–73.8%, `_v3_img` 29.0–72.2%. **Not run** on the OpenVLA, pi05 and QwenVLA checkpoints |
+| Cross-model references: six public LIBERO checkpoints (§13) | Same registry; per-family clients in the openvla fork (`openvla_oft`, `openpi`, `xvla`), policy servers for VLA-Adapter / X-VLA / GR00T | 23 conditions + `no_location` / `target_swap` run 2026-10-12 → 2026-10-13 (9,800 reported rollouts per checkpoint). `spatial/default` 89.0–98.2%; mean drop over the other 19 valid conditions 13.0–28.2 pts (OpenVLA official 28.8, pi05 11.9); `negation_only` 22.6–65.8%, 31–69 pts below the same checkpoint's lowest length control. `pi0_fast_libero` excluded (gate 16.0%) |
 | Mechanistic Localization Probe (not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`) | Run 2026-09-04 → 2026-09-10 on task 5. Real, n=50-replicated early-window vision-attention/resolution-layer effects for `target_cue_landmark`; no layer/module localized; confidence diagnostic null. Full record: `mechanistic_localization.md` |
 
 ---
@@ -2495,3 +2496,121 @@ i.e. the other bowl under `target_swap` and the trained target under `no_locatio
 Results: `results/libero_spatial--target_swap--{openvla-official-libero-spatial,openvla-7b-libero-spatial-lora-r32}--shard{0,1}of2.jsonl`
 (`berkeley:~/vla_ws_e`) and `results/libero_spatial--no_location--{…}--shard{0..3}of4.jsonl`
 (`berkeley-2:~/vla_ws_e`); all in the HF mirror.
+
+---
+
+## 13. Cross-model reference: six public LIBERO checkpoints (2026-10-12 → 2026-10-13)
+
+**What this is.** `pi0_libero` (openpi), OpenVLA-OFT (`moojink/openvla-7b-oft-finetuned-libero-spatial`),
+VLA-Adapter (Spatial and Spatial-Pro), X-VLA (`2toINF/X-VLA-Libero`) and GR00T N1.5
+(`youliangtan/gr00t-n1.5-libero-spatial-posttrain`) on 23 current conditions plus `no_location` and
+`target_swap` (the exploratory `landmark_exchange` probe is not reported here): 9,800 rollouts per checkpoint.
+Same registry, scenes, init states, seed (7) and 50 trials/task.
+Launch details: `eval_log.md`, 2026-10-12 → 2026-10-13.
+
+**Read these caveats before comparing columns.**
+
+- **Different policies, different protocols.** OFT: 8-action chunks, two cameras + proprio. pi0: 5-action chunks.
+  VLA-Adapter: 8-action chunks. X-VLA: absolute end-effector poses, 30 actions per query. GR00T N1.5: query every
+  step, execute the first of 16 actions, SDPA instead of flash-attention-2. Compare each policy with its own
+  `default`, not raw rates.
+- **Training data differs.** `pi0_libero` and `X-VLA-Libero` are single models fine-tuned on LIBERO as a whole
+  (all four suites; X-VLA's authors evaluate the one checkpoint on all four); OFT, both VLA-Adapter variants and
+  GR00T are LIBERO-Spatial checkpoints.
+- **X-VLA horizon.** Its gate split `default` ran with the authors' 800-step horizon; every success there is
+  inside 230 steps, so the 220-step number is identical (487/500). All its other splits ran at 220.
+- **OFT needs the authors' transformers fork**; all OFT numbers are with it (`openvla-libero:oft`).
+- **One run per condition.** §0's noise bands apply (±3.3 pts pooled over 500, ±5–7 pts on one task);
+  `region_surface` and `surface_landmark` are 50 rollouts each (one task).
+- **Withdrawn conditions** (`target_cue_region`, `_v2`, `_v3`, Erratum E1) are not shown; the corrected `*_img`
+  conditions exist only for the new checkpoints.
+
+### 13.1 — Overall
+
+> `no_location` / `target_swap` are the instruction files of §12 batch E (not `SPLITS` entries).
+
+| Split | official OpenVLA | pi05 | pi0 | OFT | VLA-Ad. Spatial | VLA-Ad. Pro | X-VLA | GR00T N1.5 | Rollouts (new) |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| `spatial/default` | 84.0% | 98.4% | 96.4% | 98.2% | 95.8% | 97.8% | 97.4% | 89.0% | 500 |
+| `spatial/positive_contrast` | 32.8% | 92.2% | 62.6% | 77.8% | 53.6% | 71.4% | 82.0% | 73.2% | 500 |
+| `spatial/negative_contrast` | 42.4% | 87.0% | 55.0% | 76.4% | 55.6% | 70.4% | 89.6% | 73.2% | 500 |
+| `spatial/negation_only` | 5.0% | 44.8% | 32.8% | 43.6% | 22.6% | 34.2% | 65.8% | 35.8% | 500 |
+| `spatial/length_control_suffix` | 51.2% | 99.0% | 69.2% | 97.8% | 92.6% | 98.4% | 97.0% | 87.4% | 500 |
+| `spatial/length_control_infix` | 63.6% | 99.2% | 81.4% | 97.2% | 91.8% | 98.4% | 97.0% | 87.4% | 500 |
+| `grounding/paraphrase_lexical` | 79.0% | 97.2% | 90.8% | 97.2% | 71.8% | 98.6% | 92.6% | 86.8% | 500 |
+| `grounding/paraphrase_syntactic` | 84.8% | 97.8% | 97.0% | 97.2% | 92.8% | 99.8% | 90.2% | 87.4% | 500 |
+| `grounding/target_cue_landmark` | 25.0% | 87.0% | 46.0% | 85.5% | 63.5% | 83.5% | 91.5% | 78.0% | 200 |
+| `grounding/target_cue_proximity_novel` | 37.0% | 96.0% | 74.0% | 96.5% | 42.0% | 85.5% | 91.0% | 82.5% | 200 |
+| `grounding/target_cue_proximity_beside` | 31.5% | 97.0% | 93.0% | 97.0% | 66.5% | 89.5% | 95.0% | 76.0% | 200 |
+| `grounding/target_cue_proximity_near` | 45.0% | 96.0% | 96.0% | 93.5% | 72.5% | 88.5% | 96.5% | 80.5% | 200 |
+| `grounding/target_cue_proximity_adjacent` | 31.0% | 97.0% | 82.0% | 96.5% | 61.5% | 88.0% | 92.5% | 78.0% | 200 |
+| `grounding/target_cue_region_img` | — | — | 32.5% | 71.8% | 31.5% | 52.5% | 64.5% | 59.5% | 400 |
+| `grounding/target_cue_region_v2_img` | — | — | 30.5% | 73.8% | 35.5% | 54.8% | 69.0% | 55.5% | 400 |
+| `grounding/target_cue_region_v3_img` | — | — | 36.0% | 72.2% | 29.0% | 54.2% | 65.2% | 57.5% | 400 |
+| `spatial_3bowl/irrelevant` | 82.8% | 80.6% | 86.0% | 73.6% | 80.6% | 81.2% | 82.8% | 88.2% | 500 |
+| `spatial_3bowl/semantic` | 83.2% | 91.0% | 92.2% | 81.0% | 83.0% | 87.0% | 78.8% | 81.8% | 500 |
+| `spatial_3bowl/landmark` | 77.0% | 72.0% | 69.0% | 65.6% | 67.4% | 75.8% | 75.4% | 74.4% | 500 |
+| `spatial_3bowl/landmark_with_hardneg_prompt` | 42.2% | 66.2% | 46.6% | 59.6% | 46.6% | 70.0% | 66.0% | 65.8% | 500 |
+| `spatial_3bowl/drawer_open` | 64.6% | 43.4% | 40.2% | 27.2% | 33.4% | 49.4% | 39.4% | 48.4% | 500 |
+| `grounding/surface_landmark` | 88.0% | 100.0% | 94.0% | 90.0% | 98.0% | 100.0% | 90.0% | 62.0% | 50 |
+| `grounding/region_surface` | 82.0% | 100.0% | 96.0% | 100.0% | 88.0% | 92.0% | 90.0% | 96.0% | 50 |
+| `no_location` (instruction file) | 17.6% | 81.4% | 51.2% | 66.0% | 30.2% | 63.0% | 59.6% | 65.8% | 500 |
+| `target_swap` (instruction file) | 57.2% | 56.8% | 68.2% | 37.4% | 36.4% | 51.2% | 32.2% | 40.8% | 500 |
+
+Per-task counts and which-bowl classes for every cell: `docs/result_tables/` (`task_condition_sr_2026-10-13.csv`, `outcomes_2026-10-13.csv`).
+
+### 13.2 — Headline metrics (each policy against its own `default`)
+
+| Policy | `default` | Mean of the 19 other valid conditions | Mean drop | Lowest condition |
+|---|--:|--:|--:|---|
+| official OpenVLA | 84.0 | 55.2 | 28.8 | `negation_only` 5.0 |
+| pi05_libero | 98.4 | 86.5 | 11.9 | `drawer_open` 43.4 |
+| pi0_libero | 96.4 | 73.9 | 22.5 | `negation_only` 32.8 |
+| OpenVLA-OFT | 98.2 | 81.7 | 16.5 | `drawer_open` 27.2 |
+| VLA-Adapter Spatial | 95.8 | 67.6 | 28.2 | `negation_only` 22.6 |
+| VLA-Adapter Spatial-Pro | 97.8 | 82.2 | 15.6 | `negation_only` 34.2 |
+| X-VLA | 97.4 | 84.4 | 13.0 | `drawer_open` 39.4 |
+| GR00T N1.5 | 89.0 | 75.9 | 13.1 | `negation_only` 35.8 |
+
+The 19 conditions: `positive_contrast`, `negative_contrast`, `negation_only`, both length controls, both
+paraphrases, `target_cue_landmark`, the four proximity cues, `irrelevant`, `semantic`, `landmark`,
+`landmark_with_hardneg_prompt`, `drawer_open`, `region_surface`, `surface_landmark`. The three `_img` region cues
+are left out because the older checkpoints were never run on them. Drop = `default` minus condition, averaged.
+
+### 13.3 — Which bowl: `no_location` and `target_swap`
+
+Share of 500 rollouts by outcome (`target` = the bowl the success criterion scores; in `target_swap` that is the
+bowl the sentence names, and the *trained* bowl counts as `other`). `pi05_libero` was run before outcome logging.
+
+| Policy | condition | target delivered | other delivered | lifted only (target / other) | approached neither bowl |
+|---|---|--:|--:|--:|--:|
+| official OpenVLA | `no_location` | 17.6 | 1.0 | 9.6 / 0.8 | 65.4 |
+| pi0_libero | `no_location` | 51.2 | 6.6 | 10.4 / 3.8 | 24.8 |
+| OpenVLA-OFT | `no_location` | 66.0 | 10.2 | 1.8 / 1.6 | 17.8 |
+| VLA-Adapter Spatial | `no_location` | 30.2 | 6.0 | 3.6 / 1.8 | 47.2 |
+| VLA-Adapter Spatial-Pro | `no_location` | 63.0 | 15.2 | 3.4 / 1.4 | 12.4 |
+| X-VLA | `no_location` | 59.6 | 3.2 | 12.8 / 1.2 | 10.6 |
+| GR00T N1.5 | `no_location` | 65.8 | 5.4 | 6.0 / 2.8 | 16.8 |
+| official OpenVLA | `target_swap` | 57.2 | 2.2 | 11.6 / 2.6 | 15.8 |
+| pi0_libero | `target_swap` | 68.2 | 13.8 | 4.0 / 6.0 | 3.2 |
+| OpenVLA-OFT | `target_swap` | 37.4 | 41.4 | 1.0 / 3.2 | 14.2 |
+| VLA-Adapter Spatial | `target_swap` | 36.4 | 23.0 | 1.6 / 5.6 | 22.4 |
+| VLA-Adapter Spatial-Pro | `target_swap` | 51.2 | 35.2 | 1.2 / 4.4 | 1.2 |
+| X-VLA | `target_swap` | 32.2 | 40.0 | 1.4 / 6.4 | 13.0 |
+| GR00T N1.5 | `target_swap` | 40.8 | 30.4 | 5.4 / 6.8 | 11.4 |
+
+### 13.4 — What the numbers show
+
+- **All six clear their gate.** `default` is 89.0–98.2%; the GR00T gap to its published 92% is 3 pts
+  (SDPA instead of flash-attention-2; one seed).
+- **Negation is the weakest prompt condition for all six**, and it is not a length effect: `negation_only` is
+  22.6–65.8%, 31–69 pts below the lowest of that checkpoint's two length controls (69–98%). X-VLA is the least
+  affected (65.8%), VLA-Adapter Spatial the most (22.6%).
+- **Scene clutter is the lowest condition for OFT and X-VLA** (and for pi05). `drawer_open` is 27.2–49.4% for all
+  six new checkpoints, whose `default` is 89–98%.
+- **Layout alone identifies the task for most of them.** `no_location` keeps 51–66% for pi0, OFT, VLA-Adapter Pro,
+  X-VLA and GR00T, against 11.8–17.6% for the two OpenVLA checkpoints; VLA-Adapter Spatial (30.2%) is the
+  exception and 47% of its rollouts approach neither bowl.
+- **pi0 follows a swapped sentence most clearly.** In `target_swap` pi0 delivers the named bowl in 68.2% and the
+  trained, unnamed bowl in 13.8%; VLA-Adapter Pro 51.2 vs 35.2. OFT and X-VLA deliver the *unnamed* trained bowl
+  more often than the named one (41.4 vs 37.4, 40.0 vs 32.2); GR00T delivers it in 30.4% (named 40.8%).
