@@ -22,6 +22,9 @@ Each split below changes exactly one axis — prompt phrasing, distractor placem
 or the type of spatial cue used — while holding the model, checkpoint, and seed fixed, so drops
 in success rate can be attributed to a specific capability gap rather than confounded together.
 
+Since 2026-09-30 the same splits have also been run on other LIBERO-Spatial policies (ten checkpoints by
+2026-10-13, §4), each read against its own `spatial/default`.
+
 ## 2. Splits overview
 
 | Split | Probes | Registry status |
@@ -31,6 +34,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
 | 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`); 4c: `grounding/target_cue_proximity_novel`. All run. 4b/4c paraphrase controls (7 conditions) authored and run 2026-10-01 (`benchmark_split_result.md` §5.5). **Erratum E1 (2026-10-11): the three region-cue conditions (`target_cue_region`, `_v2`, `_v3`) used swapped-axis direction words and are withdrawn; corrected `*_img` conditions are authored and were run on the six public checkpoints only (`benchmark_split_result.md` §13)** |
 | 5. Landmark Exchange | Does the policy deliver the bowl the sentence describes in the *current* scene, or the bowl at the coordinate the sentence was trained on? | Implemented and run 2026-10-12 as an **exploratory probe, not part of the official data** (`grounding/landmark_exchange`; `benchmark_split_result.md` §14) |
+| 6. Instruction-file language conditions (`target_swap`, `no_location`; not `SPLITS` entries) | Does the policy deliver the bowl a sentence names when it names the *other* bowl, and can it do the task when the location is removed? | Defined in `screening/language_stress/candidates/` (Split 6 below); promoted from the 2026-10-10 screen and run at 50 trials/task on all ten checkpoints (`benchmark_split_result.md` §12, §11 addendum) |
 | VLM Bowl-Pointing / Bowl-Attraction Probes (§11, not a `SPLITS` entry) | Is the distractor-mention collapse (Splits 1/2) a grounding failure or an action-decoding failure? | Standalone diagnostic scripts, run directly — not registered in `eval_registry.py`. Both probes run to completion on their respective batteries; open gaps listed in §11.3 |
 
 "Implemented" = task suite + prompts exist in the registry and can be run with one `run_eval.sh`
@@ -580,10 +584,38 @@ layouts only, four tasks, one seed, one exchange (ramekin ↔ cookie box). The s
 (tasks 7/9) was not built: the cabinet region carries a yaw rotation the stove region does not, so an
 exchange needs a new region definition and a fresh render check.
 
+### Split 6 — Instruction-file language conditions (`target_swap`, `no_location`)
+
+Promoted from the language-stress screen (`benchmark_split_result.md` §12) and run at full size. They stay
+outside `SPLITS`: `target_swap` needs `swap_target` (the scored bowl changes), which only an instruction file
+can set, and `run_libero_eval.py` refuses a registry condition with a screening condition's name. Both run as
+`run_libero_eval.py --task_suite_name libero_spatial --unnorm_key libero_spatial --instruction_file
+screening/language_stress/candidates/<name>.json` (or `--instruction-file` in the queue scripts).
+
+| Field | `target_swap` | `no_location` |
+|---|---|---|
+| Change | Sentence names the *other* bowl in the stock 2-bowl scene, by its location (task 7: "pick up the black bowl on top of the wooden cabinet and place it on the plate") | Location phrase removed: "pick up the black bowl and place it on the plate", same for all 10 tasks |
+| Scored bowl | The bowl the sentence names (`swap_target: true`; the goal predicate is retargeted to the other bowl) | The original target (with the location removed, both bowls fit the sentence, so the condition has no unique correct answer) |
+| Hypothesis (from the JSON) | A policy that executes the layout's trained motion instead of reading the sentence scores near 0 | A high score means the layout alone identifies the task, i.e. the policy need not read the location |
+| Controlled | Scene, init states, checkpoint, seed 7, 50 trials/task, all 10 tasks | same |
+| File sha256 | `3cccd982…aa26` | `5df13c4f…9296` |
+| Metrics | SR; per-rollout outcome classes (below): named bowl delivered / trained bowl delivered / lifted only / no bowl lifted (split by first bowl approached) | SR; same classes, with "target" = original target |
+
+**Known limit.** Every `target_swap` sentence names a bowl that sits at another task's trained target coordinate
+(`benchmark_split_result.md` §12, batch E), so success cannot separate "reads the sentence and finds the described
+bowl" from "maps the sentence to a trained coordinate". Split 5 was built to separate them and is exploratory.
+
 ## 4. Baselines
 
 The single reference number everything compares against: `spatial/default` — 2 bowls, default
-prompt, `libero_spatial` scene, 84.0% (420/500), see `benchmark_split_result.md` §2. Split 3's
+prompt, `libero_spatial` scene, 84.0% (420/500), see `benchmark_split_result.md` §2.
+
+**Other checkpoints (added 2026-10-13).** The benchmark has been run on ten checkpoints: our LoRA r32, the
+official `openvla-7b-finetuned-libero-spatial`, QwenVLA, `pi05_libero`, `pi0_libero`, OpenVLA-OFT, VLA-Adapter
+Spatial and Spatial-Pro, X-VLA and GR00T N1.5 (`benchmark_split_result.md` summary, §9–§13). Each checkpoint's
+baseline is its own `spatial/default`; a drop is that checkpoint's `default` minus the condition, computed on the
+same tasks (tasks 3, 5, 7, 9 for the cue-rephrasing conditions, 8 tasks for the region cues). Columns of different
+checkpoints are not compared directly, because their action protocols differ (§8). Split 3's
 adjusted comparison uses a recomputed 7-task baseline (84.9%, 297/350) instead — see Split 3's row
 above.
 
@@ -602,6 +634,13 @@ above.
 Suite-wide success rate = **mean of the 10 (or n) per-task success rates**, not a flat count over
 all rollouts (only differs from a flat average when a run is incomplete or task-filtered).
 `scripts/aggregate_results.py` implements this once, canonically, from the JSONL results files.
+
+**Outcome classes (which-bowl logging, every model family, added 2026-10-11; older runs are success-only).** Each rollout records which
+bowls are on the plate at the end, the first bowl the end effector comes within 8 cm of, and the first bowl
+lifted (more than 3 cm above its settled height while touching the gripper). `aggregate_results.py --outcomes`
+turns these into: target delivered / other bowl delivered / other bowl lifted, not delivered / target lifted only /
+no bowl lifted. "Target" is the bowl the run scores (the named bowl under `target_swap`). `success` is unchanged by
+the logging (per-episode identical on the runs checked, `benchmark_split_result.md` §2).
 
 ## 7. Expected outputs & naming
 
@@ -622,6 +661,17 @@ all rollouts (only differs from a flat average when a run is incomplete or task-
   action un-normalization (the action space didn't change), but means none of these variants test
   whether the *policy* generalizes to a re-trained distribution, only whether a fixed policy holds
   up to distribution shift.
+- **Different policies, different protocols.** The ten checkpoints differ in action chunking (1 to 30 actions per
+  query), cameras and proprioception (OFT uses two cameras + proprio), action space (X-VLA predicts absolute
+  end-effector poses), attention implementation (GR00T N1.5 with SDPA instead of flash-attention-2) and training
+  data (`pi0_libero` and X-VLA-Libero are trained on all four LIBERO suites; the others on LIBERO-Spatial).
+  QwenVLA ran on another machine with `env_recreate_every=15`. Each family keeps the protocol of its own full run;
+  `benchmark_split_result.md` §13 lists them.
+- **One seed, one run per condition.** All numbers are seed 7, 50 trials/task. Where a condition was repeated (our
+  r32's 11 re-run conditions, pi05's which-bowl re-run), the two runs differ by 0–3.2 pts
+  (`docs/data_status_2026-10-13.md` §3).
+- **`drawer_open` mixes clutter with physical blocking.** The open drawer blocks the arm on some tasks for some
+  policies (`benchmark_split_result.md` §4, §11), and the third bowl uses the retired `center_fixed_legacy` placement.
 - **`center_fixed_legacy` is a single fixed coordinate** (`table_center`/`table_front`) reused
   across all 10 tasks, not a per-task-neutral position — see Split 2's confound note above. It's
   kept only as a retired label for `benchmark_split_result.md`'s original Exp 2 number, never

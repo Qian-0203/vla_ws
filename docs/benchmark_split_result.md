@@ -15,6 +15,121 @@ detail section, the status table, and the cross-experiment findings if the pictu
 append an entry to `eval_log.md`.** `benchmark_split_plan.md` only needs an update when a split's
 *definition* changes (new condition, redefined placement, newly authored scene).
 
+## Summary of current results (2026-10-13)
+
+Ten checkpoints, one run per condition, seed 7, 50 trials/task, success counted within 230 environment steps.
+This section collects numbers that are reported in detail further down; it adds no new runs. Sources: the raw
+JSONL via `docs/result_tables/` (built 2026-10-13), plus QwenVLA's three instruction-file conditions from its
+2026-10-11 package (§11 addendum). Our LoRA r32 uses its 2026-10-11 re-run where one exists (`default` 84.4,
+recorded 84.0; see §1 and `docs/data_status_2026-10-13.md`). Policies use different action protocols (§13), so each
+column is read against its own `default`. Single-run noise: about ±3.3 pts over 500 rollouts, ±5–7 pts on one
+task (§0).
+
+**Success rate (%) by condition and checkpoint.**
+
+| Condition | ours r32 | official OpenVLA | QwenVLA | pi05 | pi0 | OFT | VLA-Ad. Spatial | VLA-Ad. Pro | X-VLA | GR00T N1.5 |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| `default` | 84.4 | 84.0 | 79.8 | 98.4 | 96.4 | 98.2 | 95.8 | 97.8 | 97.4 | 89.0 |
+| *Prompt: distractor named* | | | | | | | | | | |
+| `positive_contrast` | 32.4 | 32.8 | 54.8 | 92.2 | 62.6 | 77.8 | 53.6 | 71.4 | 82.0 | 73.2 |
+| `negative_contrast` | 40.0 | 42.4 | 37.2 | 87.0 | 55.0 | 76.4 | 55.6 | 70.4 | 89.6 | 73.2 |
+| `negation_only` | 2.6 | 5.0 | 1.8 | 44.8 | 32.8 | 43.6 | 22.6 | 34.2 | 65.8 | 35.8 |
+| *Prompt: length controls* | | | | | | | | | | |
+| `length_control_suffix` | 53.6 | 51.2 | 76.2 | 99.0 | 69.2 | 97.8 | 92.6 | 98.4 | 97.0 | 87.4 |
+| `length_control_infix` | 62.8 | 63.6 | 74.8 | 99.2 | 81.4 | 97.2 | 91.8 | 98.4 | 97.0 | 87.4 |
+| *Prompt: same-cue paraphrase* | | | | | | | | | | |
+| `paraphrase_lexical` | 72.4 | 79.0 | 80.0 | 97.2 | 90.8 | 97.2 | 71.8 | 98.6 | 92.6 | 86.8 |
+| `paraphrase_syntactic` | 82.2 | 84.8 | 81.0 | 97.8 | 97.0 | 97.2 | 92.8 | 99.8 | 90.2 | 87.4 |
+| *Prompt: target cue rephrased (tasks 3, 5, 7, 9)* | | | | | | | | | | |
+| `target_cue_landmark` | 30.5 | 25.0 | 39.5 | 87.0 | 46.0 | 85.5 | 63.5 | 83.5 | 91.5 | 78.0 |
+| `target_cue_proximity_novel` | 53.0 | 37.0 | 46.0 | 96.0 | 74.0 | 96.5 | 42.0 | 85.5 | 91.0 | 82.5 |
+| `target_cue_proximity_beside` | 38.0 | 31.5 | 49.0 | 97.0 | 93.0 | 97.0 | 66.5 | 89.5 | 95.0 | 76.0 |
+| `target_cue_proximity_near` | 49.0 | 45.0 | 50.5 | 96.0 | 96.0 | 93.5 | 72.5 | 88.5 | 96.5 | 80.5 |
+| `target_cue_proximity_adjacent` | 37.5 | 31.0 | 44.5 | 97.0 | 82.0 | 96.5 | 61.5 | 88.0 | 92.5 | 78.0 |
+| *Prompt: region cue, image-frame wording* | | | | | | | | | | |
+| `target_cue_region_img` | — | — | — | — | 32.5 | 71.8 | 31.5 | 52.5 | 64.5 | 59.5 |
+| `target_cue_region_v2_img` | — | — | — | — | 30.5 | 73.8 | 35.5 | 54.8 | 69.0 | 55.5 |
+| `target_cue_region_v3_img` | — | — | — | — | 36.0 | 72.2 | 29.0 | 54.2 | 65.2 | 57.5 |
+| *Scene: third bowl* | | | | | | | | | | |
+| `irrelevant` | 86.0 | 82.8 | 79.0 | 80.6 | 86.0 | 73.6 | 80.6 | 81.2 | 82.8 | 88.2 |
+| `semantic` | 85.2 | 83.2 | 74.0 | 91.0 | 92.2 | 81.0 | 83.0 | 87.0 | 78.8 | 81.8 |
+| `landmark` | 80.6 | 77.0 | 68.6 | 72.0 | 69.0 | 65.6 | 67.4 | 75.8 | 75.4 | 74.4 |
+| *Scene + prompt* | | | | | | | | | | |
+| `landmark_with_hardneg_prompt` | 41.2 | 42.2 | 47.4 | 66.2 | 46.6 | 59.6 | 46.6 | 70.0 | 66.0 | 65.8 |
+| *Scene: clutter* | | | | | | | | | | |
+| `drawer_open` | 60.8 | 64.6 | 68.2 | 43.4 | 40.2 | 27.2 | 33.4 | 49.4 | 39.4 | 48.4 |
+| *Scene: cue-type cells (1 task each)* | | | | | | | | | | |
+| `surface_landmark` | — | 88.0 | 90.0 | 100.0 | 94.0 | 90.0 | 98.0 | 100.0 | 90.0 | 62.0 |
+| `region_surface` | — | 82.0 | 98.0 | 100.0 | 96.0 | 100.0 | 88.0 | 92.0 | 90.0 | 96.0 |
+| *Instruction-file conditions (target changes or is left open)* | | | | | | | | | | |
+| `target_swap` | 62.0 | 57.2 | 50.2 | 56.8 | 68.2 | 37.4 | 36.4 | 51.2 | 32.2 | 40.8 |
+| `no_location` | 11.8 | 17.6 | 27.6 | 81.4 | 51.2 | 66.0 | 30.2 | 63.0 | 59.6 | 65.8 |
+| *Legacy* | | | | | | | | | | |
+| closed-drawer control (`center_fixed_legacy`) | 82.2 | — | 77.2 | — | — | — | — | — | — | — |
+
+`target_cue_*` conditions run on tasks 3, 5, 7, 9 (200 rollouts); `target_cue_region_*_img` on 8 tasks (400);
+`surface_landmark` and `region_surface` are 1-task suites (50). The withdrawn region cues (Erratum E1) and the
+exploratory `landmark_exchange` probe (§14) are not shown. `target_swap` scores the bowl the sentence names (the
+other bowl); `no_location` scores the original target, though with the location removed both bowls fit the
+sentence.
+
+**Drop from each checkpoint's own `default`, computed on the same tasks** (pts; positive = lower than `default`).
+`surface_landmark` / `region_surface` (1-task suites in their own scenes) and the two instruction-file conditions
+(the scored bowl changes or is not unique) are left out.
+
+| Condition | Tasks | Checkpoints | Smallest drop | Median drop | Largest drop | Drop > 10 pts | Drop ≤ 5 pts |
+|---|---|--:|--:|--:|--:|--:|--:|
+| `positive_contrast` | 0–9 | 10 | 6.2 (pi05) | 25.7 | 52.0 (ours r32) | 9 | 0 |
+| `negative_contrast` | 0–9 | 10 | 7.8 (X-VLA) | 33.8 | 44.4 (ours r32) | 9 | 0 |
+| `negation_only` | 0–9 | 10 | 31.6 (X-VLA) | 63.6 | 81.8 (ours r32) | 10 | 0 |
+| `length_control_suffix` | 0–9 | 10 | -0.6 (pi05, VLA-Ad. Pro) | 2.4 | 32.8 (official OpenVLA) | 3 | 7 |
+| `length_control_infix` | 0–9 | 10 | -0.8 (pi05) | 2.8 | 21.6 (ours r32) | 3 | 7 |
+| `paraphrase_lexical` | 0–9 | 10 | -0.8 (VLA-Ad. Pro) | 3.5 | 24.0 (VLA-Ad. Spatial) | 2 | 7 |
+| `paraphrase_syntactic` | 0–9 | 10 | -2.0 (VLA-Ad. Pro) | 0.8 | 7.2 (X-VLA) | 0 | 9 |
+| `target_cue_landmark` | 3, 5, 7, 9 | 10 | 5.0 (X-VLA) | 21.5 | 60.0 (official OpenVLA) | 9 | 1 |
+| `target_cue_proximity_novel` | 3, 5, 7, 9 | 10 | 1.0 (OFT) | 16.8 | 50.5 (VLA-Ad. Spatial) | 6 | 2 |
+| `target_cue_proximity_beside` | 3, 5, 7, 9 | 10 | 0.5 (OFT) | 10.2 | 53.5 (official OpenVLA) | 5 | 4 |
+| `target_cue_proximity_near` | 3, 5, 7, 9 | 10 | -0.5 (pi0) | 8.5 | 40.0 (official OpenVLA) | 4 | 4 |
+| `target_cue_proximity_adjacent` | 3, 5, 7, 9 | 10 | 1.0 (OFT) | 12.0 | 54.0 (official OpenVLA) | 6 | 3 |
+| `target_cue_region_img` | 0, 1, 3, 5, 6, 7, 8, 9 | 6 | 26.8 (OFT) | 39.5 | 64.0 (pi0) | 6 | 0 |
+| `target_cue_region_v2_img` | 0, 1, 3, 5, 6, 7, 8, 9 | 6 | 24.8 (OFT) | 38.0 | 66.0 (pi0) | 6 | 0 |
+| `target_cue_region_v3_img` | 0, 1, 3, 5, 6, 7, 8, 9 | 6 | 26.2 (OFT) | 38.2 | 66.2 (VLA-Ad. Spatial) | 6 | 0 |
+| `irrelevant` | 0–9 | 10 | -1.6 (ours r32) | 12.5 | 24.6 (OFT) | 6 | 4 |
+| `semantic` | 0–9 | 10 | -0.8 (ours r32) | 7.3 | 18.6 (X-VLA) | 4 | 3 |
+| `landmark` | 0–9 | 10 | 3.8 (ours r32) | 22.0 | 32.6 (OFT) | 8 | 1 |
+| `landmark_with_hardneg_prompt` | 0–9 | 10 | 23.2 (GR00T N1.5) | 35.5 | 49.8 (pi0) | 10 | 0 |
+| `drawer_open` | 0–9 | 10 | 11.6 (QwenVLA) | 51.7 | 71.0 (OFT) | 10 | 0 |
+
+**What the tables show** (descriptive; per-section analysis is in §2–§13):
+
+1. **`default`** ranges from 79.8% (QwenVLA) to 98.4% (pi05).
+2. **Every checkpoint that ran them scores more than 10 pts below its own `default`** on `negation_only` (drop
+   31.6–81.8), `landmark_with_hardneg_prompt` (23.2–49.8), `drawer_open` (11.6–71.0) and the three image-frame
+   region cues (24.8–66.2, six checkpoints).
+3. **Conditions where most checkpoints stay within 5 pts:** `paraphrase_syntactic` (9 of 10; largest drop 7.2),
+   both length controls (7 of 10; the other three are our r32, official OpenVLA and pi0, 15.0–32.8) and
+   `paraphrase_lexical` (7 of 10; VLA-Adapter Spatial 24.0, our r32 12.0).
+4. **`negation_only` is below both length controls for all ten checkpoints.** The bowl the sentence negates is
+   delivered in (of 500): our r32 253, official OpenVLA 236, QwenVLA 211, pi05 255, pi0 249, OFT 182,
+   VLA-Adapter Spatial 125, VLA-Adapter Pro 248, X-VLA 46, GR00T 185 (pi05 and our r32 from their which-bowl
+   re-runs, §12 and §2).
+5. **`target_swap`** is 32.2–68.2%. The trained (unnamed) bowl is delivered in 5 (QwenVLA), 8 (our r32) and 11
+   (official OpenVLA) of 500 rollouts, and in 69 (pi0), 115 (VLA-Adapter Spatial), 152 (GR00T), 176 (VLA-Adapter
+   Pro), 188 (pi05, which-bowl re-run), 200 (X-VLA) and 207 (OFT). OFT and X-VLA deliver the unnamed bowl more often
+   than the named one.
+6. **`no_location`** is 11.8–81.4%. Rollouts in which no bowl is lifted (of 500): our r32 387, official OpenVLA 355,
+   VLA-Adapter Spatial 292, QwenVLA 283, pi0 140, X-VLA 116, OFT 102, GR00T 100, VLA-Adapter Pro 85, pi05 31 (pi05 from its
+   which-bowl re-run; QwenVLA is the `no_grasp` class of `aggregate_results.py --outcomes`).
+7. **Third-bowl scenes:** `semantic` drop −0.8 to 18.6 (median 7.3), `irrelevant` −1.6 to 24.6 (12.5),
+   `landmark` 3.8 to 32.6 (22.0). Adding the disambiguating prompt to `landmark`
+   (`landmark_with_hardneg_prompt`) lowers every checkpoint further, by 5.8–39.4 pts relative to `landmark`.
+8. **Rephrased target cue (tasks 3, 5, 7, 9):** the spread across checkpoints is wide. `target_cue_landmark` drop
+   5.0 (X-VLA) to 60.0 (official OpenVLA); the four proximity wordings from −0.5–1.0 (OFT, pi0, pi05) to 40.0–54.0
+   (official OpenVLA, VLA-Adapter Spatial).
+9. **`drawer_open`:** the three OpenVLA-architecture checkpoints (our r32, official, QwenVLA) drop 11.6–23.6; the
+   other seven 40.6–71.0. The drawer physically blocks some tasks for some policies (§4, §11 point 6), and the
+   third bowl uses the retired `center_fixed_legacy` placement.
+
 ## 0. Common eval setting
 
 Applies to every condition below unless a section says otherwise.
@@ -1440,6 +1555,23 @@ Results: `results/libero_spatial--{paraphrase_lexical,paraphrase_syntactic,targe
     so it picks about at random rather than defaulting. No run shows either family grounding a negation
     (finding 24 stands). pi05's success rates in the re-run match its earlier success-only runs within
     1.4 pts (`target_swap` exactly).
+
+30. **Six more public checkpoints show the same weakest prompt condition** (2026-10-12 → 2026-10-13, §13; 9,800
+    rollouts each). `pi0_libero`, OpenVLA-OFT, VLA-Adapter Spatial / Pro, X-VLA and GR00T N1.5 pass their gate
+    (`default` 89.0–98.2%). `negation_only` is 22.6–65.8% and lies 31–69 pts below the lower of each
+    checkpoint's two length controls; it is the lowest prompt condition for four of them, while pi0 (30.5%) and
+    X-VLA (64.5%) each have one image-frame region cue slightly below it (32.8% and 65.8%). `drawer_open` is 27.2–49.4% for all six and the lowest registry
+    split for OFT and X-VLA (X-VLA's instruction-file `target_swap`, 32.2%, is lower). The corrected image-frame region cues are 29.0–36.0% for pi0 and VLA-Adapter Spatial
+    and 52.5–73.8% for the other four; they have no run on the four older checkpoints.
+31. **With ten checkpoints, `negation_only`, `landmark_with_hardneg_prompt` and `drawer_open` are more than 10 pts
+    below `default` for every checkpoint; `paraphrase_syntactic` is within 7.2 pts for every checkpoint** (summary
+    at the top of this file, drop table). The negated bowl reaches the plate in 46–255 of 500 `negation_only`
+    rollouts (X-VLA lowest at 46; the other nine 125–255).
+32. **Under `target_swap` the checkpoints split by which bowl they deliver when they miss** (summary point 5; §12
+    batch F, §13.3, §11 addendum). QwenVLA, our r32 and official OpenVLA deliver the trained, unnamed bowl in 5–11
+    of 500 rollouts; the other seven in 69–207, and OFT (207 vs 187) and X-VLA (200 vs 161) deliver it more often
+    than the named bowl. Under `no_location` the first group lifts no bowl in 283–387 of 500, the others in 31–292
+    (VLA-Adapter Spatial 292, the rest 31–140).
 
 ## 7. Render / contact-sheet check log
 
@@ -2883,10 +3015,12 @@ bowl the sentence names, and the *trained* bowl counts as `other`). `pi05_libero
 
 - **All six clear their gate.** `default` is 89.0–98.2%; the GR00T gap to its published 92% is 3 pts
   (SDPA instead of flash-attention-2; one seed).
-- **Negation is the weakest prompt condition for all six**, and it is not a length effect: `negation_only` is
+- **Negation is the weakest prompt condition for all six** (correction 2026-10-13: except that pi0 and X-VLA each
+  have one image-frame region cue 1–2 pts below it, 30.5 vs 32.8 and 64.5 vs 65.8), and it is not a length effect: `negation_only` is
   22.6–65.8%, 31–69 pts below the lowest of that checkpoint's two length controls (69–98%). X-VLA is the least
   affected (65.8%), VLA-Adapter Spatial the most (22.6%).
-- **Scene clutter is the lowest condition for OFT and X-VLA** (and for pi05). `drawer_open` is 27.2–49.4% for all
+- **Scene clutter is the lowest condition for OFT and X-VLA** (and for pi05; correction 2026-10-13: lowest among
+  the registry splits — X-VLA's `target_swap`, 32.2%, is lower). `drawer_open` is 27.2–49.4% for all
   six new checkpoints, whose `default` is 89–98%.
 - **Layout alone identifies the task for most of them.** `no_location` keeps 51–66% for pi0, OFT, VLA-Adapter Pro,
   X-VLA and GR00T, against 11.8–17.6% for the two OpenVLA checkpoints; VLA-Adapter Spatial (30.2%) is the
