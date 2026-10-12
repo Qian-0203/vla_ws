@@ -1388,6 +1388,26 @@ notes. All four runs completed their full 500 rollouts and exited 0.
 
 ---
 
+## 2026-10-12 — Landmark-exchange probe (`grounding/landmark_exchange`): launch
+
+New split, authored and run in one session (design and pre-registered readings: `benchmark_split_plan.md`
+Split 5). Cookie box and ramekin swap places, sentences unchanged, 4 tasks × 50 trials, seed 7, with
+which-bowl outcome logging. Runs from `berkeley:~/vla_ws_e` (vla_ws `ecfb6f9`, openvla `1e8544e`, LIBERO
+`b794927` plus the uncommitted suite files and one registry entry), image `openvla-libero:blackwell` /
+sdpa / bf16, GPUs 0–3 idle at launch.
+
+- **Scene check:** `gen_suite_init_states.py` + `verify_suite_init_states.py` PASS (worst bowl separation
+  0.289 m, bowl z constant); contact sheet re-rendered with the settle step
+  (`render_suite_contact_sheet.py`) and eyeballed: every bowl rests on its support, no overlaps.
+- **Launch:** `~/run_exchange.sh`, log `~/logs/exchange.log`. Smoke (1 official rollout) → phase A:
+  official on GPUs 0,1 and r32 on GPUs 2,3 in parallel → phase B: pi05, four policy servers, GPUs 0–3.
+  Run notes `openvla-official-libero-spatial--exchange`, `openvla-7b-libero-spatial-lora-r32--exchange`,
+  `pi05_libero--exchange`. The script does not sync to the HF mirror (the cron sync covers `~/vla_ws`,
+  not `~/vla_ws_e`).
+- **Status:** running. Results are added in a follow-up entry.
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 `spatial/negation_only` (authored 2026-10-10): run for OpenVLA and `pi05_libero` (2026-10-11 entry);

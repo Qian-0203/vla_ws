@@ -30,6 +30,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` and `semantic` each redefined a second time (see Split 2 below) -- both current suites run 2026-08-27, 85.2% each |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
 | 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`); 4c: `grounding/target_cue_proximity_novel`. All run. 4b/4c paraphrase controls (7 conditions) authored and run 2026-10-01 (`benchmark_split_result.md` §5.5) |
+| 5. Landmark Exchange | Does the policy deliver the bowl the sentence describes in the *current* scene, or the bowl at the coordinate the sentence was trained on? | Implemented (`grounding/landmark_exchange`, authored and pre-registered 2026-10-12) |
 | VLM Bowl-Pointing / Bowl-Attraction Probes (§11, not a `SPLITS` entry) | Is the distractor-mention collapse (Splits 1/2) a grounding failure or an action-decoding failure? | Standalone diagnostic scripts, run directly — not registered in `eval_registry.py`. Both probes run to completion on their respective batteries; open gaps listed in §11.3 |
 
 "Implemented" = task suite + prompts exist in the registry and can be run with one `run_eval.sh`
@@ -511,6 +512,36 @@ eyeball before trusting it. Given the expected floor effect from distractor ment
 this is unlikely to isolate cue-type effects cleanly even if built, so it's not recommended as the
 next use of engineering time unless the target-cue-only results above turn out to need it as a
 follow-up.
+
+### Split 5 — Landmark Exchange Probe (authored and pre-registered 2026-10-12)
+
+| Field | Description |
+|---|---|
+| Goal | Separate "the sentence selects the bowl it describes in the current scene" from "the sentence selects a trained coordinate" and from "the scene alone selects the action". Every other split leaves the described bowl at the coordinate its sentence was trained on, so none of them can tell these apart (`benchmark_split_result.md` §12, batch E: all ten `target_swap` sentences name a bowl that sits at another task's trained target coordinate) |
+| Changed variable | Scene only: the cookie box and the ramekin exchange places in every task (cookie box → `ramekin_region`, ramekin → `box_region`). Sentences are each task's original `libero_spatial` sentence, unchanged |
+| Controlled variables | Prompt = native sentence, checkpoint, seed 7, fixed 50 init states per task, plate/cabinet/stove untouched |
+| Tasks | 4 tasks in suite `libero_spatial_landmark_exchange`: id 0 "next to the ramekin" (libero_spatial id 1), id 1 "on the cookie box" (3), id 2 "on the ramekin" (5), id 3 "next to the cookie box" (6). Two layouts: `S_next` (tasks 0 and 3: both bowls on the table, one beside each exchanged landmark) and `S_on` (tasks 1 and 2: each bowl rests on a moved landmark). Tasks 0/3 and 1/2 share one layout and differ only in the sentence |
+| Construction | `bowl_1` is always the bowl the sentence now describes (the goal stays `On(bowl_1, plate)`); `bowl_2` is at, or on the landmark at, the coordinate the sentence was trained on. The two exchanged landmarks have the same size class and no yaw region, so no new geometry is introduced; every coordinate was already used by another task |
+| Trials | 50/task, seed 7 (200 rollouts per model); OpenVLA official, OpenVLA ours (r32) and pi05_libero |
+| Metrics | Per rollout, from the outcome fields (`aggregate_results.py --outcomes`): described bowl delivered / trained-coordinate bowl delivered / trained-coordinate bowl lifted only / described bowl lifted only / no grasp (split by first bowl approached) |
+
+Registry: `grounding/landmark_exchange` (suite `libero_spatial_landmark_exchange`, `unnorm_key=libero_spatial`,
+condition `default`; no new instruction dict, the sentence is the BDDL file name).
+
+**Pre-registered readings (written before any rollout of this split was read).** "Wrong bowl" below is
+`bowl_2`, the bowl at the sentence's trained coordinate. Thresholds are descriptive cut-offs, not tests.
+
+| Reading | What a model that does this shows |
+|---|---|
+| Grounds the sentence in the scene | Described bowl delivered in at least 70% of rollouts on every task; wrong bowl delivered rarely |
+| Sentence → trained coordinate | Described bowl delivered in about 0% on every task; wrong bowl approached first / lifted / delivered in most rollouts, on both layouts |
+| Scene decides, sentence ignored | Within each shared-layout pair (0/3, 1/2) the same physical bowl is delivered under both sentences, so the two success rates sum to about 100%, and the wrong bowl is delivered in the complementary task |
+| Does not act | Most failures approach neither bowl (the §8.5 / batch E failure for OpenVLA) |
+
+No directional prediction is made for any model; the probe exists to classify them. Known limits: two
+layouts only, four tasks, one seed, one exchange (ramekin ↔ cookie box). The stove ↔ cabinet exchange
+(tasks 7/9) was not built: the cabinet region carries a yaw rotation the stove region does not, so an
+exchange needs a new region definition and a fresh render check.
 
 ## 4. Baselines
 
