@@ -40,7 +40,7 @@ def suite_sizes(libero_root: Path):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--note", required=True, help="run_id_note: tags every results file of this checkpoint")
-    ap.add_argument("--family", choices=["openvla", "openvla_oft", "openpi"], required=True)
+    ap.add_argument("--family", choices=["openvla", "openvla_oft", "openpi", "xvla"], required=True)
     ap.add_argument("--checkpoint", required=True)
     ap.add_argument("--splits", default="", help="comma list; default = run_benchmark.sh DEFAULT_SPLITS")
     ap.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]))
@@ -70,7 +70,7 @@ def main() -> int:
         "SEED": str(args.seed),
         "GPUS": "{gpu}",
     }
-    if args.family == "openpi":
+    if args.family in ("openpi", "xvla"):
         env["POLICY_PORT_BASE"] = "{port}"
     for kv in args.env:
         k, _, v = kv.partition("=")

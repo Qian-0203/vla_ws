@@ -78,7 +78,8 @@ LOCAL_CKPT=false
 case "${MODEL_FAMILY}" in
   openvla|openvla_oft) LOCAL_CKPT=true ;;
   openpi) CHECKPOINT="${OPENPI_CHECKPOINT}" ;; # recorded in run metadata only; nothing to mount
-  *) echo "Unknown MODEL_FAMILY '${MODEL_FAMILY}' (expected openvla, openvla_oft or openpi)." >&2; exit 1 ;;
+  xvla) ;;                                     # model in a policy server (serve_xvla.py); CHECKPOINT is a label only
+  *) echo "Unknown MODEL_FAMILY '${MODEL_FAMILY}' (expected openvla, openvla_oft, openpi or xvla)." >&2; exit 1 ;;
 esac
 
 # --- checkpoint integrity check (unchanged from the original per-suite scripts) ---
@@ -160,7 +161,7 @@ run_shard() {
   if ((num_shards > 1)); then
     shard_args=(--num_shards "${num_shards}" --shard_index "${shard_idx}")
   fi
-  if [[ "${MODEL_FAMILY}" == openpi ]]; then
+  if [[ "${MODEL_FAMILY}" == openpi || "${MODEL_FAMILY}" == xvla ]]; then
     # Host networking so the container reaches the policy server on the host's loopback.
     # The GPU is still passed through, for MuJoCo's EGL rendering.
     net_args=(--network host)
