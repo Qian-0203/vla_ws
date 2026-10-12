@@ -25,7 +25,7 @@ SERVER_IMAGE="${SERVER_IMAGE:-openvla-libero:gr00t}"
 EVAL_IMAGE="${EVAL_IMAGE:-openvla-libero:blackwell}"
 DATA_CONFIG="${DATA_CONFIG:-examples.Libero.custom_data_config:LiberoDataConfig}"
 DENOISING_STEPS="${DENOISING_STEPS:-8}"
-LOG_DIR="${HOME}/logs/queue_${NOTE}"
+LOG_DIR="${LOG_DIR:-${HOME}/logs/queue_${NOTE}}"
 mkdir -p "${LOG_DIR}"
 [[ -d "${GR00T_DIR}/gr00t" ]] || { echo "no Isaac-GR00T checkout at ${GR00T_DIR}" >&2; exit 1; }
 [[ -f "${CKPT}/config.json" ]] || { echo "no config.json in ${CKPT}" >&2; exit 1; }
@@ -63,6 +63,11 @@ done
 
 job_args=()
 [[ -n "${SPLITS:-}" ]] && job_args+=(--splits "${SPLITS}")
+# Language conditions outside the registry (make_eval_jobs.py --instruction-file), e.g.
+# INSTRUCTION_FILES=screening/language_stress/candidates/target_swap.json,...; alone, only those jobs are queued
+# (give them their own LOG_DIR so the split queue's markers and jobs.tsv are not touched).
+INSTRUCTION_FILES="${INSTRUCTION_FILES:-}"
+for f in ${INSTRUCTION_FILES//,/ }; do job_args+=(--instruction-file "$f"); done
 [[ -n "${TASK_IDS:-}" ]] && job_args+=(--task-ids "${TASK_IDS}")
 [[ -n "${TRIALS:-}" ]] && job_args+=(--trials "${TRIALS}")
 python3 "${ROOT}/scripts/make_eval_jobs.py" --note "${NOTE}" --family openpi --checkpoint "${CKPT}" \

@@ -13,8 +13,15 @@ run_libero_eval.py already has, so scripts/aggregate_results.py reads the result
 Families: `openpi` (a resident policy server per slot; {port} is filled by gpu_queue.py) and
 `openvla` / `openvla_oft` (the model loads inside the eval container; CHECKPOINT is a host path).
 Extra settings go in with --env KEY=VALUE (e.g. --env CENTER_CROP=False) and --extra '<flags>'.
+
+A language condition outside the registry (screening/language_stress/candidates/*.json, e.g. target_swap) is queued
+with --instruction-file PATH (repo-relative, repeatable): one job per task in the file's task_ids, run exactly as
+the earlier checkpoints ran it (`--task_suite_name libero_spatial --unnorm_key libero_spatial --instruction_file
+/workspace/PATH`), so the results file is `libero_spatial--<its condition>--{note}--shard{i}of{n}.jsonl`. With
+--instruction-file and no --splits, only those jobs are printed.
 """
 import argparse
+import json
 import re
 import shlex
 import sys
@@ -50,11 +57,13 @@ def main() -> int:
     ap.add_argument("--image", default="openvla-libero:blackwell")
     ap.add_argument("--env", action="append", default=[], help="KEY=VALUE for run_eval.sh (repeatable)")
     ap.add_argument("--extra", default="", help="extra flags appended to run_eval.sh")
+    ap.add_argument("--instruction-file", action="append", default=[],
+                    help="repo-relative instruction JSON (screening condition); repeatable")
     args = ap.parse_args()
 
     repo = Path(args.repo)
     default_splits, subset = parse_run_benchmark(repo / "scripts/run_benchmark.sh")
-    splits = [s for s in args.splits.split(",") if s] or default_splits
+    splits = [s for s in args.splits.split(",") if s] or ([] if args.instruction_file else default_splits)
     sys.path.insert(0, str(repo / "openvla"))
     from experiments.robot.libero.eval_registry import SPLITS  # noqa: E402
     sizes = suite_sizes(repo / "LIBERO")
@@ -77,27 +86,38 @@ def main() -> int:
         env[k] = v
     env_str = " ".join(f"{k}={shlex.quote(v) if '{' not in v else v}" for k, v in env.items())
 
-    n_jobs = 0
+    # (job label, run_eval.sh args selecting suite + condition, suite, task ids)
+    units = []
     for split in splits:
         if split not in SPLITS:
             sys.exit(f"unknown split {split!r} (not in eval_registry.SPLITS)")
         suite = SPLITS[split][0]
+        wanted = [int(t) for t in subset[split].split(",")] if split in subset else list(range(sizes[suite]))
+        units.append((split.replace("/", "_"), f"--split {split}", suite, wanted))
+    for rel in args.instruction_file:
+        spec = json.loads((repo / rel).read_text())
+        select = ("--task_suite_name libero_spatial --unnorm_key libero_spatial "
+                  f"--instruction_file {shlex.quote('/workspace/' + rel)}")
+        wanted = [int(t) for t in spec.get("task_ids") or range(sizes["libero_spatial"])]
+        units.append((f"lang_{spec['condition']}", select, "libero_spatial", wanted))
+
+    n_jobs = 0
+    for label, select, suite, wanted in units:
         n = sizes[suite]
-        wanted = [int(t) for t in subset[split].split(",")] if split in subset else list(range(n))
         if args.task_ids:
             only = {int(t) for t in args.task_ids.split(",")}
             wanted = [t for t in wanted if t in only]
         for tid in wanted:
             if tid >= n:
-                sys.exit(f"{split}: task id {tid} outside suite {suite} (n={n})")
+                sys.exit(f"{label}: task id {tid} outside suite {suite} (n={n})")
             shard = f"--num_shards {n} --shard_index {tid} " if n > 1 else ""
-            name = f"{args.note}__{split.replace('/', '_')}__t{tid}"
+            name = f"{args.note}__{label}__t{tid}"
             cmd = (f"cd {shlex.quote(str(repo))} && {env_str} bash docker/openvla_libero/run_eval.sh "
-                   f"--split {split} --run_id_note {shlex.quote(args.note)} --task_ids {tid} "
+                   f"{select} --run_id_note {shlex.quote(args.note)} --task_ids {tid} "
                    f"{shard}--resume True {args.extra}").strip()
             print(f"{name}\t{cmd}")
             n_jobs += 1
-    print(f"# {n_jobs} jobs, {len(splits)} splits, note={args.note}", file=sys.stderr)
+    print(f"# {n_jobs} jobs, {len(units)} splits/conditions, note={args.note}", file=sys.stderr)
     return 0
 
 

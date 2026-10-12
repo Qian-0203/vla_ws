@@ -21,7 +21,7 @@ PORT_BASE="${PORT_BASE:-8500}"
 XVLA_DIR="${XVLA_DIR:-$HOME/X-VLA}"
 SERVER_IMAGE="${SERVER_IMAGE:-openvla-libero:xvla}"
 EVAL_IMAGE="${EVAL_IMAGE:-openvla-libero:blackwell}"
-LOG_DIR="${HOME}/logs/queue_${NOTE}"
+LOG_DIR="${LOG_DIR:-${HOME}/logs/queue_${NOTE}}"
 mkdir -p "${LOG_DIR}"
 [[ -d "${XVLA_DIR}/models" ]] || { echo "no X-VLA checkout at ${XVLA_DIR}" >&2; exit 1; }
 
@@ -61,6 +61,11 @@ done
 
 job_args=()
 [[ -n "${SPLITS:-}" ]] && job_args+=(--splits "${SPLITS}")
+# Language conditions outside the registry (make_eval_jobs.py --instruction-file), e.g.
+# INSTRUCTION_FILES=screening/language_stress/candidates/target_swap.json,...; alone, only those jobs are queued
+# (give them their own LOG_DIR so the split queue's markers and jobs.tsv are not touched).
+INSTRUCTION_FILES="${INSTRUCTION_FILES:-}"
+for f in ${INSTRUCTION_FILES//,/ }; do job_args+=(--instruction-file "$f"); done
 [[ -n "${TASK_IDS:-}" ]] && job_args+=(--task-ids "${TASK_IDS}")
 [[ -n "${TRIALS:-}" ]] && job_args+=(--trials "${TRIALS}")
 python3 "${ROOT}/scripts/make_eval_jobs.py" --note "${NOTE}" --family xvla --checkpoint "$(basename "${CKPT}")" \

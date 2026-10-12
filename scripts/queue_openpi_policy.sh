@@ -20,7 +20,7 @@ SLOTS="${SLOTS:-0,0,1,1,2,2,3,3}"
 PORT_BASE="${PORT_BASE:-8000}"
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 
-LOG_DIR="${HOME}/logs/queue_${NOTE}"
+LOG_DIR="${LOG_DIR:-${HOME}/logs/queue_${NOTE}}"
 JOBS="${LOG_DIR}/jobs.tsv"
 export PID_FILE="${LOG_DIR}/servers.pid"
 mkdir -p "${LOG_DIR}"
@@ -31,6 +31,11 @@ trap stop_servers EXIT
 
 splits_args=()
 [[ -n "${SPLITS:-}" ]] && splits_args=(--splits "${SPLITS}")
+# Language conditions outside the registry (make_eval_jobs.py --instruction-file), e.g.
+# INSTRUCTION_FILES=screening/language_stress/candidates/target_swap.json,...; alone, only those jobs are queued
+# (give them their own LOG_DIR so the split queue's markers and jobs.tsv are not touched).
+INSTRUCTION_FILES="${INSTRUCTION_FILES:-}"
+for f in ${INSTRUCTION_FILES//,/ }; do splits_args+=(--instruction-file "$f"); done
 python3 "${ROOT}/scripts/make_eval_jobs.py" --note "${NOTE}" --family openpi \
   --checkpoint "${OPENPI_POLICY_DIR}" "${splits_args[@]}" >"${JOBS}"
 
