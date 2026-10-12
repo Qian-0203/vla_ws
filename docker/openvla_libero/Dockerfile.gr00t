@@ -1,0 +1,27 @@
+# Policy-server image for GR00T N1.5 (scripts/policy_servers/serve_gr00t.py). Not an eval image: no MuJoCo / LIBERO.
+# Versions follow the pins in NVIDIA/Isaac-GR00T's pyproject.toml (n1.5-release) that the inference path imports; its
+# `base` extra pins torch 2.5.1, which has no Blackwell kernels, so the torch is the 2.7.1 of the eval image. The Eagle
+# backbone asks for flash-attention-2 (no Blackwell build); serve_gr00t.py switches it to SDPA.
+FROM pytorch/pytorch:2.7.1-cuda12.8-cudnn9-devel
+
+ENV DEBIAN_FRONTEND=noninteractive PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends git libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -m pip install --upgrade pip && python -m pip install \
+    "transformers==4.51.3" "timm==1.0.14" "diffusers==0.30.2" "peft==0.17.0" "accelerate==1.2.1" \
+    "einops==0.8.1" "pydantic==2.10.6" "numpydantic==1.6.7" "dm_tree==0.1.8" "gymnasium==1.0.0" \
+    "av==12.3.0" "opencv_python_headless==4.11.0.86" "pandas==2.2.3" "pyarrow==14.0.1" "numpy==1.26.4" \
+    "matplotlib" "tyro" "tqdm" "PyYAML" "requests" "safetensors" "huggingface_hub" "websockets" "msgpack" \
+    "albumentations==1.4.18" "kornia==0.7.4" "decord==0.6.0" \
+    "openpi-client @ git+https://github.com/Physical-Intelligence/openpi.git@215abfb217dbac7d5f1273282331b9b1866c0479#subdirectory=packages/openpi-client"
+
+# gr00t/data/transform/state_action.py imports pytorch3d.transforms at module level and never uses it (the LIBERO
+# data config only uses min_max normalization). pytorch3d has no wheel for this torch / CUDA, so an empty stub.
+RUN python -c "import pathlib, site; p = pathlib.Path(site.getsitepackages()[0]) / 'pytorch3d' / 'transforms'; p.mkdir(parents=True, exist_ok=True); (p.parent / '__init__.py').write_text(''); (p / '__init__.py').write_text('')"
+
+# gr00t's Eagle remote code (radio_model.py) imports flash_attn at module level, but the SigLIP2 backbone of the
+# released checkpoints never calls it, and serve_gr00t.py selects SDPA. Import-only stub (no dist-info, so
+# transformers still reports flash-attention-2 as unavailable).
+RUN python -c "import pathlib, site; p = pathlib.Path(site.getsitepackages()[0]) / 'flash_attn'; p.mkdir(exist_ok=True); (p / '__init__.py').write_text(''); (p / 'flash_attn_interface.py').write_text('flash_attn_unpadded_qkvpacked_func = flash_attn_varlen_qkvpacked_func = None\n'); (p / 'bert_padding.py').write_text('pad_input = unpad_input = None\n')"

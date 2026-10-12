@@ -1,0 +1,1325 @@
+checkpoint,condition,run,task_id,n,target_delivered,other_delivered,target_lifted_only,other_lifted_only,no_lift_approached_target,no_lift_approached_other,no_lift_approached_neither
+ours (OpenVLA LoRA r32),closed_drawer_control (center_fixed_legacy),rerun,0,50,39,0,1,1,1,0,8
+ours (OpenVLA LoRA r32),closed_drawer_control (center_fixed_legacy),rerun,1,50,45,0,5,0,0,0,0
+ours (OpenVLA LoRA r32),closed_drawer_control (center_fixed_legacy),rerun,2,50,46,0,2,0,1,0,1
+ours (OpenVLA LoRA r32),closed_drawer_control (center_fixed_legacy),rerun,3,50,47,0,1,0,2,0,0
+ours (OpenVLA LoRA r32),closed_drawer_control (center_fixed_legacy),rerun,4,50,45,0,0,0,3,0,2
+ours (OpenVLA LoRA r32),closed_drawer_control (center_fixed_legacy),rerun,5,50,48,0,2,0,0,0,0
+ours (OpenVLA LoRA r32),closed_drawer_control (center_fixed_legacy),rerun,6,50,24,0,3,0,5,0,18
+ours (OpenVLA LoRA r32),closed_drawer_control (center_fixed_legacy),rerun,7,50,40,0,9,0,0,0,1
+ours (OpenVLA LoRA r32),closed_drawer_control (center_fixed_legacy),rerun,8,50,40,0,7,0,0,0,3
+ours (OpenVLA LoRA r32),closed_drawer_control (center_fixed_legacy),rerun,9,50,37,0,5,0,0,0,8
+ours (OpenVLA LoRA r32),default,rerun,0,50,45,0,1,0,2,0,2
+ours (OpenVLA LoRA r32),default,rerun,1,50,40,0,6,0,1,0,3
+ours (OpenVLA LoRA r32),default,rerun,2,50,46,0,2,0,2,0,0
+ours (OpenVLA LoRA r32),default,rerun,3,50,44,0,4,0,2,0,0
+ours (OpenVLA LoRA r32),default,rerun,4,50,40,0,1,0,7,0,2
+ours (OpenVLA LoRA r32),default,rerun,5,50,46,0,4,0,0,0,0
+ours (OpenVLA LoRA r32),default,rerun,6,50,48,0,1,0,1,0,0
+ours (OpenVLA LoRA r32),default,rerun,7,50,39,0,6,0,1,0,4
+ours (OpenVLA LoRA r32),default,rerun,8,50,41,0,6,0,0,0,3
+ours (OpenVLA LoRA r32),default,rerun,9,50,33,0,8,0,3,0,6
+ours (OpenVLA LoRA r32),drawer_open,rerun,0,50,34,0,2,0,2,0,12
+ours (OpenVLA LoRA r32),drawer_open,rerun,1,50,43,0,7,0,0,0,0
+ours (OpenVLA LoRA r32),drawer_open,rerun,2,50,41,0,4,0,3,0,2
+ours (OpenVLA LoRA r32),drawer_open,rerun,3,50,18,0,6,0,7,0,19
+ours (OpenVLA LoRA r32),drawer_open,rerun,4,50,45,0,0,0,3,0,2
+ours (OpenVLA LoRA r32),drawer_open,rerun,5,50,41,0,6,0,2,1,0
+ours (OpenVLA LoRA r32),drawer_open,rerun,6,50,0,0,0,0,0,0,50
+ours (OpenVLA LoRA r32),drawer_open,rerun,7,50,22,0,1,0,6,0,21
+ours (OpenVLA LoRA r32),drawer_open,rerun,8,50,37,0,2,0,1,0,10
+ours (OpenVLA LoRA r32),drawer_open,rerun,9,50,23,0,7,0,4,0,16
+ours (OpenVLA LoRA r32),irrelevant,rerun,0,50,44,0,2,0,0,0,4
+ours (OpenVLA LoRA r32),irrelevant,rerun,1,50,46,0,4,0,0,0,0
+ours (OpenVLA LoRA r32),irrelevant,rerun,2,50,48,0,2,0,0,0,0
+ours (OpenVLA LoRA r32),irrelevant,rerun,3,50,47,0,1,0,2,0,0
+ours (OpenVLA LoRA r32),irrelevant,rerun,4,50,44,0,0,0,6,0,0
+ours (OpenVLA LoRA r32),irrelevant,rerun,5,50,43,0,6,0,1,0,0
+ours (OpenVLA LoRA r32),irrelevant,rerun,6,50,38,0,2,0,2,0,8
+ours (OpenVLA LoRA r32),irrelevant,rerun,7,50,46,0,4,0,0,0,0
+ours (OpenVLA LoRA r32),irrelevant,rerun,8,50,40,0,4,0,1,0,5
+ours (OpenVLA LoRA r32),irrelevant,rerun,9,50,34,0,4,1,4,2,5
+ours (OpenVLA LoRA r32),landmark,rerun,0,50,24,0,2,12,6,1,5
+ours (OpenVLA LoRA r32),landmark,rerun,1,50,46,0,4,0,0,0,0
+ours (OpenVLA LoRA r32),landmark,rerun,2,50,49,0,1,0,0,0,0
+ours (OpenVLA LoRA r32),landmark,rerun,3,50,44,0,4,0,2,0,0
+ours (OpenVLA LoRA r32),landmark,rerun,4,50,42,0,0,0,8,0,0
+ours (OpenVLA LoRA r32),landmark,rerun,5,50,46,0,4,0,0,0,0
+ours (OpenVLA LoRA r32),landmark,rerun,6,50,40,1,1,0,2,2,4
+ours (OpenVLA LoRA r32),landmark,rerun,7,50,43,0,5,0,2,0,0
+ours (OpenVLA LoRA r32),landmark,rerun,8,50,42,0,4,0,0,0,4
+ours (OpenVLA LoRA r32),landmark,rerun,9,50,27,0,6,1,1,0,15
+ours (OpenVLA LoRA r32),landmark_with_hardneg_prompt,rerun,0,50,19,7,4,9,3,4,4
+ours (OpenVLA LoRA r32),landmark_with_hardneg_prompt,rerun,1,50,17,0,4,0,4,0,25
+ours (OpenVLA LoRA r32),landmark_with_hardneg_prompt,rerun,2,50,25,0,13,0,0,0,12
+ours (OpenVLA LoRA r32),landmark_with_hardneg_prompt,rerun,3,50,31,0,2,1,12,0,4
+ours (OpenVLA LoRA r32),landmark_with_hardneg_prompt,rerun,4,50,40,0,2,0,3,0,5
+ours (OpenVLA LoRA r32),landmark_with_hardneg_prompt,rerun,5,50,19,0,0,1,7,2,21
+ours (OpenVLA LoRA r32),landmark_with_hardneg_prompt,rerun,6,50,26,2,8,0,8,2,4
+ours (OpenVLA LoRA r32),landmark_with_hardneg_prompt,rerun,7,50,2,0,1,0,0,0,47
+ours (OpenVLA LoRA r32),landmark_with_hardneg_prompt,rerun,8,50,24,0,15,0,1,0,10
+ours (OpenVLA LoRA r32),landmark_with_hardneg_prompt,rerun,9,50,3,2,6,1,0,1,37
+ours (OpenVLA LoRA r32),negative_contrast,rerun,0,50,44,0,3,0,1,0,2
+ours (OpenVLA LoRA r32),negative_contrast,rerun,1,50,21,9,0,0,2,3,15
+ours (OpenVLA LoRA r32),negative_contrast,rerun,2,50,2,5,1,2,0,0,40
+ours (OpenVLA LoRA r32),negative_contrast,rerun,3,50,31,0,6,0,5,0,8
+ours (OpenVLA LoRA r32),negative_contrast,rerun,4,50,36,0,1,0,7,0,6
+ours (OpenVLA LoRA r32),negative_contrast,rerun,5,50,2,18,1,5,0,3,21
+ours (OpenVLA LoRA r32),negative_contrast,rerun,6,50,32,0,10,0,1,0,7
+ours (OpenVLA LoRA r32),negative_contrast,rerun,7,50,4,2,2,6,5,1,30
+ours (OpenVLA LoRA r32),negative_contrast,rerun,8,50,28,0,6,1,5,2,8
+ours (OpenVLA LoRA r32),negative_contrast,rerun,9,50,0,14,8,4,0,2,22
+ours (OpenVLA LoRA r32),no_location,main,0,50,23,1,2,0,2,0,22
+ours (OpenVLA LoRA r32),no_location,main,1,50,4,0,2,1,1,0,42
+ours (OpenVLA LoRA r32),no_location,main,2,50,3,6,3,4,2,0,32
+ours (OpenVLA LoRA r32),no_location,main,3,50,5,0,8,0,3,0,34
+ours (OpenVLA LoRA r32),no_location,main,4,50,0,0,0,0,1,0,49
+ours (OpenVLA LoRA r32),no_location,main,5,50,15,0,6,1,2,3,23
+ours (OpenVLA LoRA r32),no_location,main,6,50,2,0,0,0,1,0,47
+ours (OpenVLA LoRA r32),no_location,main,7,50,3,0,1,2,2,0,42
+ours (OpenVLA LoRA r32),no_location,main,8,50,4,0,15,1,2,0,28
+ours (OpenVLA LoRA r32),no_location,main,9,50,0,0,1,0,0,0,49
+ours (OpenVLA LoRA r32),positive_contrast,rerun,0,50,46,0,2,0,0,0,2
+ours (OpenVLA LoRA r32),positive_contrast,rerun,1,50,4,8,0,13,0,6,19
+ours (OpenVLA LoRA r32),positive_contrast,rerun,2,50,7,0,7,3,0,0,33
+ours (OpenVLA LoRA r32),positive_contrast,rerun,3,50,19,0,11,2,7,0,11
+ours (OpenVLA LoRA r32),positive_contrast,rerun,4,50,25,0,6,1,12,0,6
+ours (OpenVLA LoRA r32),positive_contrast,rerun,5,50,1,14,2,19,0,1,13
+ours (OpenVLA LoRA r32),positive_contrast,rerun,6,50,20,0,11,0,1,0,18
+ours (OpenVLA LoRA r32),positive_contrast,rerun,7,50,6,1,1,10,2,0,30
+ours (OpenVLA LoRA r32),positive_contrast,rerun,8,50,34,0,6,0,0,0,10
+ours (OpenVLA LoRA r32),positive_contrast,rerun,9,50,0,14,5,4,1,6,20
+ours (OpenVLA LoRA r32),semantic,rerun,0,50,43,0,3,0,1,0,3
+ours (OpenVLA LoRA r32),semantic,rerun,1,50,36,0,10,0,3,1,0
+ours (OpenVLA LoRA r32),semantic,rerun,2,50,48,0,2,0,0,0,0
+ours (OpenVLA LoRA r32),semantic,rerun,3,50,45,0,5,0,0,0,0
+ours (OpenVLA LoRA r32),semantic,rerun,4,50,46,0,1,0,3,0,0
+ours (OpenVLA LoRA r32),semantic,rerun,5,50,43,0,6,0,1,0,0
+ours (OpenVLA LoRA r32),semantic,rerun,6,50,47,0,3,0,0,0,0
+ours (OpenVLA LoRA r32),semantic,rerun,7,50,44,0,5,0,0,0,1
+ours (OpenVLA LoRA r32),semantic,rerun,8,50,40,0,2,0,1,0,7
+ours (OpenVLA LoRA r32),semantic,rerun,9,50,34,0,6,0,0,0,10
+ours (OpenVLA LoRA r32),target_cue_landmark,rerun,3,50,26,0,17,0,7,0,0
+ours (OpenVLA LoRA r32),target_cue_landmark,rerun,5,50,5,0,5,1,4,1,34
+ours (OpenVLA LoRA r32),target_cue_landmark,rerun,7,50,22,0,4,0,2,0,22
+ours (OpenVLA LoRA r32),target_cue_landmark,rerun,9,50,8,0,8,0,2,0,32
+ours (OpenVLA LoRA r32),target_cue_proximity_novel,rerun,3,50,28,0,9,0,11,0,2
+ours (OpenVLA LoRA r32),target_cue_proximity_novel,rerun,5,50,33,0,2,0,5,1,9
+ours (OpenVLA LoRA r32),target_cue_proximity_novel,rerun,7,50,32,0,1,1,0,0,16
+ours (OpenVLA LoRA r32),target_cue_proximity_novel,rerun,9,50,13,0,10,0,2,0,25
+ours (OpenVLA LoRA r32),target_swap,main,0,50,39,1,3,2,3,1,1
+ours (OpenVLA LoRA r32),target_swap,main,1,50,43,0,3,0,3,0,1
+ours (OpenVLA LoRA r32),target_swap,main,2,50,42,0,3,0,1,0,4
+ours (OpenVLA LoRA r32),target_swap,main,3,50,17,4,5,3,2,0,19
+ours (OpenVLA LoRA r32),target_swap,main,4,50,1,3,4,1,2,6,33
+ours (OpenVLA LoRA r32),target_swap,main,5,50,40,0,2,0,2,0,6
+ours (OpenVLA LoRA r32),target_swap,main,6,50,37,0,6,0,1,0,6
+ours (OpenVLA LoRA r32),target_swap,main,7,50,23,0,5,0,3,0,19
+ours (OpenVLA LoRA r32),target_swap,main,8,50,25,0,17,0,4,0,4
+ours (OpenVLA LoRA r32),target_swap,main,9,50,43,0,6,0,0,0,1
+official OpenVLA,negation_only,main,0,50,9,20,7,4,2,7,1
+official OpenVLA,negation_only,main,1,50,0,40,0,1,0,5,4
+official OpenVLA,negation_only,main,2,50,0,19,2,2,0,0,27
+official OpenVLA,negation_only,main,3,50,5,7,3,8,2,1,24
+official OpenVLA,negation_only,main,4,50,11,0,6,2,11,1,19
+official OpenVLA,negation_only,main,5,50,0,44,0,1,0,1,4
+official OpenVLA,negation_only,main,6,50,0,34,0,6,0,3,7
+official OpenVLA,negation_only,main,7,50,0,21,0,5,0,3,21
+official OpenVLA,negation_only,main,8,50,0,6,10,11,4,8,11
+official OpenVLA,negation_only,main,9,50,0,45,0,2,0,0,3
+official OpenVLA,no_location,main,0,50,11,0,10,1,6,1,21
+official OpenVLA,no_location,main,1,50,25,0,4,0,2,0,19
+official OpenVLA,no_location,main,2,50,13,0,9,1,3,1,23
+official OpenVLA,no_location,main,3,50,7,0,3,0,2,0,38
+official OpenVLA,no_location,main,4,50,0,0,1,0,2,0,47
+official OpenVLA,no_location,main,5,50,20,0,6,0,2,0,22
+official OpenVLA,no_location,main,6,50,2,3,1,1,1,0,42
+official OpenVLA,no_location,main,7,50,3,0,1,0,0,0,46
+official OpenVLA,no_location,main,8,50,7,0,13,1,5,2,22
+official OpenVLA,no_location,main,9,50,0,2,0,0,0,1,47
+official OpenVLA,target_swap,main,0,50,20,5,9,3,8,3,2
+official OpenVLA,target_swap,main,1,50,42,0,3,0,3,0,2
+official OpenVLA,target_swap,main,2,50,38,0,5,1,2,0,4
+official OpenVLA,target_swap,main,3,50,13,0,12,0,2,3,20
+official OpenVLA,target_swap,main,4,50,1,6,2,2,0,18,21
+official OpenVLA,target_swap,main,5,50,42,0,2,0,4,0,2
+official OpenVLA,target_swap,main,6,50,42,0,3,0,0,0,5
+official OpenVLA,target_swap,main,7,50,26,0,6,0,3,0,15
+official OpenVLA,target_swap,main,8,50,19,0,11,7,5,2,6
+official OpenVLA,target_swap,main,9,50,43,0,5,0,0,0,2
+pi0_libero,default,main,0,50,47,0,2,0,0,0,1
+pi0_libero,default,main,1,50,50,0,0,0,0,0,0
+pi0_libero,default,main,2,50,50,0,0,0,0,0,0
+pi0_libero,default,main,3,50,47,0,2,0,1,0,0
+pi0_libero,default,main,4,50,46,0,1,0,3,0,0
+pi0_libero,default,main,5,50,49,0,1,0,0,0,0
+pi0_libero,default,main,6,50,50,0,0,0,0,0,0
+pi0_libero,default,main,7,50,48,0,2,0,0,0,0
+pi0_libero,default,main,8,50,48,0,1,1,0,0,0
+pi0_libero,default,main,9,50,47,0,3,0,0,0,0
+pi0_libero,drawer_open,main,0,50,0,4,0,45,0,0,1
+pi0_libero,drawer_open,main,1,50,49,0,0,1,0,0,0
+pi0_libero,drawer_open,main,2,50,49,0,1,0,0,0,0
+pi0_libero,drawer_open,main,3,50,29,0,8,1,1,1,10
+pi0_libero,drawer_open,main,4,50,20,0,2,4,2,2,20
+pi0_libero,drawer_open,main,5,50,2,1,1,38,1,5,2
+pi0_libero,drawer_open,main,6,50,0,0,0,0,0,1,49
+pi0_libero,drawer_open,main,7,50,0,28,0,20,0,2,0
+pi0_libero,drawer_open,main,8,50,18,14,7,5,0,0,6
+pi0_libero,drawer_open,main,9,50,34,0,6,0,0,1,9
+pi0_libero,irrelevant,main,0,50,48,0,1,0,0,0,1
+pi0_libero,irrelevant,main,1,50,49,0,1,0,0,0,0
+pi0_libero,irrelevant,main,2,50,50,0,0,0,0,0,0
+pi0_libero,irrelevant,main,3,50,49,0,1,0,0,0,0
+pi0_libero,irrelevant,main,4,50,48,0,2,0,0,0,0
+pi0_libero,irrelevant,main,5,50,0,1,0,49,0,0,0
+pi0_libero,irrelevant,main,6,50,50,0,0,0,0,0,0
+pi0_libero,irrelevant,main,7,50,42,0,8,0,0,0,0
+pi0_libero,irrelevant,main,8,50,46,0,1,1,0,1,1
+pi0_libero,irrelevant,main,9,50,48,0,1,0,1,0,0
+pi0_libero,landmark,main,0,50,7,7,2,34,0,0,0
+pi0_libero,landmark,main,1,50,50,0,0,0,0,0,0
+pi0_libero,landmark,main,2,50,50,0,0,0,0,0,0
+pi0_libero,landmark,main,3,50,48,0,0,0,2,0,0
+pi0_libero,landmark,main,4,50,39,0,3,0,2,0,6
+pi0_libero,landmark,main,5,50,11,0,11,26,0,2,0
+pi0_libero,landmark,main,6,50,44,3,1,0,0,1,1
+pi0_libero,landmark,main,7,50,27,0,6,13,4,0,0
+pi0_libero,landmark,main,8,50,36,0,11,1,0,1,1
+pi0_libero,landmark,main,9,50,33,4,0,4,0,2,7
+pi0_libero,landmark_with_hardneg_prompt,main,0,50,13,3,4,29,0,1,0
+pi0_libero,landmark_with_hardneg_prompt,main,1,50,6,10,19,5,0,2,8
+pi0_libero,landmark_with_hardneg_prompt,main,2,50,44,0,6,0,0,0,0
+pi0_libero,landmark_with_hardneg_prompt,main,3,50,27,0,15,0,8,0,0
+pi0_libero,landmark_with_hardneg_prompt,main,4,50,30,0,7,0,6,1,6
+pi0_libero,landmark_with_hardneg_prompt,main,5,50,22,3,12,4,0,7,2
+pi0_libero,landmark_with_hardneg_prompt,main,6,50,41,4,2,0,0,1,2
+pi0_libero,landmark_with_hardneg_prompt,main,7,50,11,1,3,31,1,2,1
+pi0_libero,landmark_with_hardneg_prompt,main,8,50,39,0,8,0,0,0,3
+pi0_libero,landmark_with_hardneg_prompt,main,9,50,0,3,0,10,0,29,8
+pi0_libero,length_control_infix,main,0,50,39,0,7,0,4,0,0
+pi0_libero,length_control_infix,main,1,50,46,0,3,0,1,0,0
+pi0_libero,length_control_infix,main,2,50,49,0,1,0,0,0,0
+pi0_libero,length_control_infix,main,3,50,36,0,9,0,5,0,0
+pi0_libero,length_control_infix,main,4,50,40,0,7,1,2,0,0
+pi0_libero,length_control_infix,main,5,50,40,0,10,0,0,0,0
+pi0_libero,length_control_infix,main,6,50,43,0,7,0,0,0,0
+pi0_libero,length_control_infix,main,7,50,42,0,5,0,1,0,2
+pi0_libero,length_control_infix,main,8,50,40,0,9,0,0,0,1
+pi0_libero,length_control_infix,main,9,50,32,0,11,0,3,0,4
+pi0_libero,length_control_suffix,main,0,50,39,0,8,0,2,0,1
+pi0_libero,length_control_suffix,main,1,50,33,0,10,0,7,0,0
+pi0_libero,length_control_suffix,main,2,50,43,0,5,0,2,0,0
+pi0_libero,length_control_suffix,main,3,50,35,0,8,0,7,0,0
+pi0_libero,length_control_suffix,main,4,50,33,0,6,0,11,0,0
+pi0_libero,length_control_suffix,main,5,50,33,0,15,0,1,0,1
+pi0_libero,length_control_suffix,main,6,50,34,0,16,0,0,0,0
+pi0_libero,length_control_suffix,main,7,50,40,0,6,0,4,0,0
+pi0_libero,length_control_suffix,main,8,50,33,0,13,0,3,0,1
+pi0_libero,length_control_suffix,main,9,50,23,0,11,0,6,1,9
+pi0_libero,negation_only,main,0,50,41,4,2,3,0,0,0
+pi0_libero,negation_only,main,1,50,0,49,0,0,0,0,1
+pi0_libero,negation_only,main,2,50,37,5,4,1,1,0,2
+pi0_libero,negation_only,main,3,50,35,0,11,0,1,0,3
+pi0_libero,negation_only,main,4,50,45,0,1,0,2,0,2
+pi0_libero,negation_only,main,5,50,0,43,3,0,3,0,1
+pi0_libero,negation_only,main,6,50,0,44,2,1,0,0,3
+pi0_libero,negation_only,main,7,50,1,35,1,11,0,0,2
+pi0_libero,negation_only,main,8,50,5,21,19,4,1,0,0
+pi0_libero,negation_only,main,9,50,0,48,0,1,0,0,1
+pi0_libero,negative_contrast,main,0,50,29,0,18,0,3,0,0
+pi0_libero,negative_contrast,main,1,50,28,1,17,0,4,0,0
+pi0_libero,negative_contrast,main,2,50,49,0,1,0,0,0,0
+pi0_libero,negative_contrast,main,3,50,25,0,18,0,7,0,0
+pi0_libero,negative_contrast,main,4,50,44,0,3,0,3,0,0
+pi0_libero,negative_contrast,main,5,50,2,7,22,7,6,2,4
+pi0_libero,negative_contrast,main,6,50,47,0,3,0,0,0,0
+pi0_libero,negative_contrast,main,7,50,24,2,15,2,2,0,5
+pi0_libero,negative_contrast,main,8,50,17,4,20,1,8,0,0
+pi0_libero,negative_contrast,main,9,50,10,3,17,3,3,1,13
+pi0_libero,no_location,main,0,50,47,0,3,0,0,0,0
+pi0_libero,no_location,main,1,50,9,2,7,10,1,1,20
+pi0_libero,no_location,main,2,50,47,0,3,0,0,0,0
+pi0_libero,no_location,main,3,50,36,0,5,0,0,0,9
+pi0_libero,no_location,main,4,50,15,0,0,0,4,0,31
+pi0_libero,no_location,main,5,50,28,9,8,4,0,0,1
+pi0_libero,no_location,main,6,50,14,3,15,1,8,0,9
+pi0_libero,no_location,main,7,50,21,0,0,2,1,0,26
+pi0_libero,no_location,main,8,50,39,0,10,0,0,0,1
+pi0_libero,no_location,main,9,50,0,19,1,2,0,1,27
+pi0_libero,paraphrase_lexical,main,0,50,50,0,0,0,0,0,0
+pi0_libero,paraphrase_lexical,main,1,50,21,0,27,0,0,0,2
+pi0_libero,paraphrase_lexical,main,2,50,50,0,0,0,0,0,0
+pi0_libero,paraphrase_lexical,main,3,50,48,0,2,0,0,0,0
+pi0_libero,paraphrase_lexical,main,4,50,48,0,1,0,1,0,0
+pi0_libero,paraphrase_lexical,main,5,50,50,0,0,0,0,0,0
+pi0_libero,paraphrase_lexical,main,6,50,50,0,0,0,0,0,0
+pi0_libero,paraphrase_lexical,main,7,50,47,0,2,0,0,0,1
+pi0_libero,paraphrase_lexical,main,8,50,47,0,2,0,0,0,1
+pi0_libero,paraphrase_lexical,main,9,50,43,0,6,1,0,0,0
+pi0_libero,paraphrase_syntactic,main,0,50,49,0,1,0,0,0,0
+pi0_libero,paraphrase_syntactic,main,1,50,50,0,0,0,0,0,0
+pi0_libero,paraphrase_syntactic,main,2,50,49,0,1,0,0,0,0
+pi0_libero,paraphrase_syntactic,main,3,50,47,0,3,0,0,0,0
+pi0_libero,paraphrase_syntactic,main,4,50,47,0,1,0,1,0,1
+pi0_libero,paraphrase_syntactic,main,5,50,47,0,3,0,0,0,0
+pi0_libero,paraphrase_syntactic,main,6,50,49,0,1,0,0,0,0
+pi0_libero,paraphrase_syntactic,main,7,50,49,0,1,0,0,0,0
+pi0_libero,paraphrase_syntactic,main,8,50,49,0,0,0,0,0,1
+pi0_libero,paraphrase_syntactic,main,9,50,49,0,1,0,0,0,0
+pi0_libero,positive_contrast,main,0,50,40,0,8,0,2,0,0
+pi0_libero,positive_contrast,main,1,50,36,0,10,0,4,0,0
+pi0_libero,positive_contrast,main,2,50,49,0,1,0,0,0,0
+pi0_libero,positive_contrast,main,3,50,17,0,25,0,7,0,1
+pi0_libero,positive_contrast,main,4,50,39,0,3,0,7,0,1
+pi0_libero,positive_contrast,main,5,50,7,1,28,6,4,1,3
+pi0_libero,positive_contrast,main,6,50,46,0,4,0,0,0,0
+pi0_libero,positive_contrast,main,7,50,31,0,15,0,3,0,1
+pi0_libero,positive_contrast,main,8,50,33,0,16,0,1,0,0
+pi0_libero,positive_contrast,main,9,50,15,0,18,1,3,3,10
+pi0_libero,region_surface,main,0,50,48,0,2,0,0,0,0
+pi0_libero,semantic,main,0,50,40,0,3,1,1,0,5
+pi0_libero,semantic,main,1,50,41,3,1,4,0,1,0
+pi0_libero,semantic,main,2,50,49,0,1,0,0,0,0
+pi0_libero,semantic,main,3,50,49,0,1,0,0,0,0
+pi0_libero,semantic,main,4,50,45,0,2,1,1,1,0
+pi0_libero,semantic,main,5,50,42,0,8,0,0,0,0
+pi0_libero,semantic,main,6,50,50,0,0,0,0,0,0
+pi0_libero,semantic,main,7,50,50,0,0,0,0,0,0
+pi0_libero,semantic,main,8,50,45,1,1,3,0,0,0
+pi0_libero,semantic,main,9,50,50,0,0,0,0,0,0
+pi0_libero,surface_landmark,main,0,50,47,0,3,0,0,0,0
+pi0_libero,target_cue_landmark,main,3,50,45,0,5,0,0,0,0
+pi0_libero,target_cue_landmark,main,5,50,44,0,6,0,0,0,0
+pi0_libero,target_cue_landmark,main,7,50,1,0,1,1,0,1,46
+pi0_libero,target_cue_landmark,main,9,50,2,0,2,0,0,0,46
+pi0_libero,target_cue_proximity_adjacent,main,3,50,50,0,0,0,0,0,0
+pi0_libero,target_cue_proximity_adjacent,main,5,50,45,0,5,0,0,0,0
+pi0_libero,target_cue_proximity_adjacent,main,7,50,27,0,2,0,0,0,21
+pi0_libero,target_cue_proximity_adjacent,main,9,50,42,0,2,1,0,0,5
+pi0_libero,target_cue_proximity_beside,main,3,50,50,0,0,0,0,0,0
+pi0_libero,target_cue_proximity_beside,main,5,50,43,0,6,0,1,0,0
+pi0_libero,target_cue_proximity_beside,main,7,50,47,0,0,0,1,0,2
+pi0_libero,target_cue_proximity_beside,main,9,50,46,0,3,0,0,0,1
+pi0_libero,target_cue_proximity_near,main,3,50,49,0,1,0,0,0,0
+pi0_libero,target_cue_proximity_near,main,5,50,48,0,2,0,0,0,0
+pi0_libero,target_cue_proximity_near,main,7,50,47,0,0,0,0,0,3
+pi0_libero,target_cue_proximity_near,main,9,50,48,0,1,1,0,0,0
+pi0_libero,target_cue_proximity_novel,main,3,50,50,0,0,0,0,0,0
+pi0_libero,target_cue_proximity_novel,main,5,50,42,0,8,0,0,0,0
+pi0_libero,target_cue_proximity_novel,main,7,50,23,0,0,0,1,0,26
+pi0_libero,target_cue_proximity_novel,main,9,50,33,0,9,0,0,1,7
+pi0_libero,target_cue_region_img,main,0,50,25,0,24,0,1,0,0
+pi0_libero,target_cue_region_img,main,1,50,5,10,14,8,1,1,11
+pi0_libero,target_cue_region_img,main,3,50,29,0,11,0,2,0,8
+pi0_libero,target_cue_region_img,main,5,50,33,2,10,3,0,2,0
+pi0_libero,target_cue_region_img,main,6,50,14,10,18,0,1,0,7
+pi0_libero,target_cue_region_img,main,7,50,14,2,1,1,0,1,31
+pi0_libero,target_cue_region_img,main,8,50,10,0,13,3,3,4,17
+pi0_libero,target_cue_region_img,main,9,50,0,13,3,0,0,2,32
+pi0_libero,target_cue_region_v2_img,main,0,50,17,0,32,0,1,0,0
+pi0_libero,target_cue_region_v2_img,main,1,50,4,17,8,10,1,0,10
+pi0_libero,target_cue_region_v2_img,main,3,50,35,0,7,0,1,0,7
+pi0_libero,target_cue_region_v2_img,main,5,50,28,6,12,3,1,0,0
+pi0_libero,target_cue_region_v2_img,main,6,50,22,2,16,0,4,0,6
+pi0_libero,target_cue_region_v2_img,main,7,50,7,2,2,2,1,0,36
+pi0_libero,target_cue_region_v2_img,main,8,50,8,1,30,1,3,0,7
+pi0_libero,target_cue_region_v2_img,main,9,50,1,3,4,2,0,0,40
+pi0_libero,target_cue_region_v3_img,main,0,50,29,0,21,0,0,0,0
+pi0_libero,target_cue_region_v3_img,main,1,50,3,2,17,6,1,0,21
+pi0_libero,target_cue_region_v3_img,main,3,50,36,0,7,0,1,0,6
+pi0_libero,target_cue_region_v3_img,main,5,50,28,3,17,0,0,0,2
+pi0_libero,target_cue_region_v3_img,main,6,50,25,1,17,0,0,0,7
+pi0_libero,target_cue_region_v3_img,main,7,50,19,0,1,2,0,0,28
+pi0_libero,target_cue_region_v3_img,main,8,50,4,0,14,1,15,4,12
+pi0_libero,target_cue_region_v3_img,main,9,50,0,26,0,1,0,2,21
+pi0_libero,target_swap,main,0,50,16,30,2,1,1,0,0
+pi0_libero,target_swap,main,1,50,48,0,2,0,0,0,0
+pi0_libero,target_swap,main,2,50,16,13,4,10,0,0,7
+pi0_libero,target_swap,main,3,50,27,11,0,3,0,1,8
+pi0_libero,target_swap,main,4,50,15,9,3,2,0,21,0
+pi0_libero,target_swap,main,5,50,47,0,1,1,0,0,1
+pi0_libero,target_swap,main,6,50,49,0,1,0,0,0,0
+pi0_libero,target_swap,main,7,50,45,0,5,0,0,0,0
+pi0_libero,target_swap,main,8,50,29,6,1,13,1,0,0
+pi0_libero,target_swap,main,9,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),default,main,0,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),default,main,1,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),default,main,2,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),default,main,3,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),default,main,4,50,47,0,0,0,2,0,1
+OpenVLA-OFT (spatial),default,main,5,50,48,0,2,0,0,0,0
+OpenVLA-OFT (spatial),default,main,6,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),default,main,7,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),default,main,8,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),default,main,9,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),drawer_open,main,0,50,32,11,2,4,1,0,0
+OpenVLA-OFT (spatial),drawer_open,main,1,50,2,10,0,4,1,2,31
+OpenVLA-OFT (spatial),drawer_open,main,2,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),drawer_open,main,3,50,8,2,1,1,13,4,21
+OpenVLA-OFT (spatial),drawer_open,main,4,50,43,0,1,0,2,0,4
+OpenVLA-OFT (spatial),drawer_open,main,5,50,0,29,0,14,0,1,6
+OpenVLA-OFT (spatial),drawer_open,main,6,50,0,0,0,0,1,0,49
+OpenVLA-OFT (spatial),drawer_open,main,7,50,0,28,0,2,0,17,3
+OpenVLA-OFT (spatial),drawer_open,main,8,50,1,46,0,3,0,0,0
+OpenVLA-OFT (spatial),drawer_open,main,9,50,0,0,2,0,0,0,48
+OpenVLA-OFT (spatial),irrelevant,main,0,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),irrelevant,main,1,50,6,6,1,2,0,1,34
+OpenVLA-OFT (spatial),irrelevant,main,2,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),irrelevant,main,3,50,25,0,11,0,13,0,1
+OpenVLA-OFT (spatial),irrelevant,main,4,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),irrelevant,main,5,50,1,15,0,13,0,2,19
+OpenVLA-OFT (spatial),irrelevant,main,6,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),irrelevant,main,7,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),irrelevant,main,8,50,46,0,0,0,3,0,1
+OpenVLA-OFT (spatial),irrelevant,main,9,50,42,0,3,0,0,0,5
+OpenVLA-OFT (spatial),landmark,main,0,50,20,10,11,7,1,1,0
+OpenVLA-OFT (spatial),landmark,main,1,50,38,0,2,0,6,0,4
+OpenVLA-OFT (spatial),landmark,main,2,50,49,0,0,0,1,0,0
+OpenVLA-OFT (spatial),landmark,main,3,50,22,1,14,3,10,0,0
+OpenVLA-OFT (spatial),landmark,main,4,50,48,0,0,0,0,0,2
+OpenVLA-OFT (spatial),landmark,main,5,50,12,3,19,14,1,1,0
+OpenVLA-OFT (spatial),landmark,main,6,50,45,1,1,0,0,2,1
+OpenVLA-OFT (spatial),landmark,main,7,50,40,2,6,1,0,0,1
+OpenVLA-OFT (spatial),landmark,main,8,50,47,0,1,0,2,0,0
+OpenVLA-OFT (spatial),landmark,main,9,50,7,0,3,0,0,0,40
+OpenVLA-OFT (spatial),landmark_with_hardneg_prompt,main,0,50,17,12,10,6,2,3,0
+OpenVLA-OFT (spatial),landmark_with_hardneg_prompt,main,1,50,6,3,1,5,0,3,32
+OpenVLA-OFT (spatial),landmark_with_hardneg_prompt,main,2,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),landmark_with_hardneg_prompt,main,3,50,40,0,5,1,4,0,0
+OpenVLA-OFT (spatial),landmark_with_hardneg_prompt,main,4,50,43,0,1,0,0,0,6
+OpenVLA-OFT (spatial),landmark_with_hardneg_prompt,main,5,50,39,0,10,0,0,0,1
+OpenVLA-OFT (spatial),landmark_with_hardneg_prompt,main,6,50,42,2,2,0,2,2,0
+OpenVLA-OFT (spatial),landmark_with_hardneg_prompt,main,7,50,39,1,5,2,0,0,3
+OpenVLA-OFT (spatial),landmark_with_hardneg_prompt,main,8,50,22,1,3,0,0,0,24
+OpenVLA-OFT (spatial),landmark_with_hardneg_prompt,main,9,50,0,0,3,0,0,2,45
+OpenVLA-OFT (spatial),length_control_infix,main,0,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),length_control_infix,main,1,50,48,0,2,0,0,0,0
+OpenVLA-OFT (spatial),length_control_infix,main,2,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),length_control_infix,main,3,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),length_control_infix,main,4,50,48,0,0,0,1,0,1
+OpenVLA-OFT (spatial),length_control_infix,main,5,50,44,0,5,0,0,0,1
+OpenVLA-OFT (spatial),length_control_infix,main,6,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),length_control_infix,main,7,50,48,0,1,0,1,0,0
+OpenVLA-OFT (spatial),length_control_infix,main,8,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),length_control_infix,main,9,50,48,0,1,0,1,0,0
+OpenVLA-OFT (spatial),length_control_suffix,main,0,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),length_control_suffix,main,1,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),length_control_suffix,main,2,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),length_control_suffix,main,3,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),length_control_suffix,main,4,50,46,0,0,0,3,0,1
+OpenVLA-OFT (spatial),length_control_suffix,main,5,50,47,0,3,0,0,0,0
+OpenVLA-OFT (spatial),length_control_suffix,main,6,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),length_control_suffix,main,7,50,46,0,3,0,0,0,1
+OpenVLA-OFT (spatial),length_control_suffix,main,8,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),length_control_suffix,main,9,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),negation_only,main,0,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),negation_only,main,1,50,16,0,0,0,4,0,30
+OpenVLA-OFT (spatial),negation_only,main,2,50,47,3,0,0,0,0,0
+OpenVLA-OFT (spatial),negation_only,main,3,50,35,0,3,0,3,0,9
+OpenVLA-OFT (spatial),negation_only,main,4,50,16,0,3,0,5,0,26
+OpenVLA-OFT (spatial),negation_only,main,5,50,4,36,1,3,0,2,4
+OpenVLA-OFT (spatial),negation_only,main,6,50,0,45,0,3,0,2,0
+OpenVLA-OFT (spatial),negation_only,main,7,50,0,50,0,0,0,0,0
+OpenVLA-OFT (spatial),negation_only,main,8,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),negation_only,main,9,50,0,48,0,2,0,0,0
+OpenVLA-OFT (spatial),negative_contrast,main,0,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),negative_contrast,main,1,50,37,0,2,0,3,0,8
+OpenVLA-OFT (spatial),negative_contrast,main,2,50,47,2,0,0,0,0,1
+OpenVLA-OFT (spatial),negative_contrast,main,3,50,44,0,1,0,5,0,0
+OpenVLA-OFT (spatial),negative_contrast,main,4,50,47,0,0,0,2,0,1
+OpenVLA-OFT (spatial),negative_contrast,main,5,50,12,19,3,3,0,0,13
+OpenVLA-OFT (spatial),negative_contrast,main,6,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),negative_contrast,main,7,50,0,46,0,3,0,1,0
+OpenVLA-OFT (spatial),negative_contrast,main,8,50,48,0,2,0,0,0,0
+OpenVLA-OFT (spatial),negative_contrast,main,9,50,47,0,1,0,1,0,1
+OpenVLA-OFT (spatial),no_location,main,0,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),no_location,main,1,50,46,0,2,0,2,0,0
+OpenVLA-OFT (spatial),no_location,main,2,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),no_location,main,3,50,47,0,2,0,0,0,1
+OpenVLA-OFT (spatial),no_location,main,4,50,0,0,1,0,0,0,49
+OpenVLA-OFT (spatial),no_location,main,5,50,42,1,2,0,1,0,4
+OpenVLA-OFT (spatial),no_location,main,6,50,21,16,0,4,0,4,5
+OpenVLA-OFT (spatial),no_location,main,7,50,32,0,0,0,4,0,14
+OpenVLA-OFT (spatial),no_location,main,8,50,43,0,1,0,0,0,6
+OpenVLA-OFT (spatial),no_location,main,9,50,0,34,0,4,0,2,10
+OpenVLA-OFT (spatial),paraphrase_lexical,main,0,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),paraphrase_lexical,main,1,50,49,0,0,0,1,0,0
+OpenVLA-OFT (spatial),paraphrase_lexical,main,2,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),paraphrase_lexical,main,3,50,48,0,2,0,0,0,0
+OpenVLA-OFT (spatial),paraphrase_lexical,main,4,50,49,0,0,0,1,0,0
+OpenVLA-OFT (spatial),paraphrase_lexical,main,5,50,48,0,1,0,0,0,1
+OpenVLA-OFT (spatial),paraphrase_lexical,main,6,50,48,0,2,0,0,0,0
+OpenVLA-OFT (spatial),paraphrase_lexical,main,7,50,48,0,1,0,0,0,1
+OpenVLA-OFT (spatial),paraphrase_lexical,main,8,50,46,0,0,0,0,0,4
+OpenVLA-OFT (spatial),paraphrase_lexical,main,9,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),paraphrase_syntactic,main,0,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),paraphrase_syntactic,main,1,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),paraphrase_syntactic,main,2,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),paraphrase_syntactic,main,3,50,48,0,2,0,0,0,0
+OpenVLA-OFT (spatial),paraphrase_syntactic,main,4,50,48,0,0,0,1,0,1
+OpenVLA-OFT (spatial),paraphrase_syntactic,main,5,50,45,0,4,0,0,0,1
+OpenVLA-OFT (spatial),paraphrase_syntactic,main,6,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),paraphrase_syntactic,main,7,50,47,0,2,0,0,0,1
+OpenVLA-OFT (spatial),paraphrase_syntactic,main,8,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),paraphrase_syntactic,main,9,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),positive_contrast,main,0,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),positive_contrast,main,1,50,37,0,3,0,4,0,6
+OpenVLA-OFT (spatial),positive_contrast,main,2,50,46,2,1,0,1,0,0
+OpenVLA-OFT (spatial),positive_contrast,main,3,50,44,0,2,0,4,0,0
+OpenVLA-OFT (spatial),positive_contrast,main,4,50,46,0,0,0,3,0,1
+OpenVLA-OFT (spatial),positive_contrast,main,5,50,16,15,0,5,0,1,13
+OpenVLA-OFT (spatial),positive_contrast,main,6,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),positive_contrast,main,7,50,0,46,0,0,0,1,3
+OpenVLA-OFT (spatial),positive_contrast,main,8,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),positive_contrast,main,9,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),region_surface,main,0,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),semantic,main,0,50,49,0,0,0,1,0,0
+OpenVLA-OFT (spatial),semantic,main,1,50,3,22,1,6,0,15,3
+OpenVLA-OFT (spatial),semantic,main,2,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),semantic,main,3,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),semantic,main,4,50,48,0,1,0,0,0,1
+OpenVLA-OFT (spatial),semantic,main,5,50,38,0,7,0,2,0,3
+OpenVLA-OFT (spatial),semantic,main,6,50,45,0,0,0,0,0,5
+OpenVLA-OFT (spatial),semantic,main,7,50,48,0,2,0,0,0,0
+OpenVLA-OFT (spatial),semantic,main,8,50,25,0,5,0,19,0,1
+OpenVLA-OFT (spatial),semantic,main,9,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),surface_landmark,main,0,50,45,0,2,0,3,0,0
+OpenVLA-OFT (spatial),target_cue_landmark,main,3,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_landmark,main,5,50,46,0,4,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_landmark,main,7,50,33,0,1,0,4,0,12
+OpenVLA-OFT (spatial),target_cue_landmark,main,9,50,42,0,1,0,0,0,7
+OpenVLA-OFT (spatial),target_cue_proximity_adjacent,main,3,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_adjacent,main,5,50,47,0,3,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_adjacent,main,7,50,48,0,1,0,1,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_adjacent,main,9,50,48,0,2,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_beside,main,3,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_beside,main,5,50,48,0,1,0,0,0,1
+OpenVLA-OFT (spatial),target_cue_proximity_beside,main,7,50,46,0,2,0,0,0,2
+OpenVLA-OFT (spatial),target_cue_proximity_beside,main,9,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_near,main,3,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_near,main,5,50,44,0,5,0,0,0,1
+OpenVLA-OFT (spatial),target_cue_proximity_near,main,7,50,47,0,1,0,2,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_near,main,9,50,46,0,3,0,1,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_novel,main,3,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_novel,main,5,50,46,0,4,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_novel,main,7,50,47,0,1,0,2,0,0
+OpenVLA-OFT (spatial),target_cue_proximity_novel,main,9,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_region_img,main,0,50,50,0,0,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_region_img,main,1,50,49,0,0,0,1,0,0
+OpenVLA-OFT (spatial),target_cue_region_img,main,3,50,48,0,1,0,0,0,1
+OpenVLA-OFT (spatial),target_cue_region_img,main,5,50,43,1,2,0,0,0,4
+OpenVLA-OFT (spatial),target_cue_region_img,main,6,50,28,5,5,1,0,1,10
+OpenVLA-OFT (spatial),target_cue_region_img,main,7,50,30,0,0,0,2,0,18
+OpenVLA-OFT (spatial),target_cue_region_img,main,8,50,39,0,2,0,0,0,9
+OpenVLA-OFT (spatial),target_cue_region_img,main,9,50,0,26,0,1,0,2,21
+OpenVLA-OFT (spatial),target_cue_region_v2_img,main,0,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_region_v2_img,main,1,50,49,0,0,0,1,0,0
+OpenVLA-OFT (spatial),target_cue_region_v2_img,main,3,50,47,0,2,0,0,0,1
+OpenVLA-OFT (spatial),target_cue_region_v2_img,main,5,50,44,1,0,0,1,0,4
+OpenVLA-OFT (spatial),target_cue_region_v2_img,main,6,50,30,5,5,0,3,2,5
+OpenVLA-OFT (spatial),target_cue_region_v2_img,main,7,50,30,0,0,0,1,0,19
+OpenVLA-OFT (spatial),target_cue_region_v2_img,main,8,50,46,0,0,0,0,0,4
+OpenVLA-OFT (spatial),target_cue_region_v2_img,main,9,50,0,24,0,2,0,3,21
+OpenVLA-OFT (spatial),target_cue_region_v3_img,main,0,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),target_cue_region_v3_img,main,1,50,48,0,1,0,1,0,0
+OpenVLA-OFT (spatial),target_cue_region_v3_img,main,3,50,46,0,2,0,1,0,1
+OpenVLA-OFT (spatial),target_cue_region_v3_img,main,5,50,41,1,4,0,0,0,4
+OpenVLA-OFT (spatial),target_cue_region_v3_img,main,6,50,32,5,4,1,3,0,5
+OpenVLA-OFT (spatial),target_cue_region_v3_img,main,7,50,27,0,1,0,0,0,22
+OpenVLA-OFT (spatial),target_cue_region_v3_img,main,8,50,46,0,0,0,0,0,4
+OpenVLA-OFT (spatial),target_cue_region_v3_img,main,9,50,0,26,0,0,0,2,22
+OpenVLA-OFT (spatial),target_swap,main,0,50,0,49,0,1,0,0,0
+OpenVLA-OFT (spatial),target_swap,main,1,50,0,11,0,2,0,2,35
+OpenVLA-OFT (spatial),target_swap,main,2,50,3,45,0,1,0,0,1
+OpenVLA-OFT (spatial),target_swap,main,3,50,0,30,0,5,0,4,11
+OpenVLA-OFT (spatial),target_swap,main,4,50,0,17,0,6,0,6,21
+OpenVLA-OFT (spatial),target_swap,main,5,50,39,5,2,1,0,0,3
+OpenVLA-OFT (spatial),target_swap,main,6,50,47,0,1,0,2,0,0
+OpenVLA-OFT (spatial),target_swap,main,7,50,49,0,1,0,0,0,0
+OpenVLA-OFT (spatial),target_swap,main,8,50,0,50,0,0,0,0,0
+OpenVLA-OFT (spatial),target_swap,main,9,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial),default,main,0,50,48,0,1,0,1,0,0
+VLA-Adapter (Spatial),default,main,1,50,49,0,0,0,1,0,0
+VLA-Adapter (Spatial),default,main,2,50,49,0,0,0,1,0,0
+VLA-Adapter (Spatial),default,main,3,50,41,0,2,0,7,0,0
+VLA-Adapter (Spatial),default,main,4,50,49,0,0,0,1,0,0
+VLA-Adapter (Spatial),default,main,5,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),default,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),default,main,7,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial),default,main,8,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial),default,main,9,50,45,0,3,0,2,0,0
+VLA-Adapter (Spatial),drawer_open,main,0,50,40,0,0,2,0,0,8
+VLA-Adapter (Spatial),drawer_open,main,1,50,6,0,1,0,8,0,35
+VLA-Adapter (Spatial),drawer_open,main,2,50,34,0,1,0,8,0,7
+VLA-Adapter (Spatial),drawer_open,main,3,50,13,0,5,0,11,0,21
+VLA-Adapter (Spatial),drawer_open,main,4,50,38,0,0,0,0,0,12
+VLA-Adapter (Spatial),drawer_open,main,5,50,1,0,6,1,3,1,38
+VLA-Adapter (Spatial),drawer_open,main,6,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),drawer_open,main,7,50,0,5,0,2,3,32,8
+VLA-Adapter (Spatial),drawer_open,main,8,50,30,0,0,1,0,0,19
+VLA-Adapter (Spatial),drawer_open,main,9,50,5,0,2,0,4,0,39
+VLA-Adapter (Spatial),irrelevant,main,0,50,45,0,0,0,3,0,2
+VLA-Adapter (Spatial),irrelevant,main,1,50,39,0,1,0,7,0,3
+VLA-Adapter (Spatial),irrelevant,main,2,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial),irrelevant,main,3,50,48,0,2,0,0,0,0
+VLA-Adapter (Spatial),irrelevant,main,4,50,41,3,0,1,5,0,0
+VLA-Adapter (Spatial),irrelevant,main,5,50,15,0,7,1,0,0,27
+VLA-Adapter (Spatial),irrelevant,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),irrelevant,main,7,50,48,0,0,0,1,0,1
+VLA-Adapter (Spatial),irrelevant,main,8,50,46,0,0,0,0,0,4
+VLA-Adapter (Spatial),irrelevant,main,9,50,22,0,2,3,4,7,12
+VLA-Adapter (Spatial),landmark,main,0,50,22,3,5,14,3,3,0
+VLA-Adapter (Spatial),landmark,main,1,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),landmark,main,2,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),landmark,main,3,50,7,0,12,0,29,0,2
+VLA-Adapter (Spatial),landmark,main,4,50,49,0,0,0,1,0,0
+VLA-Adapter (Spatial),landmark,main,5,50,39,0,7,0,3,0,1
+VLA-Adapter (Spatial),landmark,main,6,50,42,0,2,0,2,3,1
+VLA-Adapter (Spatial),landmark,main,7,50,36,0,2,2,6,1,3
+VLA-Adapter (Spatial),landmark,main,8,50,33,0,8,0,2,0,7
+VLA-Adapter (Spatial),landmark,main,9,50,9,0,3,0,2,0,36
+VLA-Adapter (Spatial),landmark_with_hardneg_prompt,main,0,50,16,5,5,9,6,2,7
+VLA-Adapter (Spatial),landmark_with_hardneg_prompt,main,1,50,29,0,4,0,14,0,3
+VLA-Adapter (Spatial),landmark_with_hardneg_prompt,main,2,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),landmark_with_hardneg_prompt,main,3,50,12,0,7,0,30,0,1
+VLA-Adapter (Spatial),landmark_with_hardneg_prompt,main,4,50,43,0,1,0,4,0,2
+VLA-Adapter (Spatial),landmark_with_hardneg_prompt,main,5,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),landmark_with_hardneg_prompt,main,6,50,44,1,0,1,1,2,1
+VLA-Adapter (Spatial),landmark_with_hardneg_prompt,main,7,50,3,0,0,0,4,0,43
+VLA-Adapter (Spatial),landmark_with_hardneg_prompt,main,8,50,36,0,4,0,1,0,9
+VLA-Adapter (Spatial),landmark_with_hardneg_prompt,main,9,50,0,46,0,0,0,4,0
+VLA-Adapter (Spatial),length_control_infix,main,0,50,43,0,2,0,1,0,4
+VLA-Adapter (Spatial),length_control_infix,main,1,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial),length_control_infix,main,2,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial),length_control_infix,main,3,50,45,0,2,0,3,0,0
+VLA-Adapter (Spatial),length_control_infix,main,4,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),length_control_infix,main,5,50,49,0,0,0,1,0,0
+VLA-Adapter (Spatial),length_control_infix,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),length_control_infix,main,7,50,38,0,3,0,1,0,8
+VLA-Adapter (Spatial),length_control_infix,main,8,50,48,0,0,0,1,0,1
+VLA-Adapter (Spatial),length_control_infix,main,9,50,38,0,4,0,4,0,4
+VLA-Adapter (Spatial),length_control_suffix,main,0,50,45,0,0,0,1,0,4
+VLA-Adapter (Spatial),length_control_suffix,main,1,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial),length_control_suffix,main,2,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial),length_control_suffix,main,3,50,42,0,3,0,5,0,0
+VLA-Adapter (Spatial),length_control_suffix,main,4,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial),length_control_suffix,main,5,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),length_control_suffix,main,6,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial),length_control_suffix,main,7,50,39,0,4,0,2,0,5
+VLA-Adapter (Spatial),length_control_suffix,main,8,50,48,0,1,0,0,0,1
+VLA-Adapter (Spatial),length_control_suffix,main,9,50,43,0,1,0,3,0,3
+VLA-Adapter (Spatial),negation_only,main,0,50,40,0,0,0,9,1,0
+VLA-Adapter (Spatial),negation_only,main,1,50,0,28,0,2,0,1,19
+VLA-Adapter (Spatial),negation_only,main,2,50,15,4,3,0,0,2,26
+VLA-Adapter (Spatial),negation_only,main,3,50,39,0,1,0,9,0,1
+VLA-Adapter (Spatial),negation_only,main,4,50,2,0,0,0,13,0,35
+VLA-Adapter (Spatial),negation_only,main,5,50,0,44,0,3,0,0,3
+VLA-Adapter (Spatial),negation_only,main,6,50,0,0,0,1,0,0,49
+VLA-Adapter (Spatial),negation_only,main,7,50,0,10,0,0,0,2,38
+VLA-Adapter (Spatial),negation_only,main,8,50,17,0,8,0,22,0,3
+VLA-Adapter (Spatial),negation_only,main,9,50,0,39,0,2,0,2,7
+VLA-Adapter (Spatial),negative_contrast,main,0,50,46,0,1,0,1,0,2
+VLA-Adapter (Spatial),negative_contrast,main,1,50,0,1,0,1,0,0,48
+VLA-Adapter (Spatial),negative_contrast,main,2,50,47,0,2,0,0,0,1
+VLA-Adapter (Spatial),negative_contrast,main,3,50,45,0,0,0,5,0,0
+VLA-Adapter (Spatial),negative_contrast,main,4,50,38,0,0,0,7,0,5
+VLA-Adapter (Spatial),negative_contrast,main,5,50,0,39,0,3,0,0,8
+VLA-Adapter (Spatial),negative_contrast,main,6,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial),negative_contrast,main,7,50,1,5,0,1,0,2,41
+VLA-Adapter (Spatial),negative_contrast,main,8,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial),negative_contrast,main,9,50,3,0,1,0,1,0,45
+VLA-Adapter (Spatial),no_location,main,0,50,40,0,0,0,10,0,0
+VLA-Adapter (Spatial),no_location,main,1,50,41,0,4,0,5,0,0
+VLA-Adapter (Spatial),no_location,main,2,50,1,13,1,6,0,5,24
+VLA-Adapter (Spatial),no_location,main,3,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),no_location,main,4,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),no_location,main,5,50,22,0,3,0,22,0,3
+VLA-Adapter (Spatial),no_location,main,6,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),no_location,main,7,50,19,0,1,0,0,0,30
+VLA-Adapter (Spatial),no_location,main,8,50,28,0,9,0,13,0,0
+VLA-Adapter (Spatial),no_location,main,9,50,0,17,0,3,0,1,29
+VLA-Adapter (Spatial),paraphrase_lexical,main,0,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial),paraphrase_lexical,main,1,50,48,0,1,0,0,0,1
+VLA-Adapter (Spatial),paraphrase_lexical,main,2,50,48,0,1,0,1,0,0
+VLA-Adapter (Spatial),paraphrase_lexical,main,3,50,42,0,3,0,5,0,0
+VLA-Adapter (Spatial),paraphrase_lexical,main,4,50,47,0,0,0,2,0,1
+VLA-Adapter (Spatial),paraphrase_lexical,main,5,50,18,1,5,0,2,0,24
+VLA-Adapter (Spatial),paraphrase_lexical,main,6,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial),paraphrase_lexical,main,7,50,2,0,0,0,12,0,36
+VLA-Adapter (Spatial),paraphrase_lexical,main,8,50,48,0,0,0,0,0,2
+VLA-Adapter (Spatial),paraphrase_lexical,main,9,50,8,0,1,0,1,0,40
+VLA-Adapter (Spatial),paraphrase_syntactic,main,0,50,49,0,0,0,1,0,0
+VLA-Adapter (Spatial),paraphrase_syntactic,main,1,50,45,0,3,0,2,0,0
+VLA-Adapter (Spatial),paraphrase_syntactic,main,2,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial),paraphrase_syntactic,main,3,50,40,0,3,0,7,0,0
+VLA-Adapter (Spatial),paraphrase_syntactic,main,4,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),paraphrase_syntactic,main,5,50,47,0,3,0,0,0,0
+VLA-Adapter (Spatial),paraphrase_syntactic,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),paraphrase_syntactic,main,7,50,43,0,2,0,0,0,5
+VLA-Adapter (Spatial),paraphrase_syntactic,main,8,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),paraphrase_syntactic,main,9,50,41,0,3,0,1,1,4
+VLA-Adapter (Spatial),positive_contrast,main,0,50,45,0,2,0,1,0,2
+VLA-Adapter (Spatial),positive_contrast,main,1,50,0,2,0,0,0,0,48
+VLA-Adapter (Spatial),positive_contrast,main,2,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial),positive_contrast,main,3,50,43,0,0,0,7,0,0
+VLA-Adapter (Spatial),positive_contrast,main,4,50,30,0,2,0,11,0,7
+VLA-Adapter (Spatial),positive_contrast,main,5,50,0,40,0,5,0,0,5
+VLA-Adapter (Spatial),positive_contrast,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial),positive_contrast,main,7,50,0,1,0,1,2,2,44
+VLA-Adapter (Spatial),positive_contrast,main,8,50,48,0,0,0,1,0,1
+VLA-Adapter (Spatial),positive_contrast,main,9,50,3,0,0,0,1,0,46
+VLA-Adapter (Spatial),region_surface,main,0,50,44,0,0,0,6,0,0
+VLA-Adapter (Spatial),semantic,main,0,50,40,0,2,0,5,0,3
+VLA-Adapter (Spatial),semantic,main,1,50,14,7,2,5,1,13,8
+VLA-Adapter (Spatial),semantic,main,2,50,48,0,1,0,0,0,1
+VLA-Adapter (Spatial),semantic,main,3,50,46,0,3,0,1,0,0
+VLA-Adapter (Spatial),semantic,main,4,50,42,0,2,0,2,0,4
+VLA-Adapter (Spatial),semantic,main,5,50,41,0,7,1,1,0,0
+VLA-Adapter (Spatial),semantic,main,6,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial),semantic,main,7,50,43,0,2,0,4,0,1
+VLA-Adapter (Spatial),semantic,main,8,50,46,0,0,0,0,0,4
+VLA-Adapter (Spatial),semantic,main,9,50,46,0,0,0,4,0,0
+VLA-Adapter (Spatial),surface_landmark,main,0,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial),target_cue_landmark,main,3,50,31,0,0,0,19,0,0
+VLA-Adapter (Spatial),target_cue_landmark,main,5,50,37,0,4,0,9,0,0
+VLA-Adapter (Spatial),target_cue_landmark,main,7,50,40,0,1,0,4,0,5
+VLA-Adapter (Spatial),target_cue_landmark,main,9,50,19,0,3,0,3,0,25
+VLA-Adapter (Spatial),target_cue_proximity_adjacent,main,3,50,32,0,1,0,17,0,0
+VLA-Adapter (Spatial),target_cue_proximity_adjacent,main,5,50,31,0,4,0,15,0,0
+VLA-Adapter (Spatial),target_cue_proximity_adjacent,main,7,50,34,0,2,0,7,0,7
+VLA-Adapter (Spatial),target_cue_proximity_adjacent,main,9,50,26,0,0,0,1,0,23
+VLA-Adapter (Spatial),target_cue_proximity_beside,main,3,50,42,0,1,0,7,0,0
+VLA-Adapter (Spatial),target_cue_proximity_beside,main,5,50,21,0,5,0,24,0,0
+VLA-Adapter (Spatial),target_cue_proximity_beside,main,7,50,40,0,2,0,4,0,4
+VLA-Adapter (Spatial),target_cue_proximity_beside,main,9,50,30,0,1,0,1,0,18
+VLA-Adapter (Spatial),target_cue_proximity_near,main,3,50,43,0,1,0,6,0,0
+VLA-Adapter (Spatial),target_cue_proximity_near,main,5,50,21,0,5,0,24,0,0
+VLA-Adapter (Spatial),target_cue_proximity_near,main,7,50,46,0,0,0,1,0,3
+VLA-Adapter (Spatial),target_cue_proximity_near,main,9,50,35,0,2,0,2,0,11
+VLA-Adapter (Spatial),target_cue_proximity_novel,main,3,50,33,0,0,0,17,0,0
+VLA-Adapter (Spatial),target_cue_proximity_novel,main,5,50,23,0,4,0,23,0,0
+VLA-Adapter (Spatial),target_cue_proximity_novel,main,7,50,24,0,2,0,9,0,15
+VLA-Adapter (Spatial),target_cue_proximity_novel,main,9,50,4,0,0,0,1,0,45
+VLA-Adapter (Spatial),target_cue_region_img,main,0,50,46,0,1,0,1,0,2
+VLA-Adapter (Spatial),target_cue_region_img,main,1,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),target_cue_region_img,main,3,50,18,0,4,0,1,0,27
+VLA-Adapter (Spatial),target_cue_region_img,main,5,50,6,0,2,0,1,0,41
+VLA-Adapter (Spatial),target_cue_region_img,main,6,50,38,0,2,0,3,0,7
+VLA-Adapter (Spatial),target_cue_region_img,main,7,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),target_cue_region_img,main,8,50,18,0,5,0,2,0,25
+VLA-Adapter (Spatial),target_cue_region_img,main,9,50,0,0,1,0,0,0,49
+VLA-Adapter (Spatial),target_cue_region_v2_img,main,0,50,37,0,0,0,0,0,13
+VLA-Adapter (Spatial),target_cue_region_v2_img,main,1,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),target_cue_region_v2_img,main,3,50,30,0,4,0,3,0,13
+VLA-Adapter (Spatial),target_cue_region_v2_img,main,5,50,7,0,2,0,5,0,36
+VLA-Adapter (Spatial),target_cue_region_v2_img,main,6,50,42,0,5,0,2,0,1
+VLA-Adapter (Spatial),target_cue_region_v2_img,main,7,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),target_cue_region_v2_img,main,8,50,14,0,2,0,1,0,33
+VLA-Adapter (Spatial),target_cue_region_v2_img,main,9,50,12,1,6,0,2,0,29
+VLA-Adapter (Spatial),target_cue_region_v3_img,main,0,50,42,0,3,0,1,0,4
+VLA-Adapter (Spatial),target_cue_region_v3_img,main,1,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),target_cue_region_v3_img,main,3,50,9,0,1,0,1,0,39
+VLA-Adapter (Spatial),target_cue_region_v3_img,main,5,50,8,0,2,0,5,0,35
+VLA-Adapter (Spatial),target_cue_region_v3_img,main,6,50,39,0,5,0,1,0,5
+VLA-Adapter (Spatial),target_cue_region_v3_img,main,7,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),target_cue_region_v3_img,main,8,50,18,0,3,0,1,1,27
+VLA-Adapter (Spatial),target_cue_region_v3_img,main,9,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial),target_swap,main,0,50,0,31,0,10,1,6,2
+VLA-Adapter (Spatial),target_swap,main,1,50,44,0,1,0,0,0,5
+VLA-Adapter (Spatial),target_swap,main,2,50,5,29,0,4,0,2,10
+VLA-Adapter (Spatial),target_swap,main,3,50,0,41,0,0,0,9,0
+VLA-Adapter (Spatial),target_swap,main,4,50,0,2,0,1,0,10,37
+VLA-Adapter (Spatial),target_swap,main,5,50,48,0,1,0,1,0,0
+VLA-Adapter (Spatial),target_swap,main,6,50,30,0,3,0,3,0,14
+VLA-Adapter (Spatial),target_swap,main,7,50,8,0,0,0,1,0,41
+VLA-Adapter (Spatial),target_swap,main,8,50,0,12,0,13,0,22,3
+VLA-Adapter (Spatial),target_swap,main,9,50,47,0,3,0,0,0,0
+VLA-Adapter (Spatial-Pro),default,main,0,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),default,main,1,50,48,0,2,0,0,0,0
+VLA-Adapter (Spatial-Pro),default,main,2,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial-Pro),default,main,3,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),default,main,4,50,47,0,1,0,2,0,0
+VLA-Adapter (Spatial-Pro),default,main,5,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),default,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),default,main,7,50,47,0,3,0,0,0,0
+VLA-Adapter (Spatial-Pro),default,main,8,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),default,main,9,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),drawer_open,main,0,50,32,2,0,15,1,0,0
+VLA-Adapter (Spatial-Pro),drawer_open,main,1,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),drawer_open,main,2,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),drawer_open,main,3,50,18,2,4,0,18,0,8
+VLA-Adapter (Spatial-Pro),drawer_open,main,4,50,36,1,2,0,2,0,9
+VLA-Adapter (Spatial-Pro),drawer_open,main,5,50,29,0,9,0,3,2,7
+VLA-Adapter (Spatial-Pro),drawer_open,main,6,50,0,0,0,0,0,0,50
+VLA-Adapter (Spatial-Pro),drawer_open,main,7,50,10,14,9,8,5,4,0
+VLA-Adapter (Spatial-Pro),drawer_open,main,8,50,19,12,0,4,0,1,14
+VLA-Adapter (Spatial-Pro),drawer_open,main,9,50,3,0,1,0,1,0,45
+VLA-Adapter (Spatial-Pro),irrelevant,main,0,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial-Pro),irrelevant,main,1,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),irrelevant,main,2,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),irrelevant,main,3,50,41,0,7,0,2,0,0
+VLA-Adapter (Spatial-Pro),irrelevant,main,4,50,22,1,0,6,19,1,1
+VLA-Adapter (Spatial-Pro),irrelevant,main,5,50,8,4,8,13,3,0,14
+VLA-Adapter (Spatial-Pro),irrelevant,main,6,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),irrelevant,main,7,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),irrelevant,main,8,50,46,0,0,0,0,0,4
+VLA-Adapter (Spatial-Pro),irrelevant,main,9,50,41,0,2,2,0,3,2
+VLA-Adapter (Spatial-Pro),landmark,main,0,50,27,6,4,12,0,1,0
+VLA-Adapter (Spatial-Pro),landmark,main,1,50,39,0,3,0,8,0,0
+VLA-Adapter (Spatial-Pro),landmark,main,2,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),landmark,main,3,50,46,0,3,1,0,0,0
+VLA-Adapter (Spatial-Pro),landmark,main,4,50,48,0,0,0,0,0,2
+VLA-Adapter (Spatial-Pro),landmark,main,5,50,14,19,12,5,0,0,0
+VLA-Adapter (Spatial-Pro),landmark,main,6,50,46,3,0,0,0,1,0
+VLA-Adapter (Spatial-Pro),landmark,main,7,50,45,0,1,3,0,0,1
+VLA-Adapter (Spatial-Pro),landmark,main,8,50,36,0,7,0,1,0,6
+VLA-Adapter (Spatial-Pro),landmark,main,9,50,28,0,2,1,1,2,16
+VLA-Adapter (Spatial-Pro),landmark_with_hardneg_prompt,main,0,50,22,15,3,7,1,2,0
+VLA-Adapter (Spatial-Pro),landmark_with_hardneg_prompt,main,1,50,36,0,4,0,10,0,0
+VLA-Adapter (Spatial-Pro),landmark_with_hardneg_prompt,main,2,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),landmark_with_hardneg_prompt,main,3,50,41,1,2,4,2,0,0
+VLA-Adapter (Spatial-Pro),landmark_with_hardneg_prompt,main,4,50,40,0,1,1,3,0,5
+VLA-Adapter (Spatial-Pro),landmark_with_hardneg_prompt,main,5,50,27,17,6,0,0,0,0
+VLA-Adapter (Spatial-Pro),landmark_with_hardneg_prompt,main,6,50,46,2,0,0,0,2,0
+VLA-Adapter (Spatial-Pro),landmark_with_hardneg_prompt,main,7,50,43,1,2,1,2,0,1
+VLA-Adapter (Spatial-Pro),landmark_with_hardneg_prompt,main,8,50,36,0,7,0,1,0,6
+VLA-Adapter (Spatial-Pro),landmark_with_hardneg_prompt,main,9,50,10,2,1,3,0,9,25
+VLA-Adapter (Spatial-Pro),length_control_infix,main,0,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_infix,main,1,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_infix,main,2,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_infix,main,3,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_infix,main,4,50,46,0,1,0,2,0,1
+VLA-Adapter (Spatial-Pro),length_control_infix,main,5,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_infix,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_infix,main,7,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_infix,main,8,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_infix,main,9,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_suffix,main,0,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_suffix,main,1,50,48,0,1,0,1,0,0
+VLA-Adapter (Spatial-Pro),length_control_suffix,main,2,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_suffix,main,3,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_suffix,main,4,50,48,0,1,0,1,0,0
+VLA-Adapter (Spatial-Pro),length_control_suffix,main,5,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_suffix,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_suffix,main,7,50,48,0,2,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_suffix,main,8,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),length_control_suffix,main,9,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),negation_only,main,0,50,15,0,7,2,3,19,4
+VLA-Adapter (Spatial-Pro),negation_only,main,1,50,0,48,0,2,0,0,0
+VLA-Adapter (Spatial-Pro),negation_only,main,2,50,39,8,2,1,0,0,0
+VLA-Adapter (Spatial-Pro),negation_only,main,3,50,37,0,6,0,6,0,1
+VLA-Adapter (Spatial-Pro),negation_only,main,4,50,46,0,1,0,3,0,0
+VLA-Adapter (Spatial-Pro),negation_only,main,5,50,0,46,0,3,0,0,1
+VLA-Adapter (Spatial-Pro),negation_only,main,6,50,0,49,0,1,0,0,0
+VLA-Adapter (Spatial-Pro),negation_only,main,7,50,0,49,0,0,0,0,1
+VLA-Adapter (Spatial-Pro),negation_only,main,8,50,34,1,3,2,8,0,2
+VLA-Adapter (Spatial-Pro),negation_only,main,9,50,0,47,0,3,0,0,0
+VLA-Adapter (Spatial-Pro),negative_contrast,main,0,50,32,0,13,0,1,1,3
+VLA-Adapter (Spatial-Pro),negative_contrast,main,1,50,21,2,1,2,4,0,20
+VLA-Adapter (Spatial-Pro),negative_contrast,main,2,50,43,4,2,0,0,0,1
+VLA-Adapter (Spatial-Pro),negative_contrast,main,3,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),negative_contrast,main,4,50,48,0,1,0,1,0,0
+VLA-Adapter (Spatial-Pro),negative_contrast,main,5,50,31,8,2,0,0,1,8
+VLA-Adapter (Spatial-Pro),negative_contrast,main,6,50,45,2,2,0,1,0,0
+VLA-Adapter (Spatial-Pro),negative_contrast,main,7,50,47,0,1,0,1,0,1
+VLA-Adapter (Spatial-Pro),negative_contrast,main,8,50,35,0,8,0,7,0,0
+VLA-Adapter (Spatial-Pro),negative_contrast,main,9,50,0,48,0,2,0,0,0
+VLA-Adapter (Spatial-Pro),no_location,main,0,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),no_location,main,1,50,0,15,0,0,1,0,34
+VLA-Adapter (Spatial-Pro),no_location,main,2,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),no_location,main,3,50,44,0,5,0,0,0,1
+VLA-Adapter (Spatial-Pro),no_location,main,4,50,42,0,0,0,4,0,4
+VLA-Adapter (Spatial-Pro),no_location,main,5,50,20,18,2,3,2,0,5
+VLA-Adapter (Spatial-Pro),no_location,main,6,50,22,1,6,0,16,0,5
+VLA-Adapter (Spatial-Pro),no_location,main,7,50,0,42,0,4,0,0,4
+VLA-Adapter (Spatial-Pro),no_location,main,8,50,41,0,1,0,0,0,8
+VLA-Adapter (Spatial-Pro),no_location,main,9,50,48,0,1,0,0,0,1
+VLA-Adapter (Spatial-Pro),paraphrase_lexical,main,0,50,49,0,0,0,1,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_lexical,main,1,50,48,0,1,0,1,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_lexical,main,2,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_lexical,main,3,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_lexical,main,4,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_lexical,main,5,50,47,0,2,0,1,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_lexical,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_lexical,main,7,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_lexical,main,8,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_lexical,main,9,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_syntactic,main,0,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_syntactic,main,1,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_syntactic,main,2,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_syntactic,main,3,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_syntactic,main,4,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_syntactic,main,5,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_syntactic,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_syntactic,main,7,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_syntactic,main,8,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),paraphrase_syntactic,main,9,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),positive_contrast,main,0,50,38,0,6,0,4,0,2
+VLA-Adapter (Spatial-Pro),positive_contrast,main,1,50,14,2,1,1,8,0,24
+VLA-Adapter (Spatial-Pro),positive_contrast,main,2,50,44,1,3,0,0,0,2
+VLA-Adapter (Spatial-Pro),positive_contrast,main,3,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),positive_contrast,main,4,50,48,0,1,0,1,0,0
+VLA-Adapter (Spatial-Pro),positive_contrast,main,5,50,38,3,1,0,0,0,8
+VLA-Adapter (Spatial-Pro),positive_contrast,main,6,50,44,0,4,1,0,1,0
+VLA-Adapter (Spatial-Pro),positive_contrast,main,7,50,48,0,1,0,1,0,0
+VLA-Adapter (Spatial-Pro),positive_contrast,main,8,50,34,0,9,0,7,0,0
+VLA-Adapter (Spatial-Pro),positive_contrast,main,9,50,0,48,0,2,0,0,0
+VLA-Adapter (Spatial-Pro),region_surface,main,0,50,46,0,3,0,1,0,0
+VLA-Adapter (Spatial-Pro),semantic,main,0,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial-Pro),semantic,main,1,50,4,23,2,10,0,11,0
+VLA-Adapter (Spatial-Pro),semantic,main,2,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),semantic,main,3,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),semantic,main,4,50,46,0,1,0,1,0,2
+VLA-Adapter (Spatial-Pro),semantic,main,5,50,47,0,3,0,0,0,0
+VLA-Adapter (Spatial-Pro),semantic,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),semantic,main,7,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),semantic,main,8,50,45,0,1,0,0,0,4
+VLA-Adapter (Spatial-Pro),semantic,main,9,50,45,0,1,0,0,0,4
+VLA-Adapter (Spatial-Pro),surface_landmark,main,0,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_landmark,main,3,50,47,0,0,0,3,0,0
+VLA-Adapter (Spatial-Pro),target_cue_landmark,main,5,50,23,0,15,0,12,0,0
+VLA-Adapter (Spatial-Pro),target_cue_landmark,main,7,50,47,0,1,0,1,0,1
+VLA-Adapter (Spatial-Pro),target_cue_landmark,main,9,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_adjacent,main,3,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_adjacent,main,5,50,28,0,11,0,11,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_adjacent,main,7,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial-Pro),target_cue_proximity_adjacent,main,9,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_beside,main,3,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_beside,main,5,50,31,0,15,0,4,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_beside,main,7,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_beside,main,9,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_near,main,3,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_near,main,5,50,31,0,11,0,8,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_near,main,7,50,49,0,0,0,1,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_near,main,9,50,48,0,1,0,1,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_novel,main,3,50,48,0,1,0,1,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_novel,main,5,50,24,0,10,0,16,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_novel,main,7,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_proximity_novel,main,9,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_region_img,main,0,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_region_img,main,1,50,0,13,0,6,0,0,31
+VLA-Adapter (Spatial-Pro),target_cue_region_img,main,3,50,47,0,2,0,0,0,1
+VLA-Adapter (Spatial-Pro),target_cue_region_img,main,5,50,11,23,5,1,0,0,10
+VLA-Adapter (Spatial-Pro),target_cue_region_img,main,6,50,28,2,8,0,9,0,3
+VLA-Adapter (Spatial-Pro),target_cue_region_img,main,7,50,4,36,0,4,0,0,6
+VLA-Adapter (Spatial-Pro),target_cue_region_img,main,8,50,33,0,3,0,0,0,14
+VLA-Adapter (Spatial-Pro),target_cue_region_img,main,9,50,37,3,6,0,0,0,4
+VLA-Adapter (Spatial-Pro),target_cue_region_v2_img,main,0,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_region_v2_img,main,1,50,0,13,0,6,0,0,31
+VLA-Adapter (Spatial-Pro),target_cue_region_v2_img,main,3,50,45,0,3,0,1,0,1
+VLA-Adapter (Spatial-Pro),target_cue_region_v2_img,main,5,50,11,20,6,3,0,0,10
+VLA-Adapter (Spatial-Pro),target_cue_region_v2_img,main,6,50,30,1,8,0,9,0,2
+VLA-Adapter (Spatial-Pro),target_cue_region_v2_img,main,7,50,5,36,0,3,0,0,6
+VLA-Adapter (Spatial-Pro),target_cue_region_v2_img,main,8,50,36,0,3,0,1,0,10
+VLA-Adapter (Spatial-Pro),target_cue_region_v2_img,main,9,50,42,1,3,1,0,0,3
+VLA-Adapter (Spatial-Pro),target_cue_region_v3_img,main,0,50,49,0,1,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_cue_region_v3_img,main,1,50,0,13,0,3,0,2,32
+VLA-Adapter (Spatial-Pro),target_cue_region_v3_img,main,3,50,45,0,4,0,0,0,1
+VLA-Adapter (Spatial-Pro),target_cue_region_v3_img,main,5,50,10,23,5,1,0,1,10
+VLA-Adapter (Spatial-Pro),target_cue_region_v3_img,main,6,50,29,1,8,0,10,0,2
+VLA-Adapter (Spatial-Pro),target_cue_region_v3_img,main,7,50,2,37,0,2,0,1,8
+VLA-Adapter (Spatial-Pro),target_cue_region_v3_img,main,8,50,41,0,1,0,0,0,8
+VLA-Adapter (Spatial-Pro),target_cue_region_v3_img,main,9,50,41,2,4,0,0,0,3
+VLA-Adapter (Spatial-Pro),target_swap,main,0,50,0,25,1,9,10,2,3
+VLA-Adapter (Spatial-Pro),target_swap,main,1,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_swap,main,2,50,7,40,1,0,0,1,1
+VLA-Adapter (Spatial-Pro),target_swap,main,3,50,0,36,0,5,0,8,1
+VLA-Adapter (Spatial-Pro),target_swap,main,4,50,0,46,0,3,0,1,0
+VLA-Adapter (Spatial-Pro),target_swap,main,5,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_swap,main,6,50,50,0,0,0,0,0,0
+VLA-Adapter (Spatial-Pro),target_swap,main,7,50,49,0,0,0,0,0,1
+VLA-Adapter (Spatial-Pro),target_swap,main,8,50,1,29,3,5,0,12,0
+VLA-Adapter (Spatial-Pro),target_swap,main,9,50,49,0,1,0,0,0,0
+X-VLA (Libero),default,main,0,50,49,0,1,0,0,0,0
+X-VLA (Libero),default,main,1,50,49,0,0,0,1,0,0
+X-VLA (Libero),default,main,2,50,50,0,0,0,0,0,0
+X-VLA (Libero),default,main,3,50,49,0,1,0,0,0,0
+X-VLA (Libero),default,main,4,50,46,0,0,0,3,0,1
+X-VLA (Libero),default,main,5,50,47,0,3,0,0,0,0
+X-VLA (Libero),default,main,6,50,50,0,0,0,0,0,0
+X-VLA (Libero),default,main,7,50,48,0,0,0,2,0,0
+X-VLA (Libero),default,main,8,50,50,0,0,0,0,0,0
+X-VLA (Libero),default,main,9,50,49,0,1,0,0,0,0
+X-VLA (Libero),drawer_open,main,0,50,36,3,1,9,0,0,1
+X-VLA (Libero),drawer_open,main,1,50,9,22,5,5,0,0,9
+X-VLA (Libero),drawer_open,main,2,50,48,0,2,0,0,0,0
+X-VLA (Libero),drawer_open,main,3,50,39,0,0,2,5,1,3
+X-VLA (Libero),drawer_open,main,4,50,24,0,1,0,1,0,24
+X-VLA (Libero),drawer_open,main,5,50,31,4,5,3,1,0,6
+X-VLA (Libero),drawer_open,main,6,50,1,0,2,0,3,0,44
+X-VLA (Libero),drawer_open,main,7,50,0,49,0,0,0,1,0
+X-VLA (Libero),drawer_open,main,8,50,9,30,1,5,2,0,3
+X-VLA (Libero),drawer_open,main,9,50,0,18,2,6,0,3,21
+X-VLA (Libero),irrelevant,main,0,50,49,0,1,0,0,0,0
+X-VLA (Libero),irrelevant,main,1,50,8,11,8,2,2,0,19
+X-VLA (Libero),irrelevant,main,2,50,48,0,2,0,0,0,0
+X-VLA (Libero),irrelevant,main,3,50,49,0,1,0,0,0,0
+X-VLA (Libero),irrelevant,main,4,50,37,0,0,0,8,0,5
+X-VLA (Libero),irrelevant,main,5,50,36,0,8,1,0,0,5
+X-VLA (Libero),irrelevant,main,6,50,50,0,0,0,0,0,0
+X-VLA (Libero),irrelevant,main,7,50,48,0,0,0,0,0,2
+X-VLA (Libero),irrelevant,main,8,50,46,0,2,0,0,1,1
+X-VLA (Libero),irrelevant,main,9,50,43,0,3,0,0,0,4
+X-VLA (Libero),landmark,main,0,50,30,3,2,15,0,0,0
+X-VLA (Libero),landmark,main,1,50,29,0,10,0,8,0,3
+X-VLA (Libero),landmark,main,2,50,49,0,1,0,0,0,0
+X-VLA (Libero),landmark,main,3,50,26,0,13,0,11,0,0
+X-VLA (Libero),landmark,main,4,50,47,0,0,0,3,0,0
+X-VLA (Libero),landmark,main,5,50,45,0,5,0,0,0,0
+X-VLA (Libero),landmark,main,6,50,46,3,0,0,0,1,0
+X-VLA (Libero),landmark,main,7,50,45,0,1,0,3,0,1
+X-VLA (Libero),landmark,main,8,50,41,0,5,0,1,0,3
+X-VLA (Libero),landmark,main,9,50,19,11,3,3,0,2,12
+X-VLA (Libero),landmark_with_hardneg_prompt,main,0,50,33,5,4,8,0,0,0
+X-VLA (Libero),landmark_with_hardneg_prompt,main,1,50,24,2,10,0,7,0,7
+X-VLA (Libero),landmark_with_hardneg_prompt,main,2,50,49,0,1,0,0,0,0
+X-VLA (Libero),landmark_with_hardneg_prompt,main,3,50,14,0,27,1,6,0,2
+X-VLA (Libero),landmark_with_hardneg_prompt,main,4,50,45,0,1,0,3,0,1
+X-VLA (Libero),landmark_with_hardneg_prompt,main,5,50,40,0,9,0,0,0,1
+X-VLA (Libero),landmark_with_hardneg_prompt,main,6,50,45,2,1,0,0,2,0
+X-VLA (Libero),landmark_with_hardneg_prompt,main,7,50,39,0,0,0,9,0,2
+X-VLA (Libero),landmark_with_hardneg_prompt,main,8,50,41,0,7,0,0,0,2
+X-VLA (Libero),landmark_with_hardneg_prompt,main,9,50,0,30,0,5,0,10,5
+X-VLA (Libero),length_control_infix,main,0,50,49,0,1,0,0,0,0
+X-VLA (Libero),length_control_infix,main,1,50,49,0,1,0,0,0,0
+X-VLA (Libero),length_control_infix,main,2,50,50,0,0,0,0,0,0
+X-VLA (Libero),length_control_infix,main,3,50,50,0,0,0,0,0,0
+X-VLA (Libero),length_control_infix,main,4,50,46,0,0,0,3,0,1
+X-VLA (Libero),length_control_infix,main,5,50,48,0,2,0,0,0,0
+X-VLA (Libero),length_control_infix,main,6,50,48,0,1,0,1,0,0
+X-VLA (Libero),length_control_infix,main,7,50,48,0,0,0,2,0,0
+X-VLA (Libero),length_control_infix,main,8,50,48,0,2,0,0,0,0
+X-VLA (Libero),length_control_infix,main,9,50,49,0,0,0,0,0,1
+X-VLA (Libero),length_control_suffix,main,0,50,49,0,1,0,0,0,0
+X-VLA (Libero),length_control_suffix,main,1,50,49,0,1,0,0,0,0
+X-VLA (Libero),length_control_suffix,main,2,50,50,0,0,0,0,0,0
+X-VLA (Libero),length_control_suffix,main,3,50,49,0,0,0,1,0,0
+X-VLA (Libero),length_control_suffix,main,4,50,46,0,0,0,3,0,1
+X-VLA (Libero),length_control_suffix,main,5,50,48,0,2,0,0,0,0
+X-VLA (Libero),length_control_suffix,main,6,50,50,0,0,0,0,0,0
+X-VLA (Libero),length_control_suffix,main,7,50,48,0,0,0,2,0,0
+X-VLA (Libero),length_control_suffix,main,8,50,49,0,1,0,0,0,0
+X-VLA (Libero),length_control_suffix,main,9,50,47,0,2,0,1,0,0
+X-VLA (Libero),negation_only,main,0,50,50,0,0,0,0,0,0
+X-VLA (Libero),negation_only,main,1,50,48,0,0,0,2,0,0
+X-VLA (Libero),negation_only,main,2,50,49,0,0,1,0,0,0
+X-VLA (Libero),negation_only,main,3,50,36,0,5,1,6,0,2
+X-VLA (Libero),negation_only,main,4,50,46,0,4,0,0,0,0
+X-VLA (Libero),negation_only,main,5,50,36,0,14,0,0,0,0
+X-VLA (Libero),negation_only,main,6,50,17,2,5,0,5,2,19
+X-VLA (Libero),negation_only,main,7,50,0,11,1,10,10,2,16
+X-VLA (Libero),negation_only,main,8,50,47,0,3,0,0,0,0
+X-VLA (Libero),negation_only,main,9,50,0,33,0,3,0,13,1
+X-VLA (Libero),negative_contrast,main,0,50,50,0,0,0,0,0,0
+X-VLA (Libero),negative_contrast,main,1,50,49,0,1,0,0,0,0
+X-VLA (Libero),negative_contrast,main,2,50,49,0,0,0,1,0,0
+X-VLA (Libero),negative_contrast,main,3,50,47,0,0,0,3,0,0
+X-VLA (Libero),negative_contrast,main,4,50,45,0,0,0,4,0,1
+X-VLA (Libero),negative_contrast,main,5,50,24,0,20,0,4,0,2
+X-VLA (Libero),negative_contrast,main,6,50,48,0,2,0,0,0,0
+X-VLA (Libero),negative_contrast,main,7,50,48,0,0,0,2,0,0
+X-VLA (Libero),negative_contrast,main,8,50,50,0,0,0,0,0,0
+X-VLA (Libero),negative_contrast,main,9,50,38,0,2,0,2,0,8
+X-VLA (Libero),no_location,main,0,50,49,0,1,0,0,0,0
+X-VLA (Libero),no_location,main,1,50,14,0,11,2,20,0,3
+X-VLA (Libero),no_location,main,2,50,47,0,3,0,0,0,0
+X-VLA (Libero),no_location,main,3,50,42,0,8,0,0,0,0
+X-VLA (Libero),no_location,main,4,50,23,0,7,0,8,0,12
+X-VLA (Libero),no_location,main,5,50,31,0,14,0,1,0,4
+X-VLA (Libero),no_location,main,6,50,29,0,12,0,2,0,7
+X-VLA (Libero),no_location,main,7,50,15,0,6,0,15,0,14
+X-VLA (Libero),no_location,main,8,50,48,0,2,0,0,0,0
+X-VLA (Libero),no_location,main,9,50,0,16,0,4,0,17,13
+X-VLA (Libero),paraphrase_lexical,main,0,50,50,0,0,0,0,0,0
+X-VLA (Libero),paraphrase_lexical,main,1,50,49,0,1,0,0,0,0
+X-VLA (Libero),paraphrase_lexical,main,2,50,50,0,0,0,0,0,0
+X-VLA (Libero),paraphrase_lexical,main,3,50,50,0,0,0,0,0,0
+X-VLA (Libero),paraphrase_lexical,main,4,50,45,0,1,0,3,0,1
+X-VLA (Libero),paraphrase_lexical,main,5,50,44,0,6,0,0,0,0
+X-VLA (Libero),paraphrase_lexical,main,6,50,47,0,1,0,2,0,0
+X-VLA (Libero),paraphrase_lexical,main,7,50,34,2,4,2,1,0,7
+X-VLA (Libero),paraphrase_lexical,main,8,50,50,0,0,0,0,0,0
+X-VLA (Libero),paraphrase_lexical,main,9,50,44,0,1,0,0,0,5
+X-VLA (Libero),paraphrase_syntactic,main,0,50,49,0,0,0,1,0,0
+X-VLA (Libero),paraphrase_syntactic,main,1,50,29,0,9,0,11,0,1
+X-VLA (Libero),paraphrase_syntactic,main,2,50,50,0,0,0,0,0,0
+X-VLA (Libero),paraphrase_syntactic,main,3,50,49,0,1,0,0,0,0
+X-VLA (Libero),paraphrase_syntactic,main,4,50,47,0,0,0,3,0,0
+X-VLA (Libero),paraphrase_syntactic,main,5,50,49,0,1,0,0,0,0
+X-VLA (Libero),paraphrase_syntactic,main,6,50,48,0,2,0,0,0,0
+X-VLA (Libero),paraphrase_syntactic,main,7,50,45,0,0,0,2,0,3
+X-VLA (Libero),paraphrase_syntactic,main,8,50,47,0,2,0,1,0,0
+X-VLA (Libero),paraphrase_syntactic,main,9,50,38,0,5,0,1,0,6
+X-VLA (Libero),positive_contrast,main,0,50,49,0,1,0,0,0,0
+X-VLA (Libero),positive_contrast,main,1,50,50,0,0,0,0,0,0
+X-VLA (Libero),positive_contrast,main,2,50,49,0,1,0,0,0,0
+X-VLA (Libero),positive_contrast,main,3,50,47,0,0,0,3,0,0
+X-VLA (Libero),positive_contrast,main,4,50,46,0,0,0,4,0,0
+X-VLA (Libero),positive_contrast,main,5,50,25,0,15,0,6,0,4
+X-VLA (Libero),positive_contrast,main,6,50,49,0,1,0,0,0,0
+X-VLA (Libero),positive_contrast,main,7,50,14,6,3,2,5,1,19
+X-VLA (Libero),positive_contrast,main,8,50,49,0,1,0,0,0,0
+X-VLA (Libero),positive_contrast,main,9,50,32,0,4,0,0,0,14
+X-VLA (Libero),region_surface,main,0,50,45,0,5,0,0,0,0
+X-VLA (Libero),semantic,main,0,50,49,0,0,0,1,0,0
+X-VLA (Libero),semantic,main,1,50,14,7,1,28,0,0,0
+X-VLA (Libero),semantic,main,2,50,48,0,1,0,0,0,1
+X-VLA (Libero),semantic,main,3,50,50,0,0,0,0,0,0
+X-VLA (Libero),semantic,main,4,50,16,4,3,11,1,0,15
+X-VLA (Libero),semantic,main,5,50,41,1,8,0,0,0,0
+X-VLA (Libero),semantic,main,6,50,50,0,0,0,0,0,0
+X-VLA (Libero),semantic,main,7,50,38,0,1,0,6,0,5
+X-VLA (Libero),semantic,main,8,50,43,0,3,0,0,1,3
+X-VLA (Libero),semantic,main,9,50,45,0,1,0,0,0,4
+X-VLA (Libero),surface_landmark,main,0,50,45,0,5,0,0,0,0
+X-VLA (Libero),target_cue_landmark,main,3,50,48,0,0,0,2,0,0
+X-VLA (Libero),target_cue_landmark,main,5,50,50,0,0,0,0,0,0
+X-VLA (Libero),target_cue_landmark,main,7,50,43,0,2,0,2,0,3
+X-VLA (Libero),target_cue_landmark,main,9,50,42,0,3,0,2,0,3
+X-VLA (Libero),target_cue_proximity_adjacent,main,3,50,48,0,1,0,1,0,0
+X-VLA (Libero),target_cue_proximity_adjacent,main,5,50,50,0,0,0,0,0,0
+X-VLA (Libero),target_cue_proximity_adjacent,main,7,50,41,0,4,0,3,0,2
+X-VLA (Libero),target_cue_proximity_adjacent,main,9,50,46,0,2,0,1,0,1
+X-VLA (Libero),target_cue_proximity_beside,main,3,50,50,0,0,0,0,0,0
+X-VLA (Libero),target_cue_proximity_beside,main,5,50,45,0,5,0,0,0,0
+X-VLA (Libero),target_cue_proximity_beside,main,7,50,48,0,1,0,0,0,1
+X-VLA (Libero),target_cue_proximity_beside,main,9,50,47,0,3,0,0,0,0
+X-VLA (Libero),target_cue_proximity_near,main,3,50,50,0,0,0,0,0,0
+X-VLA (Libero),target_cue_proximity_near,main,5,50,47,0,3,0,0,0,0
+X-VLA (Libero),target_cue_proximity_near,main,7,50,48,0,1,0,0,0,1
+X-VLA (Libero),target_cue_proximity_near,main,9,50,48,0,2,0,0,0,0
+X-VLA (Libero),target_cue_proximity_novel,main,3,50,48,0,1,0,1,0,0
+X-VLA (Libero),target_cue_proximity_novel,main,5,50,47,0,3,0,0,0,0
+X-VLA (Libero),target_cue_proximity_novel,main,7,50,43,0,2,0,2,0,3
+X-VLA (Libero),target_cue_proximity_novel,main,9,50,44,0,2,0,1,0,3
+X-VLA (Libero),target_cue_region_img,main,0,50,49,0,1,0,0,0,0
+X-VLA (Libero),target_cue_region_img,main,1,50,23,0,8,0,19,0,0
+X-VLA (Libero),target_cue_region_img,main,3,50,35,0,11,0,0,0,4
+X-VLA (Libero),target_cue_region_img,main,5,50,46,0,4,0,0,0,0
+X-VLA (Libero),target_cue_region_img,main,6,50,14,2,8,2,5,1,18
+X-VLA (Libero),target_cue_region_img,main,7,50,44,0,1,1,3,0,1
+X-VLA (Libero),target_cue_region_img,main,8,50,47,0,2,0,0,0,1
+X-VLA (Libero),target_cue_region_img,main,9,50,0,48,0,1,0,1,0
+X-VLA (Libero),target_cue_region_v2_img,main,0,50,50,0,0,0,0,0,0
+X-VLA (Libero),target_cue_region_v2_img,main,1,50,44,0,3,0,3,0,0
+X-VLA (Libero),target_cue_region_v2_img,main,3,50,31,0,14,0,1,0,4
+X-VLA (Libero),target_cue_region_v2_img,main,5,50,48,0,2,0,0,0,0
+X-VLA (Libero),target_cue_region_v2_img,main,6,50,8,9,3,2,10,3,15
+X-VLA (Libero),target_cue_region_v2_img,main,7,50,48,0,2,0,0,0,0
+X-VLA (Libero),target_cue_region_v2_img,main,8,50,47,0,2,0,0,0,1
+X-VLA (Libero),target_cue_region_v2_img,main,9,50,0,45,0,1,0,4,0
+X-VLA (Libero),target_cue_region_v3_img,main,0,50,49,0,1,0,0,0,0
+X-VLA (Libero),target_cue_region_v3_img,main,1,50,39,0,4,0,7,0,0
+X-VLA (Libero),target_cue_region_v3_img,main,3,50,36,0,6,0,1,0,7
+X-VLA (Libero),target_cue_region_v3_img,main,5,50,45,0,5,0,0,0,0
+X-VLA (Libero),target_cue_region_v3_img,main,6,50,4,6,1,5,14,6,14
+X-VLA (Libero),target_cue_region_v3_img,main,7,50,40,0,1,0,3,0,6
+X-VLA (Libero),target_cue_region_v3_img,main,8,50,48,0,1,0,0,0,1
+X-VLA (Libero),target_cue_region_v3_img,main,9,50,0,49,0,0,0,1,0
+X-VLA (Libero),target_swap,main,0,50,0,47,0,3,0,0,0
+X-VLA (Libero),target_swap,main,1,50,48,0,1,0,0,0,1
+X-VLA (Libero),target_swap,main,2,50,0,47,0,3,0,0,0
+X-VLA (Libero),target_swap,main,3,50,1,32,0,9,0,6,2
+X-VLA (Libero),target_swap,main,4,50,0,33,1,4,0,12,0
+X-VLA (Libero),target_swap,main,5,50,0,2,2,3,0,6,37
+X-VLA (Libero),target_swap,main,6,50,24,0,0,0,7,1,18
+X-VLA (Libero),target_swap,main,7,50,39,0,2,0,2,0,7
+X-VLA (Libero),target_swap,main,8,50,0,39,0,10,1,0,0
+X-VLA (Libero),target_swap,main,9,50,49,0,1,0,0,0,0
+GR00T N1.5 (spatial),default,main,0,50,44,0,1,0,3,0,2
+GR00T N1.5 (spatial),default,main,1,50,44,0,4,0,1,0,1
+GR00T N1.5 (spatial),default,main,2,50,48,0,1,0,1,0,0
+GR00T N1.5 (spatial),default,main,3,50,43,0,3,0,3,0,1
+GR00T N1.5 (spatial),default,main,4,50,45,0,2,0,2,0,1
+GR00T N1.5 (spatial),default,main,5,50,47,0,3,0,0,0,0
+GR00T N1.5 (spatial),default,main,6,50,50,0,0,0,0,0,0
+GR00T N1.5 (spatial),default,main,7,50,42,0,4,0,1,0,3
+GR00T N1.5 (spatial),default,main,8,50,37,0,6,0,2,0,5
+GR00T N1.5 (spatial),default,main,9,50,45,0,2,0,0,0,3
+GR00T N1.5 (spatial),drawer_open,main,0,50,39,2,2,0,0,0,7
+GR00T N1.5 (spatial),drawer_open,main,1,50,42,0,2,0,5,0,1
+GR00T N1.5 (spatial),drawer_open,main,2,50,44,0,3,0,0,0,3
+GR00T N1.5 (spatial),drawer_open,main,3,50,23,0,1,0,3,0,23
+GR00T N1.5 (spatial),drawer_open,main,4,50,38,0,0,0,3,0,9
+GR00T N1.5 (spatial),drawer_open,main,5,50,28,2,8,1,0,1,10
+GR00T N1.5 (spatial),drawer_open,main,6,50,0,0,0,0,1,0,49
+GR00T N1.5 (spatial),drawer_open,main,7,50,19,7,0,2,2,8,12
+GR00T N1.5 (spatial),drawer_open,main,8,50,7,23,1,7,0,0,12
+GR00T N1.5 (spatial),drawer_open,main,9,50,2,0,0,0,0,0,48
+GR00T N1.5 (spatial),irrelevant,main,0,50,47,0,1,0,2,0,0
+GR00T N1.5 (spatial),irrelevant,main,1,50,38,0,5,0,4,0,3
+GR00T N1.5 (spatial),irrelevant,main,2,50,50,0,0,0,0,0,0
+GR00T N1.5 (spatial),irrelevant,main,3,50,49,0,1,0,0,0,0
+GR00T N1.5 (spatial),irrelevant,main,4,50,47,0,0,0,1,0,2
+GR00T N1.5 (spatial),irrelevant,main,5,50,34,0,5,1,1,0,9
+GR00T N1.5 (spatial),irrelevant,main,6,50,49,0,1,0,0,0,0
+GR00T N1.5 (spatial),irrelevant,main,7,50,46,0,4,0,0,0,0
+GR00T N1.5 (spatial),irrelevant,main,8,50,38,0,5,1,0,0,6
+GR00T N1.5 (spatial),irrelevant,main,9,50,43,0,2,0,0,0,5
+GR00T N1.5 (spatial),landmark,main,0,50,27,1,1,16,4,0,1
+GR00T N1.5 (spatial),landmark,main,1,50,45,0,5,0,0,0,0
+GR00T N1.5 (spatial),landmark,main,2,50,48,0,1,0,0,1,0
+GR00T N1.5 (spatial),landmark,main,3,50,31,0,10,0,7,0,2
+GR00T N1.5 (spatial),landmark,main,4,50,48,0,0,0,0,0,2
+GR00T N1.5 (spatial),landmark,main,5,50,40,0,3,0,7,0,0
+GR00T N1.5 (spatial),landmark,main,6,50,45,1,1,0,0,1,2
+GR00T N1.5 (spatial),landmark,main,7,50,38,0,4,2,0,0,6
+GR00T N1.5 (spatial),landmark,main,8,50,39,0,5,0,0,1,5
+GR00T N1.5 (spatial),landmark,main,9,50,11,0,8,0,0,0,31
+GR00T N1.5 (spatial),landmark_with_hardneg_prompt,main,0,50,30,1,1,17,1,0,0
+GR00T N1.5 (spatial),landmark_with_hardneg_prompt,main,1,50,48,0,0,0,2,0,0
+GR00T N1.5 (spatial),landmark_with_hardneg_prompt,main,2,50,45,0,4,0,0,0,1
+GR00T N1.5 (spatial),landmark_with_hardneg_prompt,main,3,50,24,2,8,0,15,0,1
+GR00T N1.5 (spatial),landmark_with_hardneg_prompt,main,4,50,46,0,0,0,0,0,4
+GR00T N1.5 (spatial),landmark_with_hardneg_prompt,main,5,50,28,0,11,0,10,0,1
+GR00T N1.5 (spatial),landmark_with_hardneg_prompt,main,6,50,44,1,2,1,0,1,1
+GR00T N1.5 (spatial),landmark_with_hardneg_prompt,main,7,50,33,1,0,4,1,1,10
+GR00T N1.5 (spatial),landmark_with_hardneg_prompt,main,8,50,31,1,7,0,1,0,10
+GR00T N1.5 (spatial),landmark_with_hardneg_prompt,main,9,50,0,2,2,0,0,16,30
+GR00T N1.5 (spatial),length_control_infix,main,0,50,42,1,0,0,3,1,3
+GR00T N1.5 (spatial),length_control_infix,main,1,50,44,0,1,0,3,0,2
+GR00T N1.5 (spatial),length_control_infix,main,2,50,46,0,2,0,0,0,2
+GR00T N1.5 (spatial),length_control_infix,main,3,50,38,0,7,0,2,0,3
+GR00T N1.5 (spatial),length_control_infix,main,4,50,46,0,1,0,1,0,2
+GR00T N1.5 (spatial),length_control_infix,main,5,50,47,0,2,0,1,0,0
+GR00T N1.5 (spatial),length_control_infix,main,6,50,50,0,0,0,0,0,0
+GR00T N1.5 (spatial),length_control_infix,main,7,50,41,0,5,0,0,0,4
+GR00T N1.5 (spatial),length_control_infix,main,8,50,36,0,8,0,2,1,3
+GR00T N1.5 (spatial),length_control_infix,main,9,50,47,0,0,0,3,0,0
+GR00T N1.5 (spatial),length_control_suffix,main,0,50,41,0,1,0,4,1,3
+GR00T N1.5 (spatial),length_control_suffix,main,1,50,40,0,7,0,1,0,2
+GR00T N1.5 (spatial),length_control_suffix,main,2,50,48,0,0,0,0,0,2
+GR00T N1.5 (spatial),length_control_suffix,main,3,50,39,0,4,0,1,0,6
+GR00T N1.5 (spatial),length_control_suffix,main,4,50,48,0,1,0,0,0,1
+GR00T N1.5 (spatial),length_control_suffix,main,5,50,47,0,3,0,0,0,0
+GR00T N1.5 (spatial),length_control_suffix,main,6,50,48,0,2,0,0,0,0
+GR00T N1.5 (spatial),length_control_suffix,main,7,50,41,0,5,1,0,0,3
+GR00T N1.5 (spatial),length_control_suffix,main,8,50,41,0,5,0,3,0,1
+GR00T N1.5 (spatial),length_control_suffix,main,9,50,44,0,3,0,1,0,2
+GR00T N1.5 (spatial),negation_only,main,0,50,29,6,3,0,8,1,3
+GR00T N1.5 (spatial),negation_only,main,1,50,2,21,1,2,1,0,23
+GR00T N1.5 (spatial),negation_only,main,2,50,39,5,1,1,0,1,3
+GR00T N1.5 (spatial),negation_only,main,3,50,22,4,4,0,8,2,10
+GR00T N1.5 (spatial),negation_only,main,4,50,43,0,0,1,4,0,2
+GR00T N1.5 (spatial),negation_only,main,5,50,6,21,0,7,1,0,15
+GR00T N1.5 (spatial),negation_only,main,6,50,3,35,3,4,1,0,4
+GR00T N1.5 (spatial),negation_only,main,7,50,0,46,0,2,0,1,1
+GR00T N1.5 (spatial),negation_only,main,8,50,35,1,7,2,4,0,1
+GR00T N1.5 (spatial),negation_only,main,9,50,0,46,0,4,0,0,0
+GR00T N1.5 (spatial),negative_contrast,main,0,50,44,0,1,0,3,0,2
+GR00T N1.5 (spatial),negative_contrast,main,1,50,25,1,4,0,5,0,15
+GR00T N1.5 (spatial),negative_contrast,main,2,50,43,4,2,0,0,0,1
+GR00T N1.5 (spatial),negative_contrast,main,3,50,39,0,3,0,3,0,5
+GR00T N1.5 (spatial),negative_contrast,main,4,50,44,0,0,0,2,0,4
+GR00T N1.5 (spatial),negative_contrast,main,5,50,38,5,4,0,1,0,2
+GR00T N1.5 (spatial),negative_contrast,main,6,50,45,2,3,0,0,0,0
+GR00T N1.5 (spatial),negative_contrast,main,7,50,30,3,4,5,4,0,4
+GR00T N1.5 (spatial),negative_contrast,main,8,50,35,0,7,1,5,0,2
+GR00T N1.5 (spatial),negative_contrast,main,9,50,23,3,9,2,5,1,7
+GR00T N1.5 (spatial),no_location,main,0,50,36,0,1,1,4,1,7
+GR00T N1.5 (spatial),no_location,main,1,50,37,0,8,0,3,0,2
+GR00T N1.5 (spatial),no_location,main,2,50,45,2,1,0,0,0,2
+GR00T N1.5 (spatial),no_location,main,3,50,29,0,5,0,3,0,13
+GR00T N1.5 (spatial),no_location,main,4,50,43,0,0,1,0,0,6
+GR00T N1.5 (spatial),no_location,main,5,50,38,5,2,1,1,0,3
+GR00T N1.5 (spatial),no_location,main,6,50,41,0,3,1,1,0,4
+GR00T N1.5 (spatial),no_location,main,7,50,2,19,0,9,0,0,20
+GR00T N1.5 (spatial),no_location,main,8,50,35,0,7,0,1,1,6
+GR00T N1.5 (spatial),no_location,main,9,50,23,1,3,1,0,1,21
+GR00T N1.5 (spatial),paraphrase_lexical,main,0,50,45,1,1,0,1,0,2
+GR00T N1.5 (spatial),paraphrase_lexical,main,1,50,43,0,4,0,1,0,2
+GR00T N1.5 (spatial),paraphrase_lexical,main,2,50,46,0,3,0,1,0,0
+GR00T N1.5 (spatial),paraphrase_lexical,main,3,50,40,0,2,0,5,0,3
+GR00T N1.5 (spatial),paraphrase_lexical,main,4,50,44,0,1,0,3,0,2
+GR00T N1.5 (spatial),paraphrase_lexical,main,5,50,45,0,5,0,0,0,0
+GR00T N1.5 (spatial),paraphrase_lexical,main,6,50,50,0,0,0,0,0,0
+GR00T N1.5 (spatial),paraphrase_lexical,main,7,50,40,0,6,1,0,0,3
+GR00T N1.5 (spatial),paraphrase_lexical,main,8,50,37,0,6,0,2,0,5
+GR00T N1.5 (spatial),paraphrase_lexical,main,9,50,44,0,2,0,2,0,2
+GR00T N1.5 (spatial),paraphrase_syntactic,main,0,50,45,0,0,1,2,0,2
+GR00T N1.5 (spatial),paraphrase_syntactic,main,1,50,45,0,3,0,0,0,2
+GR00T N1.5 (spatial),paraphrase_syntactic,main,2,50,46,0,4,0,0,0,0
+GR00T N1.5 (spatial),paraphrase_syntactic,main,3,50,41,0,4,0,2,0,3
+GR00T N1.5 (spatial),paraphrase_syntactic,main,4,50,47,0,1,0,1,0,1
+GR00T N1.5 (spatial),paraphrase_syntactic,main,5,50,40,0,10,0,0,0,0
+GR00T N1.5 (spatial),paraphrase_syntactic,main,6,50,49,0,1,0,0,0,0
+GR00T N1.5 (spatial),paraphrase_syntactic,main,7,50,42,0,4,0,1,0,3
+GR00T N1.5 (spatial),paraphrase_syntactic,main,8,50,38,0,7,0,1,0,4
+GR00T N1.5 (spatial),paraphrase_syntactic,main,9,50,44,0,1,0,2,0,3
+GR00T N1.5 (spatial),positive_contrast,main,0,50,46,1,0,0,2,0,1
+GR00T N1.5 (spatial),positive_contrast,main,1,50,27,2,3,0,2,0,16
+GR00T N1.5 (spatial),positive_contrast,main,2,50,45,2,0,0,0,0,3
+GR00T N1.5 (spatial),positive_contrast,main,3,50,36,0,5,0,6,0,3
+GR00T N1.5 (spatial),positive_contrast,main,4,50,46,0,2,0,1,0,1
+GR00T N1.5 (spatial),positive_contrast,main,5,50,32,7,5,1,2,0,3
+GR00T N1.5 (spatial),positive_contrast,main,6,50,45,2,2,1,0,0,0
+GR00T N1.5 (spatial),positive_contrast,main,7,50,36,2,2,1,7,0,2
+GR00T N1.5 (spatial),positive_contrast,main,8,50,37,0,6,0,3,0,4
+GR00T N1.5 (spatial),positive_contrast,main,9,50,16,7,12,1,5,0,9
+GR00T N1.5 (spatial),region_surface,main,0,50,48,0,0,0,2,0,0
+GR00T N1.5 (spatial),semantic,main,0,50,36,0,2,0,9,1,2
+GR00T N1.5 (spatial),semantic,main,1,50,33,6,3,0,3,2,3
+GR00T N1.5 (spatial),semantic,main,2,50,47,0,3,0,0,0,0
+GR00T N1.5 (spatial),semantic,main,3,50,47,0,1,0,0,0,2
+GR00T N1.5 (spatial),semantic,main,4,50,47,0,2,0,1,0,0
+GR00T N1.5 (spatial),semantic,main,5,50,26,4,6,3,6,1,4
+GR00T N1.5 (spatial),semantic,main,6,50,48,0,1,0,0,0,1
+GR00T N1.5 (spatial),semantic,main,7,50,45,0,4,0,0,0,1
+GR00T N1.5 (spatial),semantic,main,8,50,33,1,10,0,4,1,1
+GR00T N1.5 (spatial),semantic,main,9,50,47,0,0,0,0,0,3
+GR00T N1.5 (spatial),surface_landmark,main,0,50,31,0,14,0,3,0,2
+GR00T N1.5 (spatial),target_cue_landmark,main,3,50,38,0,5,0,1,0,6
+GR00T N1.5 (spatial),target_cue_landmark,main,5,50,42,0,4,0,4,0,0
+GR00T N1.5 (spatial),target_cue_landmark,main,7,50,37,0,7,0,0,0,6
+GR00T N1.5 (spatial),target_cue_landmark,main,9,50,39,0,4,0,0,0,7
+GR00T N1.5 (spatial),target_cue_proximity_adjacent,main,3,50,42,0,2,0,1,0,5
+GR00T N1.5 (spatial),target_cue_proximity_adjacent,main,5,50,37,0,8,0,5,0,0
+GR00T N1.5 (spatial),target_cue_proximity_adjacent,main,7,50,40,0,4,0,1,0,5
+GR00T N1.5 (spatial),target_cue_proximity_adjacent,main,9,50,37,0,6,0,1,0,6
+GR00T N1.5 (spatial),target_cue_proximity_beside,main,3,50,40,0,3,0,4,0,3
+GR00T N1.5 (spatial),target_cue_proximity_beside,main,5,50,34,0,6,0,10,0,0
+GR00T N1.5 (spatial),target_cue_proximity_beside,main,7,50,37,0,7,0,2,0,4
+GR00T N1.5 (spatial),target_cue_proximity_beside,main,9,50,41,0,4,0,0,0,5
+GR00T N1.5 (spatial),target_cue_proximity_near,main,3,50,38,0,4,0,3,0,5
+GR00T N1.5 (spatial),target_cue_proximity_near,main,5,50,40,0,7,0,3,0,0
+GR00T N1.5 (spatial),target_cue_proximity_near,main,7,50,39,0,6,0,1,0,4
+GR00T N1.5 (spatial),target_cue_proximity_near,main,9,50,44,0,1,0,2,0,3
+GR00T N1.5 (spatial),target_cue_proximity_novel,main,3,50,39,0,5,0,1,0,5
+GR00T N1.5 (spatial),target_cue_proximity_novel,main,5,50,41,0,7,0,2,0,0
+GR00T N1.5 (spatial),target_cue_proximity_novel,main,7,50,42,0,2,0,1,0,5
+GR00T N1.5 (spatial),target_cue_proximity_novel,main,9,50,43,0,2,1,0,0,4
+GR00T N1.5 (spatial),target_cue_region_img,main,0,50,34,0,5,0,6,0,5
+GR00T N1.5 (spatial),target_cue_region_img,main,1,50,38,0,8,0,2,0,2
+GR00T N1.5 (spatial),target_cue_region_img,main,3,50,30,0,4,0,5,0,11
+GR00T N1.5 (spatial),target_cue_region_img,main,5,50,39,4,5,0,0,0,2
+GR00T N1.5 (spatial),target_cue_region_img,main,6,50,44,0,1,0,2,0,3
+GR00T N1.5 (spatial),target_cue_region_img,main,7,50,3,13,0,7,0,1,26
+GR00T N1.5 (spatial),target_cue_region_img,main,8,50,31,0,6,1,1,0,11
+GR00T N1.5 (spatial),target_cue_region_img,main,9,50,19,2,2,0,0,1,26
+GR00T N1.5 (spatial),target_cue_region_v2_img,main,0,50,36,0,2,1,3,0,8
+GR00T N1.5 (spatial),target_cue_region_v2_img,main,1,50,31,0,8,0,8,0,3
+GR00T N1.5 (spatial),target_cue_region_v2_img,main,3,50,22,0,10,0,1,0,17
+GR00T N1.5 (spatial),target_cue_region_v2_img,main,5,50,40,2,4,2,0,0,2
+GR00T N1.5 (spatial),target_cue_region_v2_img,main,6,50,41,0,4,0,0,0,5
+GR00T N1.5 (spatial),target_cue_region_v2_img,main,7,50,1,14,0,7,0,0,28
+GR00T N1.5 (spatial),target_cue_region_v2_img,main,8,50,35,0,3,0,2,1,9
+GR00T N1.5 (spatial),target_cue_region_v2_img,main,9,50,16,1,3,1,0,1,28
+GR00T N1.5 (spatial),target_cue_region_v3_img,main,0,50,33,0,3,1,8,0,5
+GR00T N1.5 (spatial),target_cue_region_v3_img,main,1,50,37,0,4,0,6,0,3
+GR00T N1.5 (spatial),target_cue_region_v3_img,main,3,50,28,0,6,0,5,0,11
+GR00T N1.5 (spatial),target_cue_region_v3_img,main,5,50,37,3,6,2,0,0,2
+GR00T N1.5 (spatial),target_cue_region_v3_img,main,6,50,44,0,2,1,0,0,3
+GR00T N1.5 (spatial),target_cue_region_v3_img,main,7,50,1,15,0,6,0,0,28
+GR00T N1.5 (spatial),target_cue_region_v3_img,main,8,50,34,0,5,0,2,1,8
+GR00T N1.5 (spatial),target_cue_region_v3_img,main,9,50,16,1,2,1,1,0,29
+GR00T N1.5 (spatial),target_swap,main,0,50,5,27,0,4,4,9,1
+GR00T N1.5 (spatial),target_swap,main,1,50,25,0,1,0,1,0,23
+GR00T N1.5 (spatial),target_swap,main,2,50,7,32,2,5,0,0,4
+GR00T N1.5 (spatial),target_swap,main,3,50,5,12,5,8,1,3,16
+GR00T N1.5 (spatial),target_swap,main,4,50,1,48,0,1,0,0,0
+GR00T N1.5 (spatial),target_swap,main,5,50,27,3,8,2,2,1,7
+GR00T N1.5 (spatial),target_swap,main,6,50,38,1,5,0,1,0,5
+GR00T N1.5 (spatial),target_swap,main,7,50,48,0,2,0,0,0,0
+GR00T N1.5 (spatial),target_swap,main,8,50,1,29,1,14,0,4,1
+GR00T N1.5 (spatial),target_swap,main,9,50,47,0,3,0,0,0,0

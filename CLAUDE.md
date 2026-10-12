@@ -126,6 +126,34 @@ Any flag not consumed by `run_eval.sh` (`--split`, `--resume`, ...) forwards str
 **Config precedence:** CLI args to `run_eval.sh` > variables already exported in your shell >
 `MACHINE_CONFIG` file > `run_eval.sh`'s own fallback defaults.
 
+**Filling several GPUs with several checkpoints (job queue):** `run_eval.sh` shards one split over
+`GPUS` and waits for the slowest shard. To keep every GPU busy across splits and checkpoints, make one
+job per (split, task) and let free slots pick them up:
+
+```bash
+python3 scripts/make_eval_jobs.py --note <run_note> --family openvla|openpi --checkpoint <ckpt> \
+    [--splits a,b] [--env CENTER_CROP=True] > jobs.tsv     # split list = run_benchmark.sh's DEFAULT_SPLITS
+python3 scripts/gpu_queue.py --jobs jobs.tsv --slots 0,0,1,1,2,2,3,3 --log-dir ~/logs/queue_<note> \
+    --min-free-gb 20                                       # 0 when policy servers are already resident
+# openpi policies other than pi05_libero (servers + queue + teardown in one call):
+OPENPI_POLICY_CONFIG=pi0_libero OPENPI_POLICY_DIR=gs://openpi-assets/checkpoints/pi0_libero \
+    NOTE=pi0_libero bash scripts/queue_openpi_policy.sh
+```
+
+Repeating a GPU in `--slots` runs several shards per GPU (an OpenVLA shard needs ~16 GB, an openpi
+server ~9 GB). On a shared host check what else holds the GPUs first; `--min-free-gb` only waits, it
+never frees memory. Results land in the usual files (`--shard{task}of{n_tasks}`), so
+`aggregate_results.py --filter=--<note>` reads them unchanged. Re-running resumes.
+
+**OpenVLA-OFT checkpoints** (`moojink/openvla-7b-oft-finetuned-libero-*`: merged weights plus
+`action_head--*_checkpoint.pt` and `proprio_projector--*_checkpoint.pt` in one directory) run with
+`MODEL_FAMILY=openvla_oft` (or `--family openvla_oft` above): two images + proprio in, an 8-action chunk
+out. The family lives in the openvla fork (`experiments/robot/oft_utils.py`); it needs fork commit
+`0cafe50` or later. It also needs the OFT authors' transformers fork (bidirectional Llama attention):
+build `docker/openvla_libero/Dockerfile.oft` and run with `IMAGE_NAME=openvla-libero:oft`. On the stock
+image the checkpoint runs but scores ~10-20% on `libero_spatial` tasks 1 and 5 (20/20 with the fork;
+2026-10-12). Gate it against the checkpoint's published `libero_spatial` number before trusting it.
+
 ## Results & logs
 
 - Text log: `openvla/experiments/logs/EVAL-{suite}-openvla-{timestamp}[--note][--shardXofY].txt`

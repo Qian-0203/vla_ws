@@ -1,0 +1,16 @@
+# Eval image for OpenVLA-OFT checkpoints (MODEL_FAMILY=openvla_oft): the Blackwell image with the OFT
+# authors' transformers 4.40.1 fork, which makes the Llama SDPA attention fully bidirectional. OFT predicts
+# an action chunk in parallel from empty action tokens and was trained with that attention; stock
+# transformers uses causal attention, and the same checkpoint then drops to ~10-20% on libero_spatial tasks
+# 1 and 5 (2026-10-12 head-to-head: official openvla-oft code and our adapter agreed on all 20 episodes,
+# and both went to 20/20 with the fork). The fork changes only models/llama/modeling_llama.py.
+#
+#   docker build -f docker/openvla_libero/Dockerfile.blackwell -t openvla-libero:blackwell .   # first
+#   docker build -f docker/openvla_libero/Dockerfile.oft -t openvla-libero:oft .
+#   IMAGE_NAME=openvla-libero:oft MODEL_FAMILY=openvla_oft ... bash docker/openvla_libero/run_eval.sh ...
+#
+# Pinned to the fork commit used for the head-to-head. --no-deps keeps every other pin of the base image.
+FROM openvla-libero:blackwell
+
+RUN python -m pip install --no-deps --force-reinstall \
+    "transformers @ git+https://github.com/moojink/transformers-openvla-oft.git@bc339d9ad707454c0c115970db43c260067c61ab"

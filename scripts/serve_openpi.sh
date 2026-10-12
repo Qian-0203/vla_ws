@@ -11,17 +11,30 @@
 # openpi-client in the Dockerfiles), OPENPI_ENV (serve_policy.py --env, default LIBERO, which
 # serves gs://openpi-assets/checkpoints/pi05_libero), POLICY_PORT_BASE (default 8000).
 # The checkpoint downloads to ~/.cache/openpi on first start.
+#
+# Other released checkpoints (--env only knows pi05_libero): set both of
+#   OPENPI_POLICY_CONFIG=pi0_libero  OPENPI_POLICY_DIR=gs://openpi-assets/checkpoints/pi0_libero
+#   OPENPI_POLICY_CONFIG=pi0_fast_libero  OPENPI_POLICY_DIR=gs://openpi-assets/checkpoints/pi0_fast_libero
+# GPUS may repeat a GPU (GPUS=0,0,1,1): one server per entry, each on its own port.
+# To run two policies at once, give each its own PID_FILE (and POLICY_PORT_BASE) so that
+# `stop` and the PID bookkeeping don't clobber each other.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OPENPI_DIR="${OPENPI_DIR:-$HOME/openpi}"
 OPENPI_COMMIT="${OPENPI_COMMIT:-215abfb217dbac7d5f1273282331b9b1866c0479}"
 OPENPI_ENV="${OPENPI_ENV:-LIBERO}"
+OPENPI_POLICY_CONFIG="${OPENPI_POLICY_CONFIG:-}"
+OPENPI_POLICY_DIR="${OPENPI_POLICY_DIR:-}"
 GPUS="${GPUS:-0}"
 POLICY_PORT_BASE="${POLICY_PORT_BASE:-8000}"
 LOG_DIR="${ROOT}/openvla/experiments/logs/openpi_servers"
-PID_FILE="${LOG_DIR}/servers.pid"
+PID_FILE="${PID_FILE:-${LOG_DIR}/servers.pid}"
 mkdir -p "${LOG_DIR}"
+if [[ -n "${OPENPI_POLICY_CONFIG}" || -n "${OPENPI_POLICY_DIR}" ]]; then
+  [[ -n "${OPENPI_POLICY_CONFIG}" && -n "${OPENPI_POLICY_DIR}" ]] \
+    || { echo "Set both OPENPI_POLICY_CONFIG and OPENPI_POLICY_DIR, or neither." >&2; exit 1; }
+fi
 
 # `uv run` starts the server as a child process, and killing only the recorded PID leaves that
 # child holding its GPU memory. Each server is its own process group (setsid below), so signal the
@@ -71,10 +84,17 @@ for idx in "${!GPU_ARR[@]}"; do
   gpu="${GPU_ARR[$idx]}"
   port=$((POLICY_PORT_BASE + idx))
   log="${LOG_DIR}/server-gpu${gpu}-port${port}.log"
+  # --port is a global flag, so it goes before the `policy:checkpoint` subcommand.
+  serve_args=(--port "${port}")
+  if [[ -n "${OPENPI_POLICY_CONFIG}" ]]; then
+    serve_args+=(policy:checkpoint --policy.config "${OPENPI_POLICY_CONFIG}" --policy.dir "${OPENPI_POLICY_DIR}")
+  else
+    serve_args=(--env "${OPENPI_ENV}" "${serve_args[@]}")
+  fi
   # JAX grabs 75% of GPU memory by default; these GPUs may be shared, so allocate on demand.
   # setsid makes the recorded PID the leader of a process group holding uv and the server.
   (cd "${OPENPI_DIR}" && CUDA_VISIBLE_DEVICES="${gpu}" XLA_PYTHON_CLIENT_PREALLOCATE=false \
-    exec setsid nohup uv run scripts/serve_policy.py --env "${OPENPI_ENV}" --port "${port}" \
+    exec setsid nohup uv run scripts/serve_policy.py "${serve_args[@]}" \
     >"${log}" 2>&1 </dev/null) &
   echo $! >>"${PID_FILE}"
   echo "server ${idx}: GPU ${gpu}, port ${port}, log ${log}"

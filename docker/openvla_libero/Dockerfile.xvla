@@ -1,0 +1,16 @@
+# Policy-server image for X-VLA (scripts/policy_servers/serve_xvla.py). Not an eval image: it has no MuJoCo or
+# LIBERO. X-VLA pins transformers <= 4.51.3, timm 1.0.12, peft 0.17.1, which cannot share the OpenVLA eval image
+# (transformers 4.40.1, timm 0.9.10), so the model runs here and the eval containers talk to it over a websocket.
+# Versions follow 2toINF/X-VLA's requirements.txt; torch is the Blackwell-capable one used for the eval image.
+FROM pytorch/pytorch:2.7.1-cuda12.8-cudnn9-devel
+
+ENV DEBIAN_FRONTEND=noninteractive PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends git libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -m pip install --upgrade pip && python -m pip install \
+    "transformers==4.51.3" "timm==1.0.12" "peft==0.17.1" "accelerate==1.2.1" "einops==0.8.1" \
+    "safetensors" "numpy==1.26.3" "pillow" "opencv-python-headless" "scipy" \
+    "fastapi" "uvicorn==0.34.3" "json_numpy==2.1.0" "websockets" "msgpack" \
+    "openpi-client @ git+https://github.com/Physical-Intelligence/openpi.git@215abfb217dbac7d5f1273282331b9b1866c0479#subdirectory=packages/openpi-client"

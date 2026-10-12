@@ -74,6 +74,7 @@ DEFAULT_SPLITS=(
   grounding/paraphrase_syntactic              # Split 4 same-cue paraphrase
   grounding/surface_landmark                  # Split 4a gap-fill cell
   grounding/region_surface                    # Split 4a gap-fill cell
+  grounding/landmark_exchange                 # Split 5 (4-task suite, 200 rollouts per checkpoint)
 )
 if [[ "${SPLITS:-}" == new ]]; then RUN_SPLITS=("${NEW_SPLITS[@]}")
 elif [[ -n "${SPLITS:-}" ]]; then read -r -a RUN_SPLITS <<<"${SPLITS}"; else RUN_SPLITS=("${DEFAULT_SPLITS[@]}"); fi

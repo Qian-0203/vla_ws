@@ -111,6 +111,36 @@ kept only so that old numbers stay traceable. The one exception you might want i
 counterpart of `drawer_open` (80.2% reference), which Split 3's Δ is measured against. Run it with
 `SPLITS=spatial_3bowl/center_fixed_legacy bash scripts/run_benchmark.sh`.
 
+### Other public checkpoints
+
+The same splits were run on six other public LIBERO checkpoints on 2026-10-12 → 2026-10-13 (`pi0_libero`,
+OpenVLA-OFT, VLA-Adapter Spatial and Spatial-Pro, X-VLA, GR00T N1.5), next to the official
+`openvla-7b-finetuned-libero-spatial` checkpoint and `pi05_libero`. These are not OpenVLA-format checkpoints: they run
+through their own policy servers and queue scripts (`scripts/queue_*.sh`; setup in `docs/eval_log.md`), not through
+the quickstart above. One run per condition, seed 7, 50 trials/task; read each policy against its own
+`spatial/default`, not against another column.
+
+| Split | official OpenVLA | pi05 | pi0 | OFT | VLA-Ad. Spatial | VLA-Ad. Pro | X-VLA | GR00T N1.5 |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| `spatial/default` | 84.0% | 98.4% | 96.4% | 98.2% | 95.8% | 97.8% | 97.4% | 89.0% |
+| `spatial/positive_contrast` | 32.8% | 92.2% | 62.6% | 77.8% | 53.6% | 71.4% | 82.0% | 73.2% |
+| `spatial/negative_contrast` | 42.4% | 87.0% | 55.0% | 76.4% | 55.6% | 70.4% | 89.6% | 73.2% |
+| `spatial/negation_only` | 5.0% | 44.8% | 32.8% | 43.6% | 22.6% | 34.2% | 65.8% | 35.8% |
+| `spatial/length_control_suffix` | 51.2% | 99.0% | 69.2% | 97.8% | 92.6% | 98.4% | 97.0% | 87.4% |
+| `grounding/target_cue_landmark` | 25.0% | 87.0% | 46.0% | 85.5% | 63.5% | 83.5% | 91.5% | 78.0% |
+| `grounding/target_cue_proximity_novel` | 37.0% | 96.0% | 74.0% | 96.5% | 42.0% | 85.5% | 91.0% | 82.5% |
+| `grounding/target_cue_region_img` | — | — | 32.5% | 71.8% | 31.5% | 52.5% | 64.5% | 59.5% |
+| `spatial_3bowl/irrelevant` | 82.8% | 80.6% | 86.0% | 73.6% | 80.6% | 81.2% | 82.8% | 88.2% |
+| `spatial_3bowl/landmark` | 77.0% | 72.0% | 69.0% | 65.6% | 67.4% | 75.8% | 75.4% | 74.4% |
+| `spatial_3bowl/landmark_with_hardneg_prompt` | 42.2% | 66.2% | 46.6% | 59.6% | 46.6% | 70.0% | 66.0% | 65.8% |
+| `spatial_3bowl/drawer_open` | 64.6% | 43.4% | 40.2% | 27.2% | 33.4% | 49.4% | 39.4% | 48.4% |
+| `no_location` (instruction file) | 17.6% | 81.4% | 51.2% | 66.0% | 30.2% | 63.0% | 59.6% | 65.8% |
+| `target_swap` (instruction file) | 57.2% | 56.8% | 68.2% | 37.4% | 36.4% | 51.2% | 32.2% | 40.8% |
+
+`no_location` drops the location phrase and scores the original target; `target_swap` names the other bowl and
+scores that bowl (instruction files under `screening/language_stress/candidates/`). All 25 rows, the which-bowl
+breakdown and the caveats: `docs/benchmark_split_result.md` §13 and `docs/result_tables/`.
+
 ## Repository layout
 
 ```
@@ -141,6 +171,7 @@ To run a single split by hand:
   for every condition.
 - `docs/eval_log.md`: chronological launch log for the reference numbers above, plus the
   hardware and server-setup reference.
+- `docs/result_tables/`: condition x checkpoint success rates and which-bowl counts as CSV, for ten checkpoints.
 - `docs/mechanistic_localization.md`: an optional diagnostic that probes *where* in the network the
   prompt-induced failures originate (logit lens, attention mass, decision confidence). It is not
   needed to run the benchmark.

@@ -72,14 +72,18 @@ SEED="${SEED:-7}"
 
 EXTRA_ARGS=("$@") # forwarded to run_libero_eval.py verbatim (e.g. --split spatial/default)
 
+# openvla_oft = OpenVLA-OFT (merged VLA + action head + proprio projector in one directory, run in-container
+# like openvla); everything below that treats "openvla" as "a checkpoint directory" applies to it too.
+LOCAL_CKPT=false
 case "${MODEL_FAMILY}" in
-  openvla) ;;
+  openvla|openvla_oft) LOCAL_CKPT=true ;;
   openpi) CHECKPOINT="${OPENPI_CHECKPOINT}" ;; # recorded in run metadata only; nothing to mount
-  *) echo "Unknown MODEL_FAMILY '${MODEL_FAMILY}' (expected openvla or openpi)." >&2; exit 1 ;;
+  xvla) ;;                                     # model in a policy server (serve_xvla.py); CHECKPOINT is a label only
+  *) echo "Unknown MODEL_FAMILY '${MODEL_FAMILY}' (expected openvla, openvla_oft, openpi or xvla)." >&2; exit 1 ;;
 esac
 
 # --- checkpoint integrity check (unchanged from the original per-suite scripts) ---
-if [[ "${MODEL_FAMILY}" == openvla && -f "${CHECKPOINT}/model.safetensors.index.json" ]]; then
+if [[ "${LOCAL_CKPT}" == true && -f "${CHECKPOINT}/model.safetensors.index.json" ]]; then
   python3 - "${CHECKPOINT}" <<'PY'
 import glob, json, os, sys
 checkpoint = sys.argv[1]
@@ -114,7 +118,7 @@ DOCKER_TTY_ARGS=()
 DOCKER_MOUNTS=(-v "${WORKSPACE_ROOT}:/workspace")
 [[ -n "${SERVER_ROOT}" && -d "${SERVER_ROOT}" ]] && DOCKER_MOUNTS+=(-v "${SERVER_ROOT}:${SERVER_ROOT}:ro")
 # A checkpoint anywhere else on the host is identity-mounted read-only on its own.
-if [[ "${MODEL_FAMILY}" == openvla && "${CHECKPOINT}" != "${WORKSPACE_ROOT}"/* && ( -z "${SERVER_ROOT}" || "${CHECKPOINT}" != "${SERVER_ROOT}"/* ) ]]; then
+if [[ "${LOCAL_CKPT}" == true && "${CHECKPOINT}" != "${WORKSPACE_ROOT}"/* && ( -z "${SERVER_ROOT}" || "${CHECKPOINT}" != "${SERVER_ROOT}"/* ) ]]; then
   DOCKER_MOUNTS+=(-v "${CHECKPOINT}:${CHECKPOINT}:ro")
 fi
 DOCKER_MOUNTS+=(-v "${SCRIPT_DIR}/10_nvidia_egl.json:/etc/glvnd/egl_vendor.d/10_nvidia.json:ro")
@@ -131,6 +135,12 @@ DOCKER_ENV_COMMON=(
   # their init order races and intermittently aborts with "OMP: Error #15". Allow
   # the duplicate runtime so the process continues (the documented workaround).
   -e KMP_DUPLICATE_LIB_OK=TRUE
+  # Cap CPU thread pools: with 8+ containers per host every TF / torch process otherwise spawns one thread per
+  # core (load average 870 on 192 cores, 2026-10-12) and the jobs slow each other down.
+  -e OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}"
+  -e MKL_NUM_THREADS="${MKL_NUM_THREADS:-4}"
+  -e TF_NUM_INTRAOP_THREADS="${TF_NUM_INTRAOP_THREADS:-4}"
+  -e TF_NUM_INTEROP_THREADS="${TF_NUM_INTEROP_THREADS:-2}"
   -e WANDB_MODE="${WANDB_MODE:-disabled}"
   -e OPENVLA_ATTN_IMPLEMENTATION="${OPENVLA_ATTN_IMPLEMENTATION}"
   # Run as the host user so eval outputs (logs, rollouts) aren't root-owned. HOME
@@ -157,7 +167,7 @@ run_shard() {
   if ((num_shards > 1)); then
     shard_args=(--num_shards "${num_shards}" --shard_index "${shard_idx}")
   fi
-  if [[ "${MODEL_FAMILY}" == openpi ]]; then
+  if [[ "${MODEL_FAMILY}" == openpi || "${MODEL_FAMILY}" == xvla ]]; then
     # Host networking so the container reaches the policy server on the host's loopback.
     # The GPU is still passed through, for MuJoCo's EGL rendering.
     net_args=(--network host)
