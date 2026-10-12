@@ -18,6 +18,7 @@ Figures: `docs/figures/openvla_official_language_heatmap.png`,
 | LoRA (ours) | HF mirror jsonl, 2026-10-01 → 10-10 | 10 conditions incl. `negation_only` | 3,900 |
 | LoRA (ours) | Per-task tables in `benchmark_split_result.md` (pre-jsonl runs) | `default`, contrasts, region, landmark, "close to" | — |
 | Both | Full `target_swap` + `no_location` with which-bowl logging (batch E, 2026-10-10/11) | 2 conditions, 50 trials/task | 2 × 1,000 |
+| Both | Full `negation_only` with which-bowl logging (2026-10-11; the official checkpoint's first full run) | 1 condition, 50 trials/task | 2 × 500 |
 
 **OpenVLA has no layout-driven tasks** (added 2026-10-11, §2a below). The full `target_swap` and
 `no_location` runs show it follows the named location on every task and does not act without one. The
@@ -35,16 +36,20 @@ assumption: the two tasks share one layout with the target swapped, for every po
 1. **OpenVLA's main weakness is surface form, not meaning.** Content-free filler costs it 12–26 pts on
    the eight unique-layout tasks and **43–60 pts on the mirror pair**, for both checkpoints; pi05 loses
    nothing. Where the sentence alone decides the bowl, any change to the sentence breaks OpenVLA.
-2. **Exclusion fails completely, with no layout safety net.** `negation_only` is 2.6% on our checkpoint
-   (500 rollouts; no task above 10%) and 1/50 on the official one. pi05 keeps 90% on its layout-driven
-   tasks; OpenVLA fails those too. The drop is far larger than OpenVLA's own surface-form cost (length
-   controls keep 51–64%), so it is content-specific.
+2. **Exclusion fails completely, with no layout safety net, and the negated bowl is the one it takes.**
+   `negation_only` is 2.6% on our checkpoint (13/500; no task above 10%) and 5.0% on the official one
+   (25/500; best task 11/50). pi05 keeps 90% on its layout-driven tasks; OpenVLA fails those too. The
+   drop is far larger than OpenVLA's own surface-form cost (length controls keep 51–64%), so it is
+   content-specific. With which-bowl logging (2026-10-11, §3.2) both checkpoints deliver the *negated*
+   bowl in about half of all rollouts (253 and 236 of 500), the same rate as pi05 (255): "not" is
+   dropped and the named place is taken. The difference is the payoff, not the behaviour.
 3. **Chinese gives 0%, code-switching 1/50**, on every task. pi05 stays at 78–80% by falling back on the
    layout. OpenVLA never had a layout fallback: with the location removed it scores 11.8–17.6%, and
    79–83% of those failures never approach either bowl (§2a).
 4. **Distractor mentions and self-correction** cost OpenVLA 50–70 pts, far more than pi05, and reach
    0–10% on the mirror pair. (~~Region cues~~ withdrawn: E1, the region prompts named the wrong place.)
-5. **Shared with pi05:** exclusion (0–1% on the mirror pair for both), ~~region cues being the worst cue
+5. **Shared with pi05:** exclusion (0–1% on the mirror pair for both, and the same "take the negated
+   bowl" behaviour, §3.2), ~~region cues being the worst cue
    type~~ (withdrawn, E1), the "next to X" familiarity penalty, and distractor-mention losses concentrated on tasks 5 and
    9. **OpenVLA only:** sensitivity to content-free text, to lexical paraphrase, and to non-English.
 6. **OpenVLA follows the sentence's location, never the layout** (§2a). Told to fetch the other bowl,
@@ -60,7 +65,9 @@ assumption: the two tasks share one layout with the target swapped, for every po
   "goes to the other bowl". For OpenVLA the bowl-attraction probe (§8.5, our checkpoint) logged where
   the arm went: among `negative_contrast` failures, 58.1% never came within 8 cm of either bowl and only
   14.5% approached the distractor first. Below-50% scores for OpenVLA mostly mean *no commitment*, not
-  *wrong bowl*.
+  *wrong bowl*. The exception is `negation_only`, where the logged outcome is the wrong bowl in about
+  half of all rollouts (§3.2): a negated location behaves as a pointer, so the words still launch a
+  committed motion, to the bowl they negate.
 - **The layout-driven/language-read split does not apply.** OpenVLA has no layout-driven tasks (§2a).
 
 ## 2a. Layout reliance, measured (full runs, 2026-10-11)
@@ -107,9 +114,9 @@ single tasks hard: task 2 "from the middle of the table" 44% (ours) / 70% (offic
 
 ### 3.2 O2 — Exclusion is never composed, on any task
 
-| Condition | Official (5/task) | Ours (50/task) | pi05 (full / screen) |
+| Condition | Official (5/task; full run in brackets) | Ours (50/task) | pi05 (full / screen) |
 |---|--:|--:|--:|
-| `negation_only` ("the black bowl that is not on top of the wooden cabinet") | 1/50 | **2.6%** (13/500) | 44.8% |
+| `negation_only` ("the black bowl that is not on top of the wooden cabinet") | 1/50 [**5.0%**, 25/500] | **2.6%** (13/500) | 44.8% |
 | `negation_except` ("any black bowl except the one …") | 3/50 | — | 22/50 |
 | `negation_other` ("the other black bowl, not the one …") | 4/50 | — | 23/50 |
 | `negation_swap` (negates the target's own location; scored on the other bowl) | 0/50 | — | 0/50 |
@@ -121,8 +128,30 @@ single tasks hard: task 2 "from the middle of the table" 44% (ours) / 70% (offic
 - When the target's own location is also named, appending "not the one …" does not hurt further:
   `negative_contrast` is *above* `positive_contrast` (official 42.4% vs 32.8%; ours 36.8% vs 32.4%).
   OpenVLA can carry a negated clause it ignores; it cannot select a bowl through one.
-- Which bowl the arm goes for under `negation_only` was not logged. §8.5's pattern makes
-  "commits to neither" at least as likely as "goes to the named bowl".
+- **Which bowl it goes for was logged on 2026-10-11** (50 trials/task, both checkpoints, same seed and
+  init states; `benchmark_split_result.md` §2 which-bowl run and finding 29). §8.5's pattern had made
+  "commits to neither" at least as likely as "goes to the named bowl"; the full run says the second:
+
+| `negation_only`, 500 rollouts | Success | Negated bowl delivered | Negated bowl lifted, not delivered | Trained bowl lifted, not delivered | No bowl lifted (of which approach neither) |
+|---|--:|--:|--:|--:|--:|
+| Official | 25 (5.0%) | 236 (47.2%) | 42 | 28 | 169 (121) |
+| Ours | 13 (2.6%) | 253 (50.6%) | 64 | 4 | 166 (131) |
+| pi05 | 217 (43.4%) | 255 (51.0%) | 6 | 15 | 7 (1) |
+
+  - The negated bowl is the most common outcome, about half of failures (49.7% official, 52.0% ours).
+    In 199 of 236 (official) and 207 of 253 (ours) of those rollouts `target_swap` put the same bowl on
+    the plate; in the remaining 37 and 46 `target_swap` itself lifted the named bowl without delivering
+    it (26 and 22) or never reached it (11 and 24). pi05's agreement is 251 of 255.
+  - On the mirror pair (tasks 7/9) OpenVLA delivers the negated bowl in 66/100 (official) and 62/100
+    (ours) and the trained bowl in 0/100; pi05 does so in 96/100. On pi05's layout-driven tasks
+    0/2/4/8 it delivers the trained bowl in 20/200 (official) and 10/200 (ours), the negated bowl in
+    45 and 72, and lifts nothing in 91 and 80; pi05 delivers the trained bowl in 177/200.
+  - A third of rollouts (33–34%) never lift a bowl, against 1.4% for pi05, but only 25–27% of the
+    *failures* approach neither bowl, against 58.1% under `negative_contrast` (§8.5) and 79–83% under
+    `no_location`. The location words keep OpenVLA moving; what they cannot do is make it exclude.
+  - Same mechanism as pi05, different payoff: both take the named place and drop "not". pi05 then
+    succeeds on the four tasks where its layout prior already gives the trained bowl; OpenVLA has no
+    such tasks (§2a), so its score is 2.6–5.0%.
 
 ### 3.3 O3 — Mentioning the distractor collapses specific tasks
 
@@ -196,7 +225,7 @@ appears to recall their motions.
 | Self-correction * | 1/10 | 3/10 | **both** |
 | ~~Region cue~~ (withdrawn, E1) | ~~0%~~ | ~~25%~~ | ~~both~~ |
 | Chinese / code-switch * | 0 / 0 of 10 | 3 / 4 of 10 | both on the mirror pair; only OpenVLA elsewhere |
-| Exclusion (`negation_only` *) | 0/10 | 0/10 | **both, total** |
+| Exclusion (`negation_only`, full run, trained bowl delivered) | 0/100 | 0/100 | **both, total** |
 
 Reading: pi05 removed OpenVLA's dependence on exact wording, but not its inability to compose
 exclusion or to handle a retracted reference. Those two are the benchmark's model-independent
@@ -218,8 +247,8 @@ tasks.
 
 ## 6. Limitations
 
-- Which bowl the arm went for is logged only in the batch E runs (§2a) and §8.5's probe; every other
-  condition here is outcome-only.
+- Which bowl the arm went for is logged only in the batch E runs (§2a), the 2026-10-11 `negation_only`
+  runs (§3.2) and §8.5's probe; every other condition here is outcome-only.
 - Outcome-only results in the main eval. §8.5's instrumented probe covers our checkpoint on `default`,
   `negative_contrast`, `target_cue_landmark` and `target_cue_proximity_novel` only, 10 episodes/task.
 - Screens are 5 trials/task (10 rollouts on the mirror pair). Our checkpoint's early per-task numbers
@@ -230,9 +259,11 @@ tasks.
 
 1. ~~`target_swap` and `no_location` on both OpenVLA checkpoints.~~ Done at 50 trials/task with
    which-bowl logging (§2a): no layout-driven tasks, no layout fallback.
-2. With the which-bowl logging now merged (openvla `1e8544e`), re-run `negation_only` and
-   `target_cue_region_img` (corrected wording, E1) on the mirror pair for OpenVLA and pi05 together: wrong bowl vs. no commitment
-   is the open question for every shared weakness in §4.
+2. ~~Re-run `negation_only` with which-bowl logging.~~ Done 2026-10-11 for both checkpoints (§3.2):
+   the negated bowl is delivered in about half of rollouts, for OpenVLA as for pi05. Still open:
+   `target_cue_region_img` (corrected wording, E1) on the mirror pair for OpenVLA and pi05 together, and
+   `self_correction`: wrong bowl vs. no commitment is the open question for the shared weaknesses in §4
+   other than exclusion.
 3. Run the bowl-attraction probe on the length controls (open since §8.6) to confirm whether the
    mirror-pair filler collapse is the same "never commits" mode.
 4. Shared failures (exclusion, self-correction; region cue once `_img` is run) are the candidates for model-independent

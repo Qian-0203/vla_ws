@@ -1388,6 +1388,39 @@ notes. All four runs completed their full 500 rollouts and exited 0.
 
 ---
 
+## 2026-10-11 — pi05 re-run with which-bowl logging (`target_swap`, `no_location`, `negation_only`)
+
+The pi05 results of batch E and of the 2026-10-10 `negation_only` run recorded success only. This
+re-runs the same three conditions with the outcome logging that went into the OpenVLA batch-E runs, so
+which bowl pi05 reached for, lifted and delivered is observed rather than inferred.
+
+- **Machine:** `berkeley` (`g4-flexstart-mig-ussouth1-5tbf`), all four GPUs idle at launch. `uv`,
+  `~/openpi` (commit `215abfb`) and the `pi05_libero` checkpoint (`gs://openpi-assets`, cached under
+  `~/.cache/openpi`) were not present and were installed by the launch script.
+- **Code:** `~/vla_ws_e` (vla_ws `ecfb6f9`, openvla `1e8544e`, the same workspace as the OpenVLA batch-E
+  runs). The run metadata records `openvla_git_commit: null`, as for those runs.
+- **Launch:** `~/run_full_pi05_whichbowl.sh`, log `~/logs/full_pi05_whichbowl.log`. Four policy servers
+  (`GPUS=0,1,2,3`, ports 8000–8003, `scripts/serve_openpi.sh`), eval sharded `--shardXof4`, image
+  `openvla-libero:blackwell` / sdpa / bf16, seed 7, 50 trials/task. Run note `pi05_libero--whichbowl`,
+  so the files never collide with `berkeley-2`'s success-only `pi05_libero` shards in the HF mirror.
+  The script first ran a 1-rollout smoke (`target_swap` task 0, run note
+  `pi05_libero--whichbowl-smoke`) and checked the which-bowl fields before continuing; it passed.
+- **Order and times (UTC):** `target_swap` 08:51 → 09:11, `no_location` 09:11 → 09:27, `negation_only`
+  09:27 → 09:47. Script exited 0, results synced (2,501 rollouts in the mirror), servers stopped.
+- **Headline:** `target_swap` 56.8% (284/500, identical to the success-only run), `no_location` 80.4%
+  (402/500; 81.4% before), `negation_only` 43.4% (217/500; 44.8% before). All 1,500 rows carry
+  `target_object`, `bowls_on_plate`, `first_bowl_approached` and `first_bowl_grasped`. Under
+  `negation_only` pi05 delivers the *other* bowl in 255/500 rollouts, and the same bowl that
+  `target_swap` made it deliver in 251 of those 255 (same init states and seed).
+- **Results:** `berkeley:~/vla_ws_e/openvla/experiments/logs/results/libero_spatial--{target_swap,no_location,negation_only}--pi05_libero--whichbowl--shard{0..3}of4.jsonl`,
+  in the HF mirror. Detail: `benchmark_split_result.md` §12 batch E, finding 29.
+- The orphan `sleep 1800` left on `berkeley` is this script's sync loop (its subshell was killed, its
+  `sleep` child was not); harmless.
+
+**Status:** done.
+
+---
+
 ## 2026-10-11 — Erratum E1: region-cue wording used swapped axes (no eval run; documentation and registry change)
 
 **What happened.** A visual check of the Split 4b region-cue prompts against the rendered init states
@@ -1429,6 +1462,44 @@ above are left as written: 2026-08-19 batch (`target_cue_region`, 17.0%), 2026-1
 run: 400 rollouts per condition and model.
 
 ---
+
+## 2026-10-11 — `spatial/negation_only` with which-bowl logging: official OpenVLA (first full run) and our r32
+
+Re-runs `spatial/negation_only` (the target is named only by negating the other bowl's location) on both
+OpenVLA checkpoints with the per-rollout outcome logging of openvla PR #3 (`target_object`,
+`distractor_objects`, `bowls_on_plate`, `first_bowl_approached`, `first_bowl_grasped`, per-bowl
+approach/grasp steps), so the question left open in `benchmark_split_result.md` §2 / §12 batch D point 4,
+"does the arm go to the negated bowl or fail to commit", can be answered per rollout. The official
+checkpoint had only a 5-trial screen (2.0%); this is its first full `negation_only` run.
+
+- **Host / code:** `berkeley` (`g4-flexstart-mig-ussouth1-5tbf`), 4x RTX PRO 6000 Blackwell, all idle at
+  launch. Workspace `~/vla_ws_e` (vla_ws `ecfb6f9`, openvla `1e8544e`), image `openvla-libero:blackwell`,
+  `OPENVLA_ATTN_IMPLEMENTATION=sdpa`, bf16, seed 7, 50 trials/task, `--split spatial/negation_only`.
+  Checkpoints mounted read-only from `~/vla_ws/openvla/checkpoint/`.
+- **Launch:** `~/run_negation_whichbowl_openvla.sh` (own 30-minute HF sync loop, every call `--resume
+  True`), log `~/logs/negation_whichbowl_openvla.log`. Official on GPUs 0,1 (`--shard{0,1}of2`, run note
+  `openvla-official-libero-spatial`); ours on GPUs 2,3 (`--shard{0,1}of2`, run note
+  `openvla-7b-libero-spatial-lora-r32--whichbowl`), concurrently. The `--whichbowl` note keeps these
+  shards out of the older success-only `libero_spatial--negation_only--openvla-7b-libero-spatial-lora-r32.jsonl`,
+  which `aggregate_results.py` would otherwise merge them into (it strips `--shardXofN`).
+- **Times (UTC):** smoke (ours, task 0, 1 trial, GPU 0) 11:06 → 11:07, row carried every outcome field;
+  full runs 11:11:34 → 13:30:18 (2 h 19 min, about 3.6 rollouts/min per run); both exited 0; final HF sync
+  13:30:18 (3,502 rollouts in the workspace). No shard restarts, no mid-run errors; the
+  `EGLError ... Exception ignored in MjRenderContext.__del__` lines at container exit are teardown noise.
+- **Headline:** official **5.0%** (25/500), ours **2.6%** (13/500; per-(task, episode) identical to the
+  earlier success-only run, 500/500, so the logging does not change behaviour; the official screen's 1/50
+  is likewise identical on its 50 rollouts). The negated bowl reaches the plate in **236/500** (official)
+  and **253/500** (ours), against 255/500 for `pi05_libero` (which-bowl re-run, 2026-10-11,
+  `libero_spatial--negation_only--pi05_libero--whichbowl--shard{0..3}of4.jsonl`). Detail:
+  `benchmark_split_result.md` §2 `negation_only` which-bowl run and finding 29.
+- **Results:** `~/vla_ws_e/openvla/experiments/logs/results/libero_spatial--negation_only--openvla-official-libero-spatial--shard{0,1}of2.{jsonl,meta.json}`
+  and `...--openvla-7b-libero-spatial-lora-r32--whichbowl--shard{0,1}of2.{jsonl,meta.json}`; smoke
+  `...--openvla-7b-libero-spatial-lora-r32--whichbowl-smoke.jsonl`. All in the HF mirror.
+- **Notes:** (1) `~/vla_ws_e/scripts/aggregate_results.py` at `ecfb6f9` predates `--outcomes`; the
+  aggregation was done on copies of the JSONL with the newer script (nothing was changed on the server).
+  (2) QwenVLA was not run: Ken's checkpoint and environment are not on any of our servers.
+
+**Status:** done.
 
 ## 2026-10-12 → 2026-10-13 — Public LIBERO-finetuned checkpoints on the whole benchmark (pi0, OpenVLA-OFT, VLA-Adapter ×2, X-VLA, GR00T N1.5)
 
@@ -1491,9 +1562,9 @@ run: 400 rollouts per condition and model.
 tasks 0,1,3,5–9): corrected image-frame region cue; not run on the OpenVLA, pi05 or QwenVLA
 checkpoints (run on six other public checkpoints 2026-10-12 → 2026-10-13, entry above).
 
-`spatial/negation_only` (authored 2026-10-10): run for OpenVLA and `pi05_libero` (2026-10-11 entry);
-QwenVLA not yet requested. The official OpenVLA checkpoint's full run finished 2026-10-07; it has not
-run `spatial/negation_only` (only the 5-trial screen).
+`spatial/negation_only` (authored 2026-10-10): run for our OpenVLA checkpoint, the official OpenVLA
+checkpoint (full, 2026-10-11, with which-bowl logging) and `pi05_libero`; QwenVLA not yet run (needs
+Ken's checkpoint and environment on one of our servers).
 
 **Not registry-ready** (open design questions, `benchmark_split_plan.md` §9): Split 2's `path`
 distractor.
@@ -1515,7 +1586,7 @@ in place: update it when a machine is added or retired, and leave the dated entr
 | GCP replacement instance, same `berkeley` alias — replaced by 2026-09-30 | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-10 entries |
 | GCP `g4-flexstart-mig-uswest1-9dxc`, same `berkeley` alias — replaced by 2026-10-05. Shared host: other users' jobs run on the same GPUs. Workspace `/home/qian/vla_ws`, checkpoint `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32`, openpi checkout `/home/qian/openpi` | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-09-30 → 2026-10-03 entries |
 | GCP `g4-flexstart-mig-uswest1-15gr`, same `berkeley` alias — replaced by 2026-10-10 (its disk came back as `berkeley-2`). Shared host (`vaclis` runs training on the same GPUs). Workspace `/home/qian/vla_ws`; checkpoints `openvla/checkpoint/openvla-7b-libero-spatial-lora-r32` and `openvla/checkpoint/openvla-7b-finetuned-libero-spatial` (official). No `uv` installed | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa | bf16 | 2026-10-05 onward |
-| GCP `g4-flexstart-mig-ussouth1-5tbf` (`34.174.233.202`), ssh alias `berkeley` — current. Shared host (`vaclis`, `ayushraj`): only GPU 3 had room on 2026-10-10. Docker installed 2026-10-10 | 4× RTX PRO 6000 Blackwell Server Edition, driver 580.178.04 | `openvla-libero:blackwell` (built 2026-10-10) / sdpa | bf16 | 2026-10-10 entry; 2026-10-12 → 2026-10-13 public-checkpoint batch (images `openvla-libero:oft`, `:xvla`, `:gr00t`) |
+| GCP `g4-flexstart-mig-ussouth1-5tbf` (`34.174.233.202`), ssh alias `berkeley` — current. Shared host (`vaclis`, `ayushraj`): only GPU 3 had room on 2026-10-10. Docker installed 2026-10-10; `uv`, `~/openpi` and the pi05 checkpoint installed 2026-10-11 | 4× RTX PRO 6000 Blackwell Server Edition, driver 580.178.04 | `openvla-libero:blackwell` (built 2026-10-10) / sdpa | bf16 | 2026-10-10 entry; 2026-10-12 → 2026-10-13 public-checkpoint batch (images `openvla-libero:oft`, `:xvla`, `:gr00t`) |
 | GCP `g4-15gr-1009-mig-uswest3-zzst` (`34.106.148.66`), ssh alias `berkeley-2` — current. Booted from `…-15gr`'s disk; `vaclis` uses about 83 GB per GPU | same hardware, driver 580.178.04 | `openvla-libero:blackwell` / sdpa; openpi at `~/openpi` | bf16 | 2026-10-10 entry (pi05); 2026-10-12 → 2026-10-13 public-checkpoint batch (pi0, OFT, VLA-Adapter, GR00T N1.5) |
 | Ken Zheng's machines: dgx1 (8× A100-SXM4-80GB) and an 8× H200 node — not ours | 8× A100 80 GB / 8× H200 | host conda env (`scripts/run_eval_qwenvla.sh`) / SDPA | not quantized (dtype not recorded) | QwenVLA runs, 2026-09-30 and 2026-10-05 (logged 2026-10-06) |
 | Laptop | 1× RTX 5060 Laptop, 8 GB, compute cap 12.0 | `openvla-libero:blackwell` / sdpa | 4-bit only | scene authoring, init states, contact sheets, smoke tests (no reported number comes from here) |

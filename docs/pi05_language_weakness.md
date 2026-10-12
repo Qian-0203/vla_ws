@@ -16,12 +16,16 @@ Figures: `docs/figures/pi05_language_heatmap.png`, `docs/figures/pi05_mirror_pai
 | `spatial/negation_only`, 2026-10-10 (`--pi05_libero`) | 1 | 50 | 500 |
 | Language-stress screen, batches 1–3, 2026-10-10 (`--pi05_libero--screen`) | 12 candidates | 5 | 580 |
 | Full `target_swap` + `no_location` (batch E), 2026-10-10 (`--pi05_libero`) | 2 | 50 | 1,000 |
-| **Total** (the 16-rollout `pi05_smoke` run excluded) | | | **10,380** |
+| Re-run of `target_swap`, `no_location`, `spatial/negation_only` with which-bowl logging, 2026-10-11 (`--pi05_libero--whichbowl`) | 3 | 50 | 1,500 |
+| **Total** (the 16-rollout `pi05_smoke` run excluded) | | | **10,380** (+1,500 re-runs, below) |
 
 All from the HF mirror `Qian0203/vla_ws-eval-results`, `results/`, deduplicated on
 `(task_id, episode_idx)`. Same scene, init states and seed (7) as every other policy. Every failed
 rollout in every condition ran to the 230-step limit, so a failure never says *which* bowl, if any,
-the arm went for (§6).
+the arm went for (§6). The 2026-10-11 re-run logs it (bowl approached, lifted, delivered) for three
+conditions; where a number below says "observed" it comes from that run, and its success rates differ
+from the success-only runs by at most 1.4 pts. The re-run duplicates conditions already counted, so it
+is not in the total.
 
 ![π0.5 per-task heatmap](figures/pi05_language_heatmap.png)
 
@@ -126,8 +130,16 @@ Success rates per group; 95% Wilson intervals for the cells the argument rests o
   follows the location the sentence names.
 - **The negated location acts as a positive pointer.** On the mirror pair the policy must choose from
   the words; with "not on the cabinet" it delivers the stove bowl in 1/100, far below the 38% it gets
-  with no location at all. That is consistent with going to the place named and dropping "not" (direct
-  confirmation needs which-bowl logging, §6).
+  with no location at all. That is consistent with going to the place named and dropping "not"; the
+  which-bowl re-run observes it (next bullet).
+- **Observed (re-run with which-bowl logging, 2026-10-11).** `negation_only` delivers the *other* bowl,
+  the one the sentence's location points at, in 255/500 rollouts: 96/100 on tasks 7/9 (46 and 50) and
+  245/300 on the six language-read tasks (tasks 1, 5, 6: 42–46 of 50; task 3: 16 of 50, the mixed
+  case). Paired per rollout with `target_swap`, 251 of the 255 put the same bowl on the plate. On the
+  layout-driven four it delivers the trained bowl in 177/200 and the other bowl in 10. Success was
+  43.4% in this run (44.8% before). Both OpenVLA checkpoints deliver the negated bowl at the same rate
+  (236 and 253 of 500, logged the same day), so the pointer behaviour is not specific to pi05; what
+  differs is that pi05 has the layout-driven tasks to succeed on (`openvla_language_weakness.md` §3.2).
 - **Not a "not" problem.** "except" and "the other …, not the one" track `negation_only` per task
   (r = 0.97 and 0.92). Any referent defined by exclusion fails.
 - **`negation_swap` closes the alternative.** If pi05 used negation at all, some task would deliver the
@@ -288,10 +300,11 @@ mirror-pair numbers (tasks 7/9, 50 trials each) are there to compare already (th
 
 ## 6. Limitations
 
-- **Outcome only.** Every failure is a 230-step timeout; the results do not record which bowl was
-  grasped or placed. "The negated phrase acts as a pointer" (W1) is inferred from
-  `target_swap` + `negation_only` adding up to about 1 per task and from `negation_swap`; which bowl the
-  policy takes under self-correction (W3) and region cues (W4) is unknown. None of it is observed.
+- **Outcome only, except three conditions.** Every failure is a 230-step timeout; the success-only runs
+  do not record which bowl was grasped or placed. For `target_swap`, `no_location` and `negation_only`
+  the 2026-10-11 re-run does, and W1 ("the negated phrase acts as a pointer") is observed there.
+  Which bowl the policy takes under self-correction (W3), and in the other 20 conditions, is still
+  unknown and rests on success rates (W4, the region cues, is withdrawn: Erratum E1).
 - **Screens are 5 trials/task**: ±20 pts per task, 10 rollouts on the mirror pair (95% CIs about ±30
   pts). The task grouping no longer depends on them: the full `target_swap` run confirms it, with task 3
   (60%) partial and task 8 (18%) mostly layout-driven.
@@ -304,11 +317,12 @@ mirror-pair numbers (tasks 7/9, 50 trials each) are there to compare already (th
 
 ## 7. Next steps, by expected information per GPU-hour
 
-1. **Log which bowl ends up on the plate, and which one is grasped first**, in each rollout row (the
-   distractor's `On(bowl_2, plate)` predicate plus first-contact object). No new rollouts needed for
-   new conditions, and it turns W1/W3/W4 from inferences into observations.
+1. ~~**Log which bowl ends up on the plate, and which one is grasped first**, in each rollout row.~~
+   Done 2026-10-11 (openvla `1e8544e`) and run for `target_swap`, `no_location` and `negation_only`
+   (§0, `benchmark_split_result.md` §12 batch E re-run). W1 is now observed. Remaining: re-run
+   `self_correction` (W3) with the logging, on tasks 7/9 first; the corrected region cue is item 5.
 2. ~~Full runs (50 trials/task) of `target_swap` and `no_location`.~~ Done for pi05 (2026-10-10,
-   §2 above); both OpenVLA checkpoints running with which-bowl logging (§12 batch E).
+   §2 above); both OpenVLA checkpoints done with which-bowl logging (§12 batch E, finding 28).
 3. **A mirror-pair split.** Tasks 7/9 are the only layout-ambiguous pair in `libero_spatial`. New suites
    with more such pairs (two bowls in the same places, target swapped, e.g. stove/cookie box, ramekin/
    cabinet top) would give a language score that the layout prior cannot inflate. Placing bowls on the
