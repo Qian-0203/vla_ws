@@ -1501,6 +1501,49 @@ checkpoint had only a 5-trial screen (2.0%); this is its first full `negation_on
 
 **Status:** done.
 
+## 2026-10-12 — Landmark-exchange probe (`grounding/landmark_exchange`): launch
+
+New split, authored and run in one session (design and pre-registered readings: `benchmark_split_plan.md`
+Split 5). Cookie box and ramekin swap places, sentences unchanged, 4 tasks × 50 trials, seed 7, with
+which-bowl outcome logging. Runs from `berkeley:~/vla_ws_e` (vla_ws `ecfb6f9`, openvla `1e8544e`, LIBERO
+`b794927` plus the uncommitted suite files and one registry entry), image `openvla-libero:blackwell` /
+sdpa / bf16, GPUs 0–3 idle at launch.
+
+- **Scene check:** `gen_suite_init_states.py` + `verify_suite_init_states.py` PASS (worst bowl separation
+  0.289 m, bowl z constant); contact sheet re-rendered with the settle step
+  (`render_suite_contact_sheet.py`) and eyeballed: every bowl rests on its support, no overlaps.
+- **Launch:** `~/run_exchange.sh`, log `~/logs/exchange.log`. Smoke (1 official rollout) → phase A:
+  official on GPUs 0,1 and r32 on GPUs 2,3 in parallel → phase B: pi05, four policy servers, GPUs 0–3.
+  Run notes `openvla-official-libero-spatial--exchange`, `openvla-7b-libero-spatial-lora-r32--exchange`,
+  `pi05_libero--exchange`. The script does not sync to the HF mirror (the cron sync covers `~/vla_ws`,
+  not `~/vla_ws_e`).
+- **Status:** running. Results are added in a follow-up entry.
+
+---
+
+## 2026-10-12 — Landmark-exchange probe finished (closes the launch entry above)
+
+All runs completed and exited 0 (`EXCHANGE ALL DONE official=0 r32=0 pi05=0`, `~/logs/exchange.log`).
+
+- **Phase A** (2026-10-12 08:47 → 09:43 UTC): official OpenVLA on GPUs 0,1 and ours r32 on GPUs 2,3, 200 rollouts
+  each. **Phase B** (09:43 → 09:51 UTC): pi05_libero, four policy servers, 200 rollouts, one task per shard.
+  Both smoke checks passed (all outcome fields present). The `EGLError` tracebacks mid-run noted in earlier
+  entries appear here too; every task completed 50/50.
+- **Headline:** the described bowl is delivered in **0 of 600** rollouts; the bowl at the sentence's trained
+  coordinate is approached first in 585, lifted first in 561 and delivered in 502 (official 163, ours 151,
+  pi05 188 of 200). Detail and the reading against the pre-registered readings:
+  `benchmark_split_result.md` §14.
+- **Results:** `berkeley:~/vla_ws_e/openvla/experiments/logs/results/libero_spatial_landmark_exchange--default--*--exchange*`.
+  Copied to `~/vla_results_backup/landmark_exchange_2026-10-12/` with `SHA256SUMS`. Not synced to the HF
+  mirror (the script did not run the sync on purpose; the cron sync covers `~/vla_ws`, not `~/vla_ws_e`).
+  The run metadata records `openvla_git_commit: null` (same worktree limitation as batch E); the code was
+  openvla `1e8544e` plus the registry entry, committed as `40b0d66`.
+
+**Status:** done; closes the entry above. **Exploratory: not part of the official data** (author's decision
+2026-10-12; see `benchmark_split_result.md` §14 for why and what promotion needs).
+
+---
+
 ## 2026-10-12 → 2026-10-13 — Public LIBERO-finetuned checkpoints on the whole benchmark (pi0, OpenVLA-OFT, VLA-Adapter ×2, X-VLA, GR00T N1.5)
 
 - **Why:** the benchmark so far covered one LoRA checkpoint, the official OpenVLA checkpoint, `pi05_libero` and
