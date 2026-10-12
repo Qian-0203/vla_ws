@@ -54,6 +54,7 @@ Applies to every condition below unless a section says otherwise.
 | Cross-model reference: official OpenVLA checkpoint (§10) | Same registry and code path as the reference; only `CHECKPOINT` differs | All 22 conditions run 2026-10-05 → 2026-10-07 (8,300 rollouts). Against our checkpoint: r = 0.980, mean absolute difference 4.0 pts, 20 of 22 within 7 pts. `spatial/default` 84.0% for both |
 | Language-stress screening (§12, not a `SPLITS` entry) | `screening/language_stress/` + `run_libero_eval.py --instruction_file` | 2026-10-10, 5 trials/task, three batches, 14 candidates. Every negation/exclusion wording collapses both families (official OpenVLA 0–8%, pi05_libero 0–46%); `negation_swap` is 0% for both. `translate_zh` / `code_switch` separate them (OpenVLA 0–4%, pi05 78–80%). `negation_only` promoted to `spatial/negation_only` and run in full for OpenVLA (2.6%) and pi05 (44.8%). Batch D (2026-10-10/11): OpenVLA `target_swap` 52–54%, `no_location` 10–20% (pi05 60% / 82%) |
 | Full `target_swap` / `no_location` runs (§12 batch E, not `SPLITS` entries) | Same candidate JSONs as the screens, 50 trials/task | pi05_libero done 2026-10-10: `target_swap` 56.8%, `no_location` 81.4% (1,000 rollouts). Both OpenVLA checkpoints done 2026-10-11 with per-rollout outcome logging (openvla `1e8544e`): `target_swap` 57.2% official / 62.0% ours, `no_location` 17.6% / 11.8% (2,000 rollouts); 79–83% of `no_location` failures approach neither bowl |
+| Full `target_swap` / `no_location` on six more checkpoints (§12 batch F, not `SPLITS` entries) | Same candidate JSONs (sha256 checked on both servers), 50 trials/task, which-bowl logging, horizon 220 | Done 2026-10-12 UTC (6,000 rollouts): `target_swap` pi0 68.2%, OFT 37.4%, VLA-Adapter 36.4%, VLA-Adapter-Pro 51.2%, X-VLA 32.2%, GR00T N1.5 40.8%; `no_location` 51.2 / 66.0 / 30.2 / 63.0 / 59.6 / 65.8%. Under `target_swap` all six deliver the trained, unnamed bowl in 69–207 of 500 rollouts (OpenVLA 8–11); on pi05's blind tasks 0, 2, 4, 8 every model but pi0 scores 0–7% |
 | Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% |
 | Mechanistic Localization Probe (not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`) | Run 2026-09-04 → 2026-09-10 on task 5. Real, n=50-replicated early-window vision-attention/resolution-layer effects for `target_cue_landmark`; no layer/module localized; confidence diagnostic null. Full record: `mechanistic_localization.md` |
 
@@ -2350,3 +2351,78 @@ i.e. the other bowl under `target_swap` and the trained target under `no_locatio
 Results: `results/libero_spatial--target_swap--{openvla-official-libero-spatial,openvla-7b-libero-spatial-lora-r32}--shard{0,1}of2.jsonl`
 (`berkeley:~/vla_ws_e`) and `results/libero_spatial--no_location--{…}--shard{0..3}of4.jsonl`
 (`berkeley-2:~/vla_ws_e`); all in the HF mirror.
+
+**Batch F: `target_swap` and `no_location` on six more checkpoints** (2026-10-12 16:22 → 17:14 UTC; launch
+details: `eval_log.md` batch F). Same candidate JSONs as batches D and E (sha256 `3cccd982…` / `5df13c4f…`,
+checked on both servers before launch), run exactly as for the earlier checkpoints:
+`--task_suite_name libero_spatial --unnorm_key libero_spatial --instruction_file …`, seed 7, 50 trials/task, all
+10 tasks, which-bowl logging on every rollout, horizon 220 for every model (X-VLA too, not its own 800; no success
+needs more than 230 steps). Each model keeps the protocol of its own full benchmark run: pi0 5-action chunks;
+OpenVLA-OFT 8-action chunks with the authors' transformers fork; VLA-Adapter 8-action chunks; X-VLA absolute poses,
+30 actions per query; GR00T N1.5 a query every step, SDPA attention. openvla `77e1579`, LIBERO `63b26c5`. The
+conditions stay outside `SPLITS` (as for batch E): `swap_target` is read only from an instruction file, and
+`run_libero_eval.py` forbids a registry condition with a screening condition's name.
+
+Per task, successes out of 50 (pi0 / OFT / VLA-Adapter / VLA-Adapter-Pro / X-VLA / GR00T N1.5), pi05 for reference:
+
+| id | Class (pi05 blind-task table) | `target_swap` | pi05 | `no_location` | pi05 |
+|--:|---|--:|--:|--:|--:|
+| 0 | blind | 16 / 0 / 0 / 0 / 0 / 5 | 0 | 47 / 50 / 40 / 49 / 49 / 36 | 50 |
+| 2 | blind | 16 / 3 / 5 / 7 / 0 / 7 | 2 | 47 / 49 / 1 / 49 / 47 / 45 | 50 |
+| 4 | blind | 15 / 0 / 0 / 0 / 0 / 1 | 0 | 15 / 0 / 0 / 42 / 23 / 43 | 38 |
+| 8 | blind | 29 / 0 / 0 / 1 / 0 / 1 | 9 | 39 / 43 / 28 / 41 / 48 / 35 | 50 |
+| 1 | following | 48 / 0 / 44 / 50 / 48 / 25 | 48 | 9 / 46 / 41 / 0 / 14 / 37 | 40 |
+| 3 | following | 27 / 0 / 0 / 0 / 1 / 5 | 30 | 36 / 47 / 0 / 44 / 42 / 29 | 47 |
+| 5 | following | 47 / 39 / 48 / 50 / 0 / 27 | 50 | 28 / 42 / 22 / 20 / 31 / 38 | 45 |
+| 6 | following | 49 / 47 / 30 / 50 / 24 / 38 | 48 | 14 / 21 / 0 / 22 / 29 / 41 | 49 |
+| 7 | following, shared layout | 45 / 49 / 8 / 49 / 39 / 48 | 48 | 21 / 32 / 19 / 0 / 15 / 2 | 18 |
+| 9 | following, shared layout | 49 / 49 / 47 / 49 / 49 / 47 | 49 | 0 / 0 / 0 / 48 / 0 / 23 | 20 |
+| **Overall** | | **68.2 / 37.4 / 36.4 / 51.2 / 32.2 / 40.8%** | 56.8% | **51.2 / 66.0 / 30.2 / 63.0 / 59.6 / 65.8%** | 81.4% |
+
+Which bowl ended on the plate (counts out of 500). Under `target_swap` the "named" bowl is the swapped one the run
+scores on and "trained" is the task's original target; under `no_location` "named" is the original target. No
+rollout put both bowls on the plate. "Neither delivered" is split by the first bowl lifted, else the first bowl
+approached (within 8 cm, the §8.5 rule):
+
+| Condition | Model | Named delivered (= success) | Other delivered | Neither delivered | lifted named / lifted other / approached named / approached other / approached neither |
+|---|---|--:|--:|--:|---|
+| `target_swap` | pi0 | 341 | 69 | 90 | 20 / 30 / 2 / 22 / 16 |
+| `target_swap` | OpenVLA-OFT | 187 | **207** | 106 | 5 / 16 / 2 / 12 / 71 |
+| `target_swap` | VLA-Adapter | 182 | 115 | 203 | 8 / 28 / 6 / 49 / 112 |
+| `target_swap` | VLA-Adapter-Pro | 256 | 176 | 68 | 6 / 22 / 10 / 24 / 6 |
+| `target_swap` | X-VLA | 161 | **200** | 139 | 7 / 32 / 10 / 25 / 65 |
+| `target_swap` | GR00T N1.5 | 204 | 152 | 144 | 27 / 34 / 9 / 17 / 57 |
+| `no_location` | pi0 | 256 | 33 | 211 | 52 / 19 / 14 / 2 / 124 |
+| `no_location` | OpenVLA-OFT | 330 | 51 | 119 | 9 / 8 / 7 / 6 / 89 |
+| `no_location` | VLA-Adapter | 151 | 30 | 319 | 18 / 9 / 50 / 6 / 236 |
+| `no_location` | VLA-Adapter-Pro | 315 | 76 | 109 | 17 / 7 / 23 / 0 / 62 |
+| `no_location` | X-VLA | 298 | 16 | 186 | 64 / 6 / 46 / 17 / 53 |
+| `no_location` | GR00T N1.5 | 329 | 27 | 144 | 30 / 14 / 13 / 3 / 84 |
+
+For comparison (batch E): OpenVLA delivers the other bowl in 11 / 8 of 500 `target_swap` rollouts and 5 / 7 of
+500 `no_location` rollouts (official / ours).
+
+**Reading (batch F).**
+
+1. **The five newer policies are layout-driven on pi05's blind tasks, more strongly than pi05.** On tasks 0, 2,
+   4, 8 `target_swap` is 0–7% for OFT, both VLA-Adapters, X-VLA and GR00T (3, 5, 8, 0, 14 of 200), and each of
+   them still delivers the target on tasks 0, 2 and 8 without the location phrase (`no_location` 28–50 of 50,
+   except VLA-Adapter task 2 at 1). Told to fetch the other bowl, OFT and X-VLA deliver the trained bowl in 207 and 200 of 500 rollouts (OpenVLA 8–11).
+2. **pi0 is the exception among the new models.** It is the only one with at least 15 of 50 on every blind task
+   (15–29) and the best overall `target_swap` (68.2%, above pi05's 56.8%), but it still delivers the trained bowl in
+   69 of 500.
+3. **Task 3 (named bowl on top of the wooden cabinet) is 0–1/50 for OFT, both VLA-Adapters and X-VLA**, while
+   pi0 and pi05 reach 27–30; the cabinet-top difficulty seen for OpenVLA (batch E point 3) is stronger here.
+   Task 9's swap ("on the stove") is 47–49/50 for all six.
+4. **`no_location` sits between pi05 and OpenVLA.** 30–66%, against pi05 81.4% and OpenVLA 12–18%. On the
+   shared-layout pair (tasks 7 and 9, identical scenes) no model solves both: the sum over the pair is 15–48 of
+   100, and VLA-Adapter-Pro is the extreme case: 48 on task 9, and on task 7 it delivers the other bowl in 42 of
+   50 (0 successes), i.e. it goes to one position regardless of which task it is.
+5. **Single seed, 50 trials/task.** A parallel session's duplicate run of pi0 `no_location` tasks 8 and 9
+   (`berkeley-2:~/vla_ws_lang2`, 42 of its 100 rows written after its policy server was gone) agrees on the valid
+   rows (task 8: 26/34 vs 39/50 here) and is not used.
+
+Results: `results/libero_spatial--{target_swap,no_location}--{pi0_libero,vla_adapter_spatial,vla_adapter_pro_spatial}--shard{0..9}of10.jsonl`
+(`berkeley-2:~/vla_ws_lang`) and `…--{oft_libero_spatial,xvla_libero,gr00t_n15_spatial}--shard{0..9}of10.jsonl`
+(`berkeley:~/vla_ws_lang`); HF mirror and laptop copy
+`~/vla_results_backup/libero_ckpt_campaign_2026-10-12/<host>/vla_ws_lang/results`; data package `full_data_v3`.
