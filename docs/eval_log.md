@@ -1556,6 +1556,46 @@ checkpoint had only a 5-trial screen (2.0%); this is its first full `negation_on
 
 ---
 
+## 2026-10-12 UTC (2026-10-13 Taipei) — Batch F: `target_swap` / `no_location` on six more checkpoints
+
+The author made `target_swap` and `no_location` official benchmark conditions and approved GPU time for this batch
+only. Same candidate JSONs as batches D and E (sha256 `3cccd982…` / `5df13c4f…`, checked in every clone on both
+servers before launch), run the same way: `--task_suite_name libero_spatial --unnorm_key libero_spatial
+--instruction_file /workspace/screening/language_stress/candidates/<c>.json`, seed 7, 50 trials/task, 10 tasks,
+which-bowl logging. Not registry splits (see `benchmark_split_result.md` §12 batch F for why).
+
+- **Code:** clean clones `~/vla_ws_lang` on both servers (vla_ws `eaf8f0d` + the `--instruction-file` job
+  generator and `INSTRUCTION_FILES` / `LOG_DIR` queue options, later committed as `3b30d7b` on
+  `claude/libero-finetuned-ckpt-benchmark-4f7040`; openvla `77e1579`, LIBERO `63b26c5`). One job per (model,
+  condition, task), `scripts/gpu_queue.py`; own `LOG_DIR`s (`~/logs/queue_lang_<note>`) and port bases, next to
+  the GR00T split queue still running on `berkeley-2` (not touched).
+- **`berkeley`** (`~/launch_lang.sh`, ends `LANG BERKELEY DONE`): X-VLA (note `xvla_libero`, 4 slots, ports
+  8730+, `MAX_STEPS=0` = horizon 220) 16:22 → 16:57; OpenVLA-OFT (`oft_libero_spatial`, image
+  `openvla-libero:oft`, 4 slots) 16:23 → 17:10; GR00T N1.5 (`gr00t_n15_spatial`, 8 slots, ports 8740+, started
+  once this host's `GR00T HALF DONE` was logged) 16:23 → 17:14. All 60 jobs ok.
+- **`berkeley-2`** (`~/launch_lang.sh`, ends `LANG BERKELEY-2 DONE`): pi0 (`pi0_libero`, 4 openpi servers, ports
+  8700+) 16:22 → 17:03; VLA-Adapter (`vla_adapter_spatial`, ports 8710+) and VLA-Adapter-Pro
+  (`vla_adapter_pro_spatial`, ports 8720+), 4 slots each, done by 16:59. All 60 jobs ok. The pi0 run metadata
+  shows `pretrained_checkpoint: …/pi05_libero`: run_eval.sh's default openpi label (the pi0 full run has it too);
+  the servers ran `--policy.config pi0_libero`.
+- **A concurrent session launched the same batch** on `berkeley-2` at 16:58 (`~/launch_lang_b2.sh`, clone
+  `~/vla_ws_lang2`, same `LOG_DIR`s). Its queues found this batch's `.done` markers and skipped every job except
+  pi0 `no_location` tasks 8 and 9, which were still running here; its copies (42 of 100 rows written after its
+  server was gone, `num_steps <= 10`) are not used. Its rewrite of `~/logs/lang_va*.log` replaced this batch's VA
+  queue logs; the per-job logs in `~/logs/queue_lang_vla_adapter*/` are intact.
+- **Checks:** 12 cells x 500 rollouts, no repeated (task, episode), every row has the which-bowl fields, no success
+  after step 230.
+- **Headline:** `target_swap` pi0 68.2%, OFT 37.4%, VLA-Adapter 36.4%, Pro 51.2%, X-VLA 32.2%, GR00T 40.8%;
+  `no_location` 51.2 / 66.0 / 30.2 / 63.0 / 59.6 / 65.8%. The trained, unnamed bowl is delivered in 69–207 of 500
+  `target_swap` rollouts (OpenVLA 8–11). Detail: `benchmark_split_result.md` §12 batch F.
+- **Results:** `~/vla_ws_lang/openvla/experiments/logs/results/` on each server (HF mirror via
+  `~/sync_extra_workspaces.sh`, which now includes `vla_ws_lang`); laptop copy
+  `~/vla_results_backup/libero_ckpt_campaign_2026-10-12/<host>/vla_ws_lang/results`. Data package
+  `full_data_v3` (same builder and `--max-steps 230` as v1; excludes `vla_ws_lang2`; identical numbers to the
+  concurrent session's `full_data_v2` except that v2 flags pi0 `no_location` for the duplicate rows).
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 `grounding/target_cue_region_img`, `_v2_img`, `_v3_img` (authored 2026-10-11, Erratum E1; 400 rollouts each,
