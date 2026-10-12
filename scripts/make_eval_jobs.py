@@ -44,6 +44,7 @@ def main() -> int:
     ap.add_argument("--checkpoint", required=True)
     ap.add_argument("--splits", default="", help="comma list; default = run_benchmark.sh DEFAULT_SPLITS")
     ap.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]))
+    ap.add_argument("--task-ids", default="", help="comma list; keep only these task ids (smoke tests)")
     ap.add_argument("--trials", type=int, default=50)
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--image", default="openvla-libero:blackwell")
@@ -83,6 +84,9 @@ def main() -> int:
         suite = SPLITS[split][0]
         n = sizes[suite]
         wanted = [int(t) for t in subset[split].split(",")] if split in subset else list(range(n))
+        if args.task_ids:
+            only = {int(t) for t in args.task_ids.split(",")}
+            wanted = [t for t in wanted if t in only]
         for tid in wanted:
             if tid >= n:
                 sys.exit(f"{split}: task id {tid} outside suite {suite} (n={n})")
