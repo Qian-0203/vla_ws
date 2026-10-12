@@ -29,8 +29,8 @@ ACTION_KEYS = ("x", "y", "z", "roll", "pitch", "yaw", "gripper")
 
 
 def _force_sdpa() -> None:
-    """The Eagle backbone's config asks for flash-attention-2, which has no build for Blackwell; use SDPA.
-    Numerically the same attention, different kernel."""
+    """The Eagle backbone asks for flash-attention-2 (in its config, and hard-coded for the SigLIP tower), which has
+    no build for Blackwell; use SDPA. Numerically the same attention, different kernel."""
     import transformers
 
     original = transformers.AutoConfig.from_pretrained.__func__
@@ -46,6 +46,18 @@ def _force_sdpa() -> None:
         return cfg
 
     transformers.AutoConfig.from_pretrained = classmethod(patched)
+
+    # The Eagle model code hard-codes the SigLIP vision tower to flash-attention-2 right before building it
+    # (modeling_eagle2_5_vl.py: config.vision_config._attn_implementation = "flash_attention_2").
+    from transformers.models.siglip import modeling_siglip
+
+    siglip_init = modeling_siglip.SiglipVisionModel.__init__
+
+    def init_sdpa(self, config, *args, **kwargs):
+        config._attn_implementation = "sdpa"
+        siglip_init(self, config, *args, **kwargs)
+
+    modeling_siglip.SiglipVisionModel.__init__ = init_sdpa
 
 
 def build(model_path: str, data_config: str, embodiment_tag: str, denoising_steps: int):
