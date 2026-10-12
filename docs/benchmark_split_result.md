@@ -54,7 +54,7 @@ Applies to every condition below unless a section says otherwise.
 | Cross-model reference: official OpenVLA checkpoint (§10) | Same registry and code path as the reference; only `CHECKPOINT` differs | All 22 conditions run 2026-10-05 → 2026-10-07 (8,300 rollouts). Against our checkpoint: r = 0.980, mean absolute difference 4.0 pts, 20 of 22 within 7 pts. `spatial/default` 84.0% for both |
 | Language-stress screening (§12, not a `SPLITS` entry) | `screening/language_stress/` + `run_libero_eval.py --instruction_file` | 2026-10-10, 5 trials/task, three batches, 14 candidates. Every negation/exclusion wording collapses both families (official OpenVLA 0–8%, pi05_libero 0–46%); `negation_swap` is 0% for both. `translate_zh` / `code_switch` separate them (OpenVLA 0–4%, pi05 78–80%). `negation_only` promoted to `spatial/negation_only` and run in full for OpenVLA (2.6%) and pi05 (44.8%). Batch D (2026-10-10/11): OpenVLA `target_swap` 52–54%, `no_location` 10–20% (pi05 60% / 82%) |
 | Full `target_swap` / `no_location` runs (§12 batch E, not `SPLITS` entries) | Same candidate JSONs as the screens, 50 trials/task | pi05_libero done 2026-10-10: `target_swap` 56.8%, `no_location` 81.4% (1,000 rollouts). Both OpenVLA checkpoints done 2026-10-11 with per-rollout outcome logging (openvla `1e8544e`): `target_swap` 57.2% official / 62.0% ours, `no_location` 17.6% / 11.8% (2,000 rollouts); 79–83% of `no_location` failures approach neither bowl |
-| Landmark-exchange probe (`grounding/landmark_exchange`, plan Split 5; no results section yet) | Cookie box and ramekin swap places, native sentences; 4 tasks (libero_spatial ids 1, 3, 5, 6), 50 trials/task, seed 7, with which-bowl logging | **Running** (launched 2026-10-12 on `berkeley`: official OpenVLA, ours r32, pi05_libero; 200 rollouts each). Scene check done (verify PASS, render eyeballed); readings pre-registered in the plan before any rollout was read. Results are added here when the run finishes |
+| **Exploratory, not part of the official data** (author's decision 2026-10-12): landmark-exchange probe (`grounding/landmark_exchange`, plan Split 5; §13) | Cookie box and ramekin swap places, native sentences; 4 tasks (libero_spatial ids 1, 3, 5, 6), 50 trials/task, seed 7, with which-bowl logging | Run 2026-10-12 on `berkeley` (official OpenVLA, ours r32, pi05_libero; 600 rollouts). **The described bowl is delivered in 0 of 600.** The bowl at the sentence's trained coordinate is approached first in 585, lifted first in 561 and delivered in 502 (official 163/200, ours 151/200, pi05 188/200), on both layouts |
 | Cross-model reference: QwenVLA (§11) | Runs through the same registry via `--model_family qwenvla` (`scripts/run_eval_qwenvla.sh`, host conda env) | All 22 current conditions + `center_fixed_legacy` run by Ken Zheng (2026-09-30 A100, 2026-10-05 H200; 8,800 rollouts). `spatial/default` 79.8%; distractor mention / negation 54.8 / 37.2%; length controls 74.8–76.2%; region cue 17–21% |
 | Mechanistic Localization Probe (not a `SPLITS` entry) | Script implemented (`probe_mechanistic_localization.py`) | Run 2026-09-04 → 2026-09-10 on task 5. Real, n=50-replicated early-window vision-attention/resolution-layer effects for `target_cue_landmark`; no layer/module localized; confidence diagnostic null. Full record: `mechanistic_localization.md` |
 
@@ -2351,3 +2351,107 @@ i.e. the other bowl under `target_swap` and the trained target under `no_locatio
 Results: `results/libero_spatial--target_swap--{openvla-official-libero-spatial,openvla-7b-libero-spatial-lora-r32}--shard{0,1}of2.jsonl`
 (`berkeley:~/vla_ws_e`) and `results/libero_spatial--no_location--{…}--shard{0..3}of4.jsonl`
 (`berkeley-2:~/vla_ws_e`); all in the HF mirror.
+
+
+## 13. Landmark-exchange probe (2026-10-12) — exploratory, not part of the official data
+
+> **Status (author's decision, 2026-10-12): exploratory.** These 600 rollouts are recorded here so they are
+> not lost, and they are **not** counted anywhere else: not in the §6 findings, the status totals, the
+> README or `run_benchmark.sh`, and not in the evidence base of the paper. Reasons for holding them back:
+> one landmark exchange, four tasks, one seed; scene, readings and analysis were authored, run and read in
+> one session; the scene has had no independent validity check. Raw files live outside the verified raw data
+> library (`~/vla_results_backup/landmark_exchange_2026-10-12/`). Promotion needs the author's explicit
+> decision; the checks that would make it defensible are listed at the end of this section.
+
+
+**Question.** Does a sentence select the bowl it describes in the *current* scene, or the bowl at the
+coordinate the sentence was trained on? Every earlier split leaves the described bowl at that coordinate,
+and all ten `target_swap` sentences reuse another task's training sentence and its trained coordinate (§12
+batch E), so none of them could tell. Design and pre-registered readings: `benchmark_split_plan.md` Split 5.
+
+**Setting.** Suite `libero_spatial_landmark_exchange`, split `grounding/landmark_exchange`. The cookie box
+and the ramekin swap places in every scene (cookie box → `ramekin_region`, ramekin → `box_region`); the
+sentence is each task's original `libero_spatial` sentence, unchanged. `bowl_1` is the bowl the sentence now
+describes (goal `On(bowl_1, plate)`); `bowl_2` is at, or on the landmark at, the coordinate the sentence was
+trained on. Tasks: 0 "next to the ramekin" (libero_spatial id 1), 1 "on the cookie box" (3), 2 "on the
+ramekin" (5), 3 "next to the cookie box" (6). Layout `S_next` (tasks 0, 3): both bowls on the table, one
+beside each exchanged landmark. Layout `S_on` (tasks 1, 2): each bowl rests on a moved landmark. Tasks 0/3 and
+1/2 share a layout and differ only in the sentence. 50 trials/task, seed 7, openvla `1e8544e`,
+`openvla-libero:blackwell` / sdpa / bf16, `berkeley` GPUs 0–3. Scene check: `verify_suite_init_states.py` PASS
+(worst bowl separation 0.289 m); contact sheet re-rendered with the settle step and eyeballed (§7 convention).
+All 600 rows carry the outcome fields; no duplicate (task, episode) keys.
+
+**Results** (counts out of 50 per task; "trained-coordinate bowl" is `bowl_2`; default = the same checkpoint on
+the original task, same 50 init states):
+
+| Model | Task | Described bowl delivered | Trained-coordinate bowl delivered | Lifted only (trained / described) | No grasp | First approached: trained / described / neither | Default SR (original task) |
+|---|---|--:|--:|--:|--:|--:|--:|
+| official | 0 next to the ramekin | 0 | 44 | 6 / 0 | 0 | 50 / 0 / 0 | 48/50 |
+| official | 1 on the cookie box | 0 | 44 | 4 / 0 | 2 | 50 / 0 / 0 | 48/50 |
+| official | 2 on the ramekin | 0 | 44 | 4 / 1 | 1 | 49 / 0 / 1 | 45/50 |
+| official | 3 next to the cookie box | 0 | 31 | 6 / 0 | 13 | 44 / 0 / 6 | 44/50 |
+| ours r32 | 0 | 0 | 36 | 14 / 0 | 0 | 50 / 0 / 0 | 40/50 |
+| ours r32 | 1 | 0 | 43 | 7 / 0 | 0 | 50 / 0 / 0 | 44/50 |
+| ours r32 | 2 | 0 | 39 | 8 / 0 | 3 | 50 / 0 / 0 | 46/50 |
+| ours r32 | 3 | 0 | 33 | 1 / 0 | 16 | 45 / 0 / 5 | 48/50 |
+| pi05 | 0 | 0 | 48 | 2 / 0 | 0 | 50 / 0 / 0 | 50/50 |
+| pi05 | 1 | 0 | 44 | 6 / 0 | 0 | 50 / 0 / 0 | 49/50 |
+| pi05 | 2 | 0 | 50 | 0 / 0 | 0 | 50 / 0 / 0 | 49/50 |
+| pi05 | 3 | 0 | 46 | 1 / 0 | 3 | 47 / 0 / 3 | 49/50 |
+| **all** | | **0 / 600** | **502** (163 / 151 / 188) | 59 / 1 | 38 | **585** / 0 / 15 | |
+
+Per model (200 rollouts each): the trained-coordinate bowl is approached first in 193 / 195 / 197
+(official / ours / pi05), lifted first in 183 / 181 / 197, delivered in 163 / 151 / 188. The described bowl is
+never approached first; it comes within 8 cm at any time in 0 / 8 / 22 rollouts. Median closest approach: 0.25 m
+to the described bowl, 0.05 m to the trained-coordinate bowl. The 15 "neither" rollouts are the only ones that do
+not go to the trained coordinate first.
+
+**Pairs on a shared layout.** Which physical bowl is delivered flips with the sentence, and in both layouts it is
+the bowl at the sentence's trained coordinate, not the bowl beside / on the named landmark:
+
+| Layout | Sentence | Delivered bowl (official / ours / pi05, of 50) |
+|---|---|---|
+| `S_next` | "next to the ramekin" | cookie-box-side bowl 44 / 36 / 48 |
+| `S_next` | "next to the cookie box" | ramekin-side bowl 31 / 33 / 46 |
+| `S_on` | "on the cookie box" | bowl on the ramekin 44 / 43 / 44 |
+| `S_on` | "on the ramekin" | bowl on the cookie box 44 / 39 / 50 |
+
+Both pair success sums are 0 / 100 for every model.
+
+**Reading against the pre-registered readings** (written before any rollout of this split was read):
+
+1. **Grounds the sentence in the scene (≥70% described bowl on every task): not observed.** 0 of 600.
+2. **Sentence → trained coordinate: observed for all three models, on both layouts.** Described bowl 0%; the
+   other bowl is approached first in 97.5% of rollouts (585/600), lifted first in 561 and delivered in 502 (83.7%).
+3. **Scene decides, sentence ignored: not observed.** Under the two sentences of one layout the delivered bowl
+   flips, so the sentence is used. It selects a location, not the object it names.
+4. **Does not act: not the main outcome.** 15 of 600 approach neither bowl; the largest no-grasp counts are
+   13 and 16 on task 3 (official, ours), where the trained-coordinate bowl is still approached first in 44 and 45.
+
+**What this changes.** The three policies differ elsewhere in the benchmark (pi05 falls back on the layout
+without a sentence, OpenVLA does not start; pi05 follows the sentence on six tasks and not on four). Here
+they do the same thing, so the difference is not "reads the scene" versus "reads the sentence". It is what
+each does when the two disagree *at a trained location*. This is also the reading of `target_swap` that §12
+batch E could not rule out: a swap success on a task where pi05 "follows the sentence" (e.g. 48/50 and 50/50 on
+tasks 7 and 9) is compatible with the sentence selecting its trained location, and this probe shows that
+selection is what all three do when the named landmark moves.
+
+**Limits.** One exchange (ramekin ↔ cookie box), two layouts, four tasks, one seed, hand-built scenes. A
+policy that grounds but is thrown by an out-of-distribution scene would have to fail by going somewhere
+other than the trained coordinate in 97.5% of rollouts, which is not the stall pattern seen elsewhere (§8.5,
+§12 batch E); the probe still cannot say *why* the trained location is preferred (instruction-conditioned
+trajectory, appearance of the trained region, or both predict this). "No grasp" and "neither approached" are
+about bowls only: the outcome fields do not log the distance to the trained coordinate itself. The stove ↔
+cabinet exchange (tasks 7/9) was not built (yaw region, §Split 5). `libero_spatial_landmark_exchange` is
+not in `run_benchmark.sh` or the README table: it has no external reference number yet.
+
+**What would promote it to official data (not done).** (i) A second seed or an independently re-sampled set of
+init states for the same four tasks; (ii) a second exchange (stove ↔ cabinet, tasks 7/9, with a yaw-aware
+region) so the result is not one pair of landmarks; (iii) an independent check of the two scenes against the
+sentences (truth and uniqueness, as `benchmark_split_plan.md` §9 does for the proximity wording); (iv) a logged
+distance to the trained coordinate, so "approached neither bowl" can be read.
+
+Results: `results/libero_spatial_landmark_exchange--default--{openvla-official-libero-spatial,openvla-7b-libero-spatial-lora-r32}--exchange--shard{0,1}of2.jsonl`
+and `…--pi05_libero--exchange--shard{0..3}of4.jsonl` (`berkeley:~/vla_ws_e`; local copy with SHA256SUMS in
+`~/vla_results_backup/landmark_exchange_2026-10-12/`, not synced to the HF mirror). Analysis scripts are
+re-derivable from `aggregate_results.py --outcomes` plus the per-bowl fields.

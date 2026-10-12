@@ -30,7 +30,7 @@ in success rate can be attributed to a specific capability gap rather than confo
 | 2. Distractor Placement | Does *where* an extra distractor sits matter more than its presence? | 3/4 conditions implemented (`path` not authored); `irrelevant` and `semantic` each redefined a second time (see Split 2 below) -- both current suites run 2026-08-27, 85.2% each |
 | 3. Scene Complexity | Does added clutter (open drawer) degrade the policy, or just block the arm? | Implemented |
 | 4. Surface vs. Landmark Grounding | Does the policy rely on landmark proximity vs. surface/region cues? | 4a: cells implemented (4/6 reuse existing data, 2/6 new scenes); 4b: implemented as a target-cue-type probe (`grounding/target_cue_region`, `grounding/target_cue_landmark`); 4c: `grounding/target_cue_proximity_novel`. All run. 4b/4c paraphrase controls (7 conditions) authored and run 2026-10-01 (`benchmark_split_result.md` §5.5) |
-| 5. Landmark Exchange | Does the policy deliver the bowl the sentence describes in the *current* scene, or the bowl at the coordinate the sentence was trained on? | Implemented (`grounding/landmark_exchange`, authored and pre-registered 2026-10-12) |
+| 5. Landmark Exchange | Does the policy deliver the bowl the sentence describes in the *current* scene, or the bowl at the coordinate the sentence was trained on? | Implemented and run 2026-10-12 as an **exploratory probe, not part of the official data** (`grounding/landmark_exchange`; `benchmark_split_result.md` §13) |
 | VLM Bowl-Pointing / Bowl-Attraction Probes (§11, not a `SPLITS` entry) | Is the distractor-mention collapse (Splits 1/2) a grounding failure or an action-decoding failure? | Standalone diagnostic scripts, run directly — not registered in `eval_registry.py`. Both probes run to completion on their respective batteries; open gaps listed in §11.3 |
 
 "Implemented" = task suite + prompts exist in the registry and can be run with one `run_eval.sh`
@@ -514,6 +514,9 @@ next use of engineering time unless the target-cue-only results above turn out t
 follow-up.
 
 ### Split 5 — Landmark Exchange Probe (authored and pre-registered 2026-10-12)
+
+> **Status: exploratory (author's decision 2026-10-12).** Run once; excluded from the official data and
+> from the paper's evidence base until promoted (conditions at the end of `benchmark_split_result.md` §13).
 
 | Field | Description |
 |---|---|
