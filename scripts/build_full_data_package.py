@@ -41,6 +41,8 @@ MODELS = {
     "vla_adapter_pro_spatial": "VLA-Adapter (Spatial-Pro)",
     "xvla_libero": "X-VLA (Libero)",
     "gr00t_n15_spatial": "GR00T N1.5 (spatial)",
+    "oft_m_libero": "OpenVLA-OFT (4-suite)",
+    "xr0_libero": "Xiaomi-Robotics-0 (Libero)",
 }
 MODEL_ORDER = list(MODELS.values())
 CANON = {

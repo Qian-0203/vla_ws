@@ -1660,11 +1660,48 @@ which-bowl logging. Not registry splits (see `benchmark_split_result.md` §12 ba
 
 ---
 
+## 2026-10-12 → 2026-10-13 UTC (recorded 2026-10-14) — Batch G: OpenVLA-OFT 4-suite and Xiaomi-Robotics-0 on the whole benchmark
+
+- **Recorded late:** the runs finished 2026-10-13 ~02:10 UTC; this entry and `benchmark_split_result.md` §15 were
+  written 2026-10-14 from the raw JSONL and run metadata (pulled to the laptop that day).
+- **Why:** two more public LIBERO checkpoints chosen by the author: an OpenVLA-OFT checkpoint trained on all four
+  LIBERO suites (same architecture and client as the spatial-only OFT of the 2026-10-12 batch, so the pair isolates
+  training data), and Xiaomi-Robotics-0. Approved as smoke → gate → full without stops.
+- **Machine:** `berkeley-2` only (4× RTX PRO 6000 Blackwell; torch 2.7.1+cu128 in the eval container). Jobs =
+  (split, task) via `scripts/make_eval_jobs.py` + `scripts/gpu_queue.py`, 186 jobs per checkpoint (22 non-gate
+  splits + the two instruction files + the gate splits).
+
+  | Run note | Checkpoint | Stack / image | Gate `default` | Window (UTC) | Clone |
+  |---|---|---|--:|---|---|
+  | `oft_m_libero` | `moojink/openvla-7b-oft-finetuned-libero-spatial-object-goal-10` | `openvla_oft` family, `openvla-libero:oft`, `unnorm_key libero_spatial_no_noops` | 97.4% (487/500) | 10-12 21:23 → 10-13 02:03 (smoke, gate, full) | `~/vla_ws_oftm` |
+  | `xr0_libero` | `XiaomiRobotics/Xiaomi-Robotics-0-LIBERO` (`~/xr0_ckpt`) | `openpi` family `--policy_obs raw --replan_steps 10`; server `serve_xr0.py`, image `openvla-libero:xr0` (built 10-12 21:16), ports 8800+ | 98.8% (494/500) | 10-12 21:25 → 10-13 01:18 | `~/vla_ws_xr0` |
+
+  Gate also ran the exploratory `grounding/landmark_exchange` (described bowl delivered 31/200 OFT 4-suite, 0/200
+  Xiaomi-R0); not tabulated, as in the 2026-10-12 batch. Smoke runs (notes `*_smoke`, 8 rollouts each) are not
+  counted. Launchers `~/launch_xr0_oftm.sh` / `~/launch_xr0_only.sh`; logs `~/logs/{xr0,oftm}_pipeline_*.log`,
+  queues `~/logs/queue_{xr0,oftm}_{smoke,gate,full}_*`.
+- **Code:** both clones at vla_ws `eaf8f0d` plus the `--instruction-file` job generator (later `3b30d7b`) and the
+  three Xiaomi-R0 files, which stayed uncommitted until 2026-10-14 (`9e05cd3`, branch
+  `claude/libero-model-evaluation-99b8f4`, PR Qian-0203/vla_ws#7; md5-identical to the clone's copies); openvla
+  `77e1579`, LIBERO `63b26c5`.
+- **Checks:** 9,800 reported rollouts per checkpoint (+200 exchange, +8 smoke), no repeated (task, episode), no
+  lost-server rows, no success after step 230. The 2026-10-13 result tables rebuild byte-identically with the
+  updated builder; the 2026-10-14 tables add only these two checkpoints.
+- **Headline:** `default` 97.4 / 98.8%; `negation_only` 72.6 / 35.8%; `drawer_open` 13.6 / 64.2%; `target_swap`
+  21.8 / 38.6%; `no_location` 84.4 / 76.8% (OFT 4-suite / Xiaomi-R0). Detail: `benchmark_split_result.md` §15.
+- **Results:** `berkeley-2:~/vla_ws_{oftm,xr0}/openvla/experiments/logs/results/`; laptop copy
+  `~/vla_results_backup/libero_ckpt_campaign_2026-10-12/berkeley-2/vla_ws_{oftm,xr0}/results/`; tables
+  `docs/result_tables/*_2026-10-14.*`.
+
+**Status:** done; 20,016 rollouts (2 checkpoints × 10,008).
+
+---
+
 ## Still queued (registry-ready, not yet launched)
 
 `grounding/target_cue_region_img`, `_v2_img`, `_v3_img` (authored 2026-10-11, Erratum E1; 400 rollouts each,
 tasks 0,1,3,5–9): corrected image-frame region cue; not run on the OpenVLA, pi05 or QwenVLA
-checkpoints (run on six other public checkpoints 2026-10-12 → 2026-10-13, entry above).
+checkpoints (run on eight other public checkpoints 2026-10-12 → 2026-10-13, entries above).
 
 `spatial/negation_only` (authored 2026-10-10): run for our OpenVLA checkpoint, the official OpenVLA
 checkpoint (full, 2026-10-11, with which-bowl logging) and `pi05_libero`; QwenVLA not yet run (needs
