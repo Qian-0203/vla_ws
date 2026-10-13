@@ -1,0 +1,15 @@
+# Policy-server image for Xiaomi-Robotics-0 (scripts/policy_servers/serve_xr0.py). Not an eval image: no MuJoCo /
+# LIBERO. The model is Hugging Face remote code (Qwen3-VL-4B backbone + flow-matching DiT head) and needs
+# transformers >= 4.57.1; the authors test torch 2.8.0 / transformers 4.57.1 (README of XiaomiRobotics/Xiaomi-Robotics-0).
+# No flash-attn: no Blackwell build; serve_xr0.py loads the model with SDPA.
+FROM pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime
+
+ENV DEBIAN_FRONTEND=noninteractive PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends git libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -m pip install --upgrade pip && python -m pip install \
+    "transformers==4.57.1" "accelerate" "safetensors" "huggingface_hub" "numpy<2" "pillow" "torchvision==0.23.0" \
+    "websockets" "msgpack" \
+    "openpi-client @ git+https://github.com/Physical-Intelligence/openpi.git@215abfb217dbac7d5f1273282331b9b1866c0479#subdirectory=packages/openpi-client"
