@@ -1,14 +1,19 @@
-# Result tables, 2026-10-13
+# Result tables, 2026-10-14
 
-All benchmark conditions for ten checkpoints (our LoRA r32, official OpenVLA, QwenVLA, `pi05_libero`, `pi0_libero`,
-OpenVLA-OFT, VLA-Adapter Spatial and Spatial-Pro, X-VLA, GR00T N1.5), built from the raw results JSONL. Analysis:
-`docs/benchmark_split_result.md` §13; launch record: `docs/eval_log.md` (2026-10-12 → 2026-10-13).
+All benchmark conditions for twelve checkpoints (our LoRA r32, official OpenVLA, QwenVLA, `pi05_libero`, `pi0_libero`,
+OpenVLA-OFT, VLA-Adapter Spatial and Spatial-Pro, X-VLA, GR00T N1.5, and from batch G OpenVLA-OFT 4-suite and
+Xiaomi-Robotics-0), built from the raw results JSONL. Analysis: `docs/benchmark_split_result.md` summary, §13 and §15;
+launch record: `docs/eval_log.md` (2026-10-12 → 2026-10-13, batch G).
+
+The `*_2026-10-14` files are current. The `*_2026-10-13` files are the earlier ten-checkpoint build, kept because
+§13 cites them; every one of their rows is byte-identical in the 2026-10-14 files, which add only the two batch G
+checkpoints.
 
 | file | content |
 |---|---|
-| `full_table_2026-10-13.md` | condition x checkpoint success rate (mean of per-task rates; rollouts in brackets) |
-| `task_condition_sr_2026-10-13.csv` | per checkpoint / condition / task: successes, trials, rate |
-| `outcomes_2026-10-13.csv` | which-bowl classes per checkpoint / condition / task (only runs with outcome logging) |
+| `full_table_2026-10-14.md` | condition x checkpoint success rate (mean of per-task rates; rollouts in brackets) |
+| `task_condition_sr_2026-10-14.csv` | per checkpoint / condition / task: successes, trials, rate |
+| `outcomes_2026-10-14.csv` | which-bowl classes per checkpoint / condition / task (only runs with outcome logging) |
 
 Built by `scripts/build_full_data_package.py`:
 

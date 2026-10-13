@@ -610,9 +610,10 @@ bowl" from "maps the sentence to a trained coordinate". Split 5 was built to sep
 The single reference number everything compares against: `spatial/default` — 2 bowls, default
 prompt, `libero_spatial` scene, 84.0% (420/500), see `benchmark_split_result.md` §2.
 
-**Other checkpoints (added 2026-10-13).** The benchmark has been run on ten checkpoints: our LoRA r32, the
-official `openvla-7b-finetuned-libero-spatial`, QwenVLA, `pi05_libero`, `pi0_libero`, OpenVLA-OFT, VLA-Adapter
-Spatial and Spatial-Pro, X-VLA and GR00T N1.5 (`benchmark_split_result.md` summary, §9–§13). Each checkpoint's
+**Other checkpoints (added 2026-10-13; batch G 2026-10-14).** The benchmark has been run on twelve checkpoints:
+our LoRA r32, the official `openvla-7b-finetuned-libero-spatial`, QwenVLA, `pi05_libero`, `pi0_libero`,
+OpenVLA-OFT, VLA-Adapter Spatial and Spatial-Pro, X-VLA, GR00T N1.5, OpenVLA-OFT 4-suite and Xiaomi-Robotics-0
+(`benchmark_split_result.md` summary, §9–§13, §15). Each checkpoint's
 baseline is its own `spatial/default`; a drop is that checkpoint's `default` minus the condition, computed on the
 same tasks (tasks 3, 5, 7, 9 for the cue-rephrasing conditions, 8 tasks for the region cues). Columns of different
 checkpoints are not compared directly, because their action protocols differ (§8). Split 3's
