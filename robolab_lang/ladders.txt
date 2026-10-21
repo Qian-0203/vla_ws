@@ -1,0 +1,45 @@
+# P4 / P6 candidate rungs, <target>\t<wording>. Draft: rungs are ordered by DROID frequency
+# (droid_vocab.py) before they are frozen as instruction keys. Relation words in the last block.
+mustard	mustard
+mustard	mustard bottle
+mustard	yellow bottle
+mustard	condiment
+mustard	sauce
+mustard	squeeze bottle
+mustard	the yellow thing
+bin	bin
+bin	grey bin
+bin	container
+bin	basket
+bin	box
+bin	tub
+bin	tray
+bin	receptacle
+bowl	bowl
+bowl	dish
+bowl	basin
+cube	cube
+cube	rubik's cube
+cube	puzzle
+cube	block
+relation	on the left
+relation	on the right
+relation	left bin
+relation	right bin
+relation	the other
+relation	closer to
+relation	farther from
+relation	nearest
+relation	next to
+relation	beside
+relation	near
+relation	not
+relation	except
+relation	instead of
+relation	rather than
+relation	alongside
+relation	adjacent to
+relation	leftmost
+relation	to your left
+relation	closest to you
+relation	the left side of
