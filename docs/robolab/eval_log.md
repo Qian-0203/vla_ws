@@ -23,3 +23,13 @@ Feasibility and design only; nothing installed, no GPU used. RoboLab source read
 `robolab_lang/frame_check.py` run on `two_bin`, `bowls_2_table`, `rubiks_cube_banana_bowl`,
 `butter_raisin_box_grey_bin` (CPU, projection only); `robolab_lang/droid_vocab.py` run on RoboLab's
 `analysis/droid_dataset/tasks.jsonl`. Results in `plan.md` §3.1 and §4.3.
+
+### 2026-10-21 — preliminary analysis without simulation; servers unavailable
+
+`berkeley` (34.174.233.202) now presents a different host key and rejects our SSH key; `berkeley-2`
+(34.106.148.66) times out on port 22. Both appear to have been replaced or released, so the approved
+pilot (plan §5.2) did not start. `VMRL-SERVER` was inspected read-only (1× RTX 5080 16 GB shared with a
+running Isaac Sim 5.1 session, root disk 99% full) and judged unsuitable for the pilot as it stands.
+Instead `robolab_lang/prelim_analysis.py` was run on the laptop (CPU) against the leaderboard JSON v55
+(`docs/robolab/leaderboard_v55.json`) and RoboLab `b6cfcf6`; results and figure in
+`preliminary_analysis.md` (findings R1–R8). No rollouts, no GPU.
