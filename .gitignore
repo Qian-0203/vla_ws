@@ -52,6 +52,10 @@ cache/
 data/
 datasets/
 results/
+# RoboCasa run records (run.json, episodes.jsonl, summary.csv) are tracked; other results/ dirs stay ignored
+!/results/
+/results/*
+!/results/robocasa/
 outputs/
 experiments/
 experiments_saved/

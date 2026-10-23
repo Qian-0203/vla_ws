@@ -1,0 +1,54 @@
+{
+ "run_id": "20261021-1636_robocasa_xr1_smoke_berkeley2",
+ "stage": "smoke",
+ "date_utc": "2026-10-21T16:36:29Z",
+ "written": "2026-10-23 (backfilled after the run)",
+ "host": "berkeley-2 = g4-zzst-1016-mig-uswest3-s4mp (34.185.64.167)",
+ "gpu": "GPU 0, RTX PRO 6000 Blackwell 98 GB (CUDA_VISIBLE_DEVICES=0, MUJOCO_EGL_DEVICE_ID=0)",
+ "sim_stack": {
+  "robocasa": "4f8a2980def75a55dff96b990745b83540425f09",
+  "robosuite": "5ce6643f3092639d08f7b0f90ed1c6a84f50552c",
+  "mujoco": "3.3.1",
+  "numpy": "2.2.5",
+  "python": "3.11",
+  "venv": "~/vla_robocasa/.venv"
+ },
+ "model": {
+  "hf_repo": "XiaomiRobotics/Xiaomi-Robotics-1-RoboCasa365",
+  "hf_revision": "3a6d0293bfa90759d34a7fc48c2c62413cd7bcf4",
+  "dtype": "bf16",
+  "attn": "sdpa (via robocasa_lang/servers/xr1_server.py, _supports_sdpa declared)"
+ },
+ "server": {
+  "code": "XiaomiRobotics/Xiaomi-Robotics-1 deploy/server.py @ 0dd7aef, wrapped by robocasa_lang/servers/xr1_server.py (vla_ws, uncommitted at run time)",
+  "venv": "~/vla_robocasa/.venv-xr1: Python 3.12, torch 2.8.0+cu128, transformers 4.57.1"
+ },
+ "client": {
+  "code": "XiaomiRobotics/Xiaomi-Robotics-1 eval_robocasa365/entry.py @ 0dd7aef",
+  "args": "--split pretrain --task-set target50 --task-name NavigateKitchen --num-trials 2 --seed 7 --save-videos (replan 16, obs history 4, interval 2, crop 0.95)"
+ },
+ "seed_rule": "upstream: 7 + task_index_in_target50 * num_trials + episode; with num_trials=2 -> seeds 15, 16 (NOT the published 207, 208)",
+ "tasks": [
+  "NavigateKitchen"
+ ],
+ "conditions": [
+  "default"
+ ],
+ "episodes_per_cell": 2,
+ "approval": "user approved the smoke in chat on 2026-10-21 (\"commit 然後開始跑 smoke\")",
+ "results": {
+  "NavigateKitchen/default": "1/2"
+ },
+ "comparable_with_published": false,
+ "notes": [
+  "Instruction and scene_hash were not logged by the upstream client; reconstructed on the laptop from the same seeds and robocasa commit (repeat reset gave the same hash for both seeds). NavigateKitchen has ~3% non-reproducible seeds (plan §3.4).",
+  "Outcome fields (approached/grasped/delivered) were not logged (upstream client).",
+  "Two earlier attempts on the same day did not produce episodes: ...T152438Z (server refused sdpa), ...T163525Z (aborted: GPU 0 busy)."
+ ],
+ "files": {
+  "server_dir": "berkeley-2:~/vla_robocasa/runs/20261021-1636_robocasa_xr1_smoke_berkeley2/ (raw/ = the original smoke_xr1_20261021T163629Z dir)",
+  "laptop_backup": "~/vla_results_backup/robocasa/20261021-1636_robocasa_xr1_smoke_berkeley2/ (raw/ = full server dir incl. 2 videos, 2.0 MB)",
+  "repo": "results/robocasa/20261021-1636_robocasa_xr1_smoke_berkeley2/ (run.json, episodes.jsonl, summary.csv)",
+  "hf": "Qian0203/vla_ws-eval-results: robocasa/20261021-1636_robocasa_xr1_smoke_berkeley2/ (all files incl. videos)"
+ }
+}
