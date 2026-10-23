@@ -1,0 +1,350 @@
+{
+ "nav_blank": {
+  "task": "NavigateKitchen",
+  "env": "NavigateKitchen",
+  "condition": "blank",
+  "n": 20,
+  "sr": 0.0,
+  "skipped_seeds": 0,
+  "n_paired": 19,
+  "default_sr_paired": 84.2,
+  "cell_sr_paired": 0.0,
+  "drop_vs_default": 84.2,
+  "outcomes": {
+   "none reached": 20
+  },
+  "example_instruction": ""
+ },
+ "mixer_blank": {
+  "task": "OpenStandMixerHead",
+  "env": "OpenStandMixerHead",
+  "condition": "blank",
+  "n": 20,
+  "sr": 0.0,
+  "skipped_seeds": 0,
+  "n_paired": 18,
+  "default_sr_paired": 94.4,
+  "cell_sr_paired": 0.0,
+  "drop_vs_default": 94.4,
+  "outcomes": {
+   "null": 20
+  },
+  "example_instruction": ""
+ },
+ "stove_no_target": {
+  "task": "TurnOffStove",
+  "env": "TurnOffStove",
+  "condition": "no_target",
+  "n": 20,
+  "sr": 30.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 65.0,
+  "cell_sr_paired": 30.0,
+  "drop_vs_default": 35.0,
+  "outcomes": {
+   "named on": 14,
+   "named off": 6
+  },
+  "example_instruction": "Turn off the burner of the stove."
+ },
+ "stovepair_a": {
+  "task": "TurnOffStove",
+  "env": "TurnOffStovePair",
+  "condition": "default",
+  "n": 20,
+  "sr": 60.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 65.0,
+  "cell_sr_paired": 60.0,
+  "drop_vs_default": 5.0,
+  "outcomes": {
+   "named off only": 12,
+   "none off": 5,
+   "other off only": 3
+  },
+  "example_instruction": "Turn off the front left burner of the stove."
+ },
+ "pnp_positive_contrast": {
+  "task": "PickPlaceCounterToCabinet",
+  "env": "PickPlaceCounterToCabinet",
+  "condition": "positive_contrast",
+  "n": 20,
+  "sr": 85.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 85.0,
+  "cell_sr_paired": 85.0,
+  "drop_vs_default": 0.0,
+  "outcomes": {
+   "target grasped only": 2,
+   "target delivered": 17,
+   "none grasped": 1
+  },
+  "example_instruction": "Pick the bread, not the juice, from the counter and place it in the cabinet."
+ },
+ "nav_length_control_positive": {
+  "task": "NavigateKitchen",
+  "env": "NavigateKitchenPair",
+  "condition": "length_control_positive",
+  "n": 20,
+  "sr": 80.0,
+  "skipped_seeds": 0,
+  "n_paired": 18,
+  "default_sr_paired": 83.3,
+  "cell_sr_paired": 77.8,
+  "drop_vs_default": 5.6,
+  "outcomes": {
+   "named reached": 16,
+   "none reached": 4
+  },
+  "example_instruction": "Navigate to the toaster oven, slowly and carefully."
+ },
+ "stove_paraphrase_syntactic": {
+  "task": "TurnOffStove",
+  "env": "TurnOffStove",
+  "condition": "paraphrase_syntactic",
+  "n": 20,
+  "sr": 45.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 65.0,
+  "cell_sr_paired": 45.0,
+  "drop_vs_default": 20.0,
+  "outcomes": {
+   "named off": 9,
+   "named on": 11
+  },
+  "example_instruction": "Of the stove, turn off the front left burner."
+ },
+ "pnp_blank": {
+  "task": "PickPlaceCounterToCabinet",
+  "env": "PickPlaceCounterToCabinet",
+  "condition": "blank",
+  "n": 20,
+  "sr": 0.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 85.0,
+  "cell_sr_paired": 0.0,
+  "drop_vs_default": 85.0,
+  "outcomes": {
+   "target grasped only": 9,
+   "none grasped": 11
+  },
+  "example_instruction": ""
+ },
+ "nav_no_target": {
+  "task": "NavigateKitchen",
+  "env": "NavigateKitchen",
+  "condition": "no_target",
+  "n": 20,
+  "sr": 40.0,
+  "skipped_seeds": 0,
+  "n_paired": 19,
+  "default_sr_paired": 84.2,
+  "cell_sr_paired": 36.8,
+  "drop_vs_default": 47.4,
+  "outcomes": {
+   "none reached": 12,
+   "named reached": 8
+  },
+  "example_instruction": "Navigate to the fixture."
+ },
+ "pnp_target_swap": {
+  "task": "PickPlaceCounterToCabinet",
+  "env": "PnPCounterToCabinetSwap",
+  "condition": "target_swap",
+  "n": 20,
+  "sr": 30.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 80.0,
+  "cell_sr_paired": 30.0,
+  "drop_vs_default": 50.0,
+  "outcomes": {
+   "other delivered": 8,
+   "target delivered": 7,
+   "other grasped": 4,
+   "none grasped": 1
+  },
+  "example_instruction": "Pick the juice from the counter and place it in the cabinet."
+ },
+ "stovepair_b": {
+  "task": "TurnOffStove",
+  "env": "TurnOffStovePair",
+  "condition": "default",
+  "n": 20,
+  "sr": 80.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 65.0,
+  "cell_sr_paired": 80.0,
+  "drop_vs_default": -15.0,
+  "outcomes": {
+   "named off only": 16,
+   "none off": 3,
+   "other off only": 1
+  },
+  "example_instruction": "Turn off the rear right burner of the stove."
+ },
+ "pnp_length_control_positive": {
+  "task": "PickPlaceCounterToCabinet",
+  "env": "PickPlaceCounterToCabinet",
+  "condition": "length_control_positive",
+  "n": 20,
+  "sr": 80.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 85.0,
+  "cell_sr_paired": 80.0,
+  "drop_vs_default": 5.0,
+  "outcomes": {
+   "target delivered": 16,
+   "none grasped": 2,
+   "target grasped only": 2
+  },
+  "example_instruction": "Pick the bread, slowly and carefully, from the counter and place it in the cabinet."
+ },
+ "nav_paraphrase_syntactic": {
+  "task": "NavigateKitchen",
+  "env": "NavigateKitchen",
+  "condition": "paraphrase_syntactic",
+  "n": 20,
+  "sr": 65.0,
+  "skipped_seeds": 0,
+  "n_paired": 19,
+  "default_sr_paired": 84.2,
+  "cell_sr_paired": 63.2,
+  "drop_vs_default": 21.1,
+  "outcomes": {
+   "named reached": 13,
+   "none reached": 7
+  },
+  "example_instruction": "To the toaster oven, navigate."
+ },
+ "mixer_paraphrase_syntactic": {
+  "task": "OpenStandMixerHead",
+  "env": "OpenStandMixerHead",
+  "condition": "paraphrase_syntactic",
+  "n": 20,
+  "sr": 100.0,
+  "skipped_seeds": 0,
+  "n_paired": 17,
+  "default_sr_paired": 94.1,
+  "cell_sr_paired": 100.0,
+  "drop_vs_default": -5.9,
+  "outcomes": {
+   "null": 20
+  },
+  "example_instruction": "Open the head of the stand mixer."
+ },
+ "stove_blank": {
+  "task": "TurnOffStove",
+  "env": "TurnOffStove",
+  "condition": "blank",
+  "n": 20,
+  "sr": 0.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 65.0,
+  "cell_sr_paired": 0.0,
+  "drop_vs_default": 65.0,
+  "outcomes": {
+   "named on": 20
+  },
+  "example_instruction": ""
+ },
+ "pnp_no_target": {
+  "task": "PickPlaceCounterToCabinet",
+  "env": "PickPlaceCounterToCabinet",
+  "condition": "no_target",
+  "n": 20,
+  "sr": 85.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 85.0,
+  "cell_sr_paired": 85.0,
+  "drop_vs_default": 0.0,
+  "outcomes": {
+   "target delivered": 17,
+   "target grasped only": 2,
+   "none grasped": 1
+  },
+  "example_instruction": "Pick the object from the counter and place it in the cabinet."
+ },
+ "nav_target_swap": {
+  "task": "NavigateKitchen",
+  "env": "NavigateKitchenPair",
+  "condition": "default",
+  "n": 20,
+  "sr": 90.0,
+  "skipped_seeds": 0,
+  "n_paired": 19,
+  "default_sr_paired": 84.2,
+  "cell_sr_paired": 89.5,
+  "drop_vs_default": -5.3,
+  "outcomes": {
+   "named reached": 18,
+   "other reached": 1,
+   "none reached": 1
+  },
+  "example_instruction": "Navigate to the fridge."
+ },
+ "pnp_negation_only": {
+  "task": "PickPlaceCounterToCabinet",
+  "env": "PickPlaceCounterToCabinet",
+  "condition": "negation_only",
+  "n": 20,
+  "sr": 65.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 85.0,
+  "cell_sr_paired": 65.0,
+  "drop_vs_default": 20.0,
+  "outcomes": {
+   "none grasped": 5,
+   "target delivered": 13,
+   "other delivered": 1,
+   "target grasped only": 1
+  },
+  "example_instruction": "Pick the object that is not the juice and place it in the cabinet."
+ },
+ "nav_positive_contrast": {
+  "task": "NavigateKitchen",
+  "env": "NavigateKitchenPair",
+  "condition": "positive_contrast",
+  "n": 20,
+  "sr": 70.0,
+  "skipped_seeds": 0,
+  "n_paired": 19,
+  "default_sr_paired": 84.2,
+  "cell_sr_paired": 68.4,
+  "drop_vs_default": 15.8,
+  "outcomes": {
+   "none reached": 3,
+   "named reached": 14,
+   "other reached": 3
+  },
+  "example_instruction": "Navigate to the toaster oven, not the fridge."
+ },
+ "pnp_paraphrase_syntactic": {
+  "task": "PickPlaceCounterToCabinet",
+  "env": "PickPlaceCounterToCabinet",
+  "condition": "paraphrase_syntactic",
+  "n": 20,
+  "sr": 90.0,
+  "skipped_seeds": 0,
+  "n_paired": 20,
+  "default_sr_paired": 85.0,
+  "cell_sr_paired": 90.0,
+  "drop_vs_default": -5.0,
+  "outcomes": {
+   "target delivered": 18,
+   "none grasped": 1,
+   "target grasped only": 1
+  },
+  "example_instruction": "From the counter, pick the bread and place it in the cabinet."
+ }
+}

@@ -18,8 +18,8 @@ Design and condition definitions: `docs/robocasa/plan.md`. Machine and environme
 
 ## Still queued (none run yet)
 
-- Pilot, Xiaomi-Robotics-1: language screen `20261023-1002_robocasa_xr1_screen_berkeley2` (20 cells × 20) running since
-  2026-10-23 10:03 UTC; smoke and gate done (entries below).
+- Pilot done (smoke, gate, screen; entries below). Next: the main experiment (plan §4.0, 50 episodes per cell) awaits
+  approval.
 
 ---
 
@@ -102,6 +102,28 @@ Design and condition definitions: `docs/robocasa/plan.md`. Machine and environme
   the 10:00 cron mid-postprocessing were removed in a follow-up HF commit); laptop backup verified against
   `SHA256SUMS`; repo `results/robocasa/20261023-0927_robocasa_xr1_gate_berkeley2/` (`run.json`, `episodes.jsonl`,
   `summary.csv`, `gate.json`).
+
+## 2026-10-23 — Screen: Xiaomi-Robotics-1, 20 language cells × 20 episodes (screen, not a result)
+
+- **Run:** `20261023-1002_robocasa_xr1_screen_berkeley2` (stage screen). Approval: user, in chat, 2026-10-23, conditional on the gate, which passed
+  (`20261023-0927_robocasa_xr1_gate_berkeley2`).
+- **Machine / stack / model:** as the gate (`berkeley-2` GPU 0, 3 server/client pairs; HF `3a6d029`, sdpa).
+- **Client:** `robocasa_lang/run_lang_eval.py` (vla_ws, uncommitted at launch; copy on the server), importing the upstream
+  `EvalClient` and observation helpers from `eval_robocasa365/entry.py` @ `0dd7aef` unchanged; instruction from the cell's
+  condition (`robocasa_lang/conditions.py`); env classes from `robocasa_lang/envs.py` where the success check changes
+  (`PnPCounterToCabinetSwap`, `NavigateKitchenPair`, `TurnOffStovePair`); scene hash and outcome fields logged per episode.
+- **Cells:** `robocasa_lang/screen_cells.py` (plan §4.0/§5.3): blank ×4 tasks, no_target ×3, target_swap (PnP on graspable
+  distractors; Nav via the pair's slot b), stove pair a/b, PnP negation_only, contrast + length control (PnP, Nav),
+  paraphrase_syntactic ×4. Seeds: first 20 published seeds per task; PnP swap skipped 417, 419, 425 (non-graspable
+  distractor).
+- **Ran:** 10:03–10:50 UTC, no errors, 400 episodes.
+- **Headlines (20 per cell, ±10–20 pts):** blank 0% on all four tasks (default 65–94%); PnP no_target 85% = default, but
+  PnP target_swap 30% with the *original* (nearer) object delivered in 8/20; Nav target_swap 90% and Nav no_target 40%;
+  stove pair a/b 60%/80% with the wrong burner turned off in 3 and 1; PnP negation_only 65% (negated object delivered
+  once); Nav positive_contrast 70% (3 went to the named distractor) vs its length control 80%; paraphrase costs 21 (Nav) and
+  20 (Stove) pts, nothing on PnP or the mixer. Full table: `docs/robocasa/results.md`.
+- **Files:** server `~/vla_robocasa/runs/20261023-1002_robocasa_xr1_screen_berkeley2/` (417 files + `SHA256SUMS`, 306 MB); HF `robocasa/20261023-1002_robocasa_xr1_screen_berkeley2/` (418 files,
+  identical to the local list); laptop backup; repo `results/robocasa/20261023-1002_robocasa_xr1_screen_berkeley2/`.
 
 ---
 
