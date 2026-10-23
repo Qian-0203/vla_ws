@@ -1,0 +1,29 @@
+{
+ "run_id": "20261021-1551_robolab_none_smoke_nj21",
+ "date": "2026-10-21",
+ "host": "g4-r1sc-1019-mig-uswest3-nj21 (34.106.249.51)",
+ "gpu": "0 (RTX PRO 6000 Blackwell Server Edition, 98 GB; driver 580.178.04)",
+ "isaac_sim": "5.0.0-rc.45",
+ "isaac_lab": "2.2.0",
+ "robolab_commit": "b6cfcf6ccd2113c4cd1216d35b33024a7d5691da",
+ "record_note": "run.json written after the run (2026-10-23) from logs, file times and episode_results.jsonl",
+ "approval": "User approved 2026-10-21 in session blissful-poincare-a11436: installs + pilot steps 0-2 and 4 for pi0.5 (about 7-10 GPU-h); host moved to nj21 GPU 0 by the user the same day.",
+ "stage": "smoke",
+ "started_utc": "2026-10-21T15:51Z",
+ "image": "robolab:b6cfcf6",
+ "image_id": "sha256:b1bcef41efd52b627abdfce9311aef12e2c79a1fd68a362450009b8c7326215f",
+ "policy": "none",
+ "tasks": [
+  "BananaInBowlTask"
+ ],
+ "instruction_key": "default",
+ "num_envs": 1,
+ "num_runs": 1,
+ "episodes_planned": 1,
+ "command": "examples/run_empty.py --headless --task BananaInBowlTask --num-steps 50",
+ "purpose": "pilot step 0: install check, no policy",
+ "episodes_recorded": 1,
+ "raw_output_dir": "/runs/20261021-1551_robolab_none_smoke_nj21/robolab_output",
+ "raw_output_bytes": 59784,
+ "record_written_utc": "2026-10-23T09:05:47Z"
+}

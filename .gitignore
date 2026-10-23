@@ -52,6 +52,10 @@ cache/
 data/
 datasets/
 results/
+# RoboLab run records (run.json, episodes.jsonl, summary.csv) are tracked; other results/ dirs stay ignored
+!/results/
+/results/*
+!/results/robolab/
 outputs/
 experiments/
 experiments_saved/

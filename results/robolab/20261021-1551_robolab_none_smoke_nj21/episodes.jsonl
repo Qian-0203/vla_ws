@@ -1,0 +1,1 @@
+{"run_id": "20261021-1551_robolab_none_smoke_nj21", "task": "BananaInBowlTask", "task_name": null, "instruction_key": "default", "instruction": "Pick up the banana and place it in the bowl", "run": null, "env_id": null, "episode": 0, "success": false, "score": 0.0, "num_steps": null, "reason": "", "events": {}}

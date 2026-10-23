@@ -1,0 +1,2 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps
+20261021-1551_robolab_none_smoke_nj21,BananaInBowlTask,default,1,0,0.0000,0.0000,0.7935,0.0000,0

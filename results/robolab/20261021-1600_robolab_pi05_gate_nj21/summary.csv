@@ -1,0 +1,3 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps
+20261021-1600_robolab_pi05_gate_nj21,BananaInBowlTask,default,50,46,0.9200,0.8116,0.9685,0.9200,1
+20261021-1600_robolab_pi05_gate_nj21,RubiksCubeAndBananaTask,default,50,36,0.7200,0.5833,0.8253,0.8400,6
