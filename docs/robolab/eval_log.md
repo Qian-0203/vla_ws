@@ -107,3 +107,16 @@ written afterwards (`run.json` says so) with `robolab_lang/make_run_record.py`:
 Copies: full runs (HDF5, videos, logs, `SHA256SUMS`) in the laptop's `~/vla_results_backup/robolab/`;
 small files in `results/robolab/<run_id>/`. Not yet on Hugging Face and no RoboLab cron on the server
 (both need the user's approval). Results in [`results.md`](results.md).
+
+### 2026-10-23 — runs mirrored to Hugging Face; RoboLab sync cron on nj21
+
+User approved (2026-10-23, in this session): HF upload of the four existing runs, a sync cron on
+34.106.249.51, and commits/pushes of results records to `results-log/robolab`.
+
+- HF: `~/robolab_ws/runs/` uploaded to `Qian0203/vla_ws-eval-results` under `robolab/<run_id>/` (whole run
+  directories: records, `SHA256SUMS`, RoboLab output with HDF5 and videos; 366 files, 1.2 GB). File counts on
+  HF match the server per run (8 / 10 / 37 / 311).
+- Cron: `*/30 * * * * bash $HOME/robolab_ws/robolab_lang/sync_robolab_hf.sh >> $HOME/logs/sync_robolab_hf.log`
+  added to qian's crontab on nj21; the two existing sync lines unchanged (previous crontab saved in
+  `~/robolab_ws/logs/crontab.before.*`).
+- Laptop: full copy in `~/vla_results_backup/robolab/` verified against each run's `SHA256SUMS` (all four pass).
