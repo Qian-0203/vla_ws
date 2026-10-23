@@ -1,0 +1,48 @@
+{
+ "tasks": {
+  "NavigateKitchen": {
+   "n": 50,
+   "sr": 88.0,
+   "published_sr": 92.0,
+   "diff_pts": -4.0,
+   "pass_14pts": true,
+   "episode_agreement": 0.88,
+   "both_success": 42,
+   "n_common": 50
+  },
+  "PickPlaceCounterToCabinet": {
+   "n": 50,
+   "sr": 88.0,
+   "published_sr": 86.0,
+   "diff_pts": 2.0,
+   "pass_14pts": true,
+   "episode_agreement": 0.9,
+   "both_success": 41,
+   "n_common": 50
+  },
+  "TurnOffStove": {
+   "n": 50,
+   "sr": 58.0,
+   "published_sr": 60.0,
+   "diff_pts": -2.0,
+   "pass_14pts": true,
+   "episode_agreement": 0.78,
+   "both_success": 24,
+   "n_common": 50
+  },
+  "OpenStandMixerHead": {
+   "n": 50,
+   "sr": 94.0,
+   "published_sr": 98.0,
+   "diff_pts": -4.0,
+   "pass_14pts": true,
+   "episode_agreement": 0.96,
+   "both_success": 47,
+   "n_common": 50
+  }
+ },
+ "mean_sr": 82.0,
+ "published_mean_sr": 84.0,
+ "mean_within_7pts": true,
+ "gate_pass": true
+}

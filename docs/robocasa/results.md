@@ -13,7 +13,22 @@ None yet.
 
 ## Gate runs
 
-None yet.
+### `20261023-0927_robocasa_xr1_gate_berkeley2` — gate, **passed**
+
+Xiaomi-Robotics-1 (HF `3a6d029`, bf16, sdpa), upstream client, published seeds, `berkeley-2` GPU 0. Rule: per task
+within 14 pts and mean within 7 pts of the published results (Xiaomi-Robotics-1 `summary.json`).
+
+| Task | n | SR | Published | Diff (pts) | Episode agreement |
+|---|--:|--:|--:|--:|--:|
+| NavigateKitchen | 50 | 88% | 92% | −4 | 0.88 |
+| OpenStandMixerHead | 50 | 94% | 98% | −4 | 0.96 |
+| PickPlaceCounterToCabinet | 50 | 88% | 86% | +2 | 0.90 |
+| TurnOffStove | 50 | 58% | 60% | −2 | 0.78 |
+| **Mean** | 200 | **82.0%** | **84.0%** | **−2.0** | |
+
+Instructions and scene hashes reconstructed after the run (upstream client); no outcome fields. Sync: HF, repo,
+laptop — all three. An earlier attempt, `20261023-0915_robocasa_xr1_gate_berkeley2`, aborted before any episode (port held
+by a leftover process).
 
 ## Screens, smoke and exploratory runs (not results)
 

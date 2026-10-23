@@ -18,8 +18,8 @@ Design and condition definitions: `docs/robocasa/plan.md`. Machine and environme
 
 ## Still queued (none run yet)
 
-- Pilot, Xiaomi-Robotics-1: smoke, gate (4 tasks × 50) and language screen (≈380 rollouts); see plan §5.3.
-  Downloads done on `berkeley-2` 2026-10-21; smoke done (entry below). Gate and screen await approval.
+- Pilot, Xiaomi-Robotics-1: language screen `20261023-1002_robocasa_xr1_screen_berkeley2` (20 cells × 20) running since
+  2026-10-23 10:03 UTC; smoke and gate done (entries below).
 
 ---
 
@@ -68,6 +68,40 @@ Design and condition definitions: `docs/robocasa/plan.md`. Machine and environme
 - **Leftover process found:** the smoke's server (pid 3484216) had kept running on GPU 0 since 2026-10-21 16:37 UTC
   (~41 h, ~10.8 GB, port 10086): the smoke script's `kill $SRV` hit the subshell, not the python process. Killed
   2026-10-23 09:26 UTC. Launchers now `exec` the servers and refuse to start when a port is taken.
+
+## 2026-10-23 — Gate: Xiaomi-Robotics-1, 4 tasks × 50 published seeds — **passed**
+
+- **Run:** `20261023-0927_robocasa_xr1_gate_berkeley2` (stage gate). Approval: user, in chat, 2026-10-23 (gate + screen).
+- **Machine:** `berkeley-2` GPU 0; 3 server/client pairs, then 2 for the continuation; ~34 GB on GPU 0.
+- **Stack / model:** as the smoke (robocasa `4f8a298`, robosuite `5ce6643`, MuJoCo 3.3.1; HF `3a6d029`, bf16, sdpa via
+  `robocasa_lang/servers/xr1_server.py`). **Client:** upstream `eval_robocasa365/entry.py` @ `0dd7aef`, unmodified,
+  `--num-trials 50 --seed 7` (published seeds: Nav 207–256, Mixer 357–406, PnPCab 407–456, Stove 707–756).
+- **Launch order:**
+  0. 09:15 UTC, run `20261023-0915_robocasa_xr1_gate_berkeley2`: aborted before any episode. Port 10086 was held by the
+     leftover smoke server (see the records entry above). No episodes; `run.json` + `ABORTED.txt` kept.
+  1. 09:27–09:45 UTC: TurnOffStove (w0) and PickPlaceCounterToCabinet (w1). Worker 2 (NavigateKitchen +
+     OpenStandMixerHead) failed at start: the launcher gave both names to one `--task-name` (upstream uses
+     `action=append`); no episodes (`raw/client_w2_argparse_error.log`).
+  2. 09:47–09:56 UTC: NavigateKitchen (w2) and OpenStandMixerHead (w3) via `run_gate_continue.sh`, same run directory.
+- **Result (gate rule: per task within 14 pts, mean within 7 pts of published):**
+
+  | Task | SR | Published | Diff | Episode agreement |
+  |---|--:|--:|--:|--:|
+  | NavigateKitchen | 88% (44/50) | 92% | −4 | 0.88 |
+  | OpenStandMixerHead | 94% (47/50) | 98% | −4 | 0.96 |
+  | PickPlaceCounterToCabinet | 88% (44/50) | 86% | +2 | 0.90 |
+  | TurnOffStove | 58% (29/50) | 60% | −2 | 0.78 |
+  | **Mean** | **82.0%** | **84.0%** | **−2.0** | |
+
+  The sdpa server with the upstream client reproduces the published numbers; the screen may run.
+- **Records:** instruction and scene hash reconstructed after the run on the server CPU, same seed order, one env per
+  task (`robocasa_lang/reconstruct_scenes.py`; the upstream client logs neither); outcome fields null for this run.
+  Seed 207's scene hash equals the laptop's for the same seed (cross-machine determinism).
+- **Files:** server `~/vla_robocasa/runs/20261023-0927_robocasa_xr1_gate_berkeley2/` (229 files + `SHA256SUMS`, 105 MB incl.
+  200 videos); HF `robocasa/20261023-0927_robocasa_xr1_gate_berkeley2/` (230 files; 4 intermediate `rec_*.jsonl` captured by
+  the 10:00 cron mid-postprocessing were removed in a follow-up HF commit); laptop backup verified against
+  `SHA256SUMS`; repo `results/robocasa/20261023-0927_robocasa_xr1_gate_berkeley2/` (`run.json`, `episodes.jsonl`,
+  `summary.csv`, `gate.json`).
 
 ---
 

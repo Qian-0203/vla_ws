@@ -1,0 +1,4 @@
+Aborted before any episode (2026-10-23 09:25 UTC): the worker-0 server could not bind port 10086, which was still
+held by the 2026-10-21 smoke server (pid 3484216, left running because the smoke script's kill hit a subshell, not
+the python process; it held ~10.8 GB on GPU 0 for ~41 h). Workers 1-2 started and were stopped. No episodes.
+The gate was relaunched under a new run ID after killing pid 3484216.

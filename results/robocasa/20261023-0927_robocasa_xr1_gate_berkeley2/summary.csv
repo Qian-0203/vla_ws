@@ -1,0 +1,5 @@
+task,condition,n,successes,sr
+NavigateKitchen,default,50,44,0.88
+OpenStandMixerHead,default,50,47,0.94
+PickPlaceCounterToCabinet,default,50,44,0.88
+TurnOffStove,default,50,29,0.58

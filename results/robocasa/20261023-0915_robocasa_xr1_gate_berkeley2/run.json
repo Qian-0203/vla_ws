@@ -1,0 +1,62 @@
+{
+ "run_id": "20261023-0915_robocasa_xr1_gate_berkeley2",
+ "stage": "gate",
+ "date_utc": "2026-10-23T09:15Z",
+ "approval": "user approved in chat 2026-10-23 (gate + screen; screen only after the gate passes)",
+ "host": "berkeley-2 = g4-zzst-1016-mig-uswest3-s4mp (34.185.64.167)",
+ "gpu": "GPU 0 only, RTX PRO 6000 Blackwell 98 GB; 3 server/client pairs (~13 GB each); pre-launch guard: >= 45 GB free",
+ "sim_stack": {
+  "robocasa": "4f8a2980def75a55dff96b990745b83540425f09",
+  "robosuite": "5ce6643f3092639d08f7b0f90ed1c6a84f50552c",
+  "mujoco": "3.3.1",
+  "numpy": "2.2.5",
+  "python": "3.11",
+  "venv": "~/vla_robocasa/.venv"
+ },
+ "model": {
+  "hf_repo": "XiaomiRobotics/Xiaomi-Robotics-1-RoboCasa365",
+  "hf_revision": "3a6d0293bfa90759d34a7fc48c2c62413cd7bcf4",
+  "dtype": "bf16",
+  "attn": "sdpa (robocasa_lang/servers/xr1_server.py declares _supports_sdpa; upstream uses flash_attention_2)"
+ },
+ "server": {
+  "code": "XiaomiRobotics/Xiaomi-Robotics-1 deploy/server.py @ 0dd7aef via robocasa_lang/servers/xr1_server.py",
+  "venv": "~/vla_robocasa/.venv-xr1: Python 3.12, torch 2.8.0+cu128, transformers 4.57.1"
+ },
+ "client": {
+  "code": "XiaomiRobotics/Xiaomi-Robotics-1 eval_robocasa365/entry.py @ 0dd7aef (upstream, unmodified)",
+  "args": "--split pretrain --task-set target50 --num-trials 50 --seed 7 --save-videos; replan 16, obs history 4, interval 2, crop 0.95 (upstream defaults)"
+ },
+ "seed_rule": "upstream: 7 + task_index_in_target50 * 50 + episode = the published seeds (NavigateKitchen 207-256, OpenStandMixerHead 357-406, PickPlaceCounterToCabinet 407-456, TurnOffStove 707-756)",
+ "tasks": [
+  "NavigateKitchen",
+  "OpenStandMixerHead",
+  "PickPlaceCounterToCabinet",
+  "TurnOffStove"
+ ],
+ "conditions": [
+  "default"
+ ],
+ "episodes_per_cell": 50,
+ "workers": {
+  "w0 (port 10086)": [
+   "TurnOffStove"
+  ],
+  "w1 (port 10087)": [
+   "PickPlaceCounterToCabinet"
+  ],
+  "w2 (port 10088)": [
+   "NavigateKitchen",
+   "OpenStandMixerHead"
+  ]
+ },
+ "gate_rule": "per task |SR - published| <= 14 pts and 4-task mean within +-7 pts of the published 84.0% (92, 98, 86, 60); plan §5.3",
+ "published_reference": "XiaomiRobotics/Xiaomi-Robotics-1 eval_robocasa365/summary.json @ 0dd7aef (robocasa_lang/pilot_seeds.json)",
+ "logging_limits": "upstream client: no instruction, scene_hash or outcome fields; instruction and scene_hash to be reconstructed from the seeds after the run (CPU), outcome fields null",
+ "files": {
+  "server_dir": "berkeley-2:~/vla_robocasa/runs/20261023-0915_robocasa_xr1_gate_berkeley2/",
+  "hf": "Qian0203/vla_ws-eval-results robocasa/20261023-0915_robocasa_xr1_gate_berkeley2/ (cron every 30 min + final manual sync)",
+  "laptop_backup": "~/vla_results_backup/robocasa/20261023-0915_robocasa_xr1_gate_berkeley2/",
+  "repo": "results/robocasa/20261023-0915_robocasa_xr1_gate_berkeley2/"
+ }
+}
