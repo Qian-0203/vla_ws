@@ -49,6 +49,11 @@ def wilson(k, n, z=1.96):
     return c - h, c + h
 
 
+def base_task(name):
+    """Pose-randomized variants (e.g. LangMustardInLeftBinRand10Task) share their base task's outcome spec."""
+    return name.replace("Rand10Task", "Task")
+
+
 def generic_outcome(g):
     objs = [k for k in g["states/rigid_object"].keys() if k != "table"]
     lifted, first, first_step = [], None, None
@@ -107,12 +112,12 @@ def main(argv=None) -> int:
                 g = fh["data"].get(f"demo_{ep.get('env_id', 0)}")
                 if g is not None:
                     row.update(generic_outcome(g))
-                    spec = SPECS.get(ep["env_name"])
+                    spec = SPECS.get(base_task(ep["env_name"]))
                     if spec:
                         lab = label_dest(g, spec) if spec["kind"] == "dest" else label_stack(g, spec)
                         row.update({f"pair_{k}": v for k, v in lab.items()},
                                    pair_target=spec["target"], pair_other=spec["other"])
-        req = OBJECT_REQUESTS.get((row["task"], key)) or OBJECT_REQUESTS.get(row["task"])
+        req = OBJECT_REQUESTS.get((base_task(row["task"]), key)) or OBJECT_REQUESTS.get(base_task(row["task"]))
         if req and "in_container" in row:
             obj, other, cont = req
             inside = {o for o, c in row["in_container"].items() if c == cont}

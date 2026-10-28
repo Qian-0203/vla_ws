@@ -14,6 +14,8 @@
 #
 # Usage:  GROUP=mustard GPU=0 PORT=8765 HOST_TAG=aws-h200 bash robolab_lang/run_paper_tests.sh
 #         GROUP=all runs the three groups one after another. ONLY_KEYS="k1 k2" limits a group to some keys.
+#         VARIANT=rand10 uses the *Rand10Task files: RoboLab's official ±10 cm initial-pose randomization
+#         (without it every episode starts from the same poses; gap G1 in docs/robolab/run_paper_tests.md).
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 GROUP="${GROUP:-all}"
@@ -30,6 +32,9 @@ run_group() {
                  KEYS="negation distractor_mention irrelevant_content" ;;
         *) echo "unknown GROUP $1 (mustard|cube|size|all)"; exit 1 ;;
     esac
+    if [[ "${VARIANT:-}" == rand10 ]]; then
+        STAGE="$STAGE-rand10"; TASKS="${TASKS//Task/Rand10Task}"
+    fi
     STAGE="$STAGE" TASKS="$TASKS" KEYS="${ONLY_KEYS:-$KEYS}" bash "$HERE/run_option_a.sh"
 }
 
