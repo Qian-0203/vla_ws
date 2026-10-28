@@ -12,7 +12,7 @@ Language stress tests on NVIDIA RoboLab, using RoboLab as an unmodified dependen
 | `serve_pi05.sh` | π0.5-DROID policy server. |
 | `run_robolab.sh`, `run_pi0.py` | One RoboLab eval in the container; `run_pi0.py` is RoboLab's π0 client plus task loading from `tasks/`. |
 | `run_option_a.sh` | Language pilot Option A (13 tasks × default/blank/no_target × 20 episodes); step-by-step guide in [`docs/robolab/run_option_a.md`](../docs/robolab/run_option_a.md). |
-| `run_p_tests.sh` | P-tests from the LIBERO-Spatial freeze §6 (P1/P3/P4/P5/P7) in 3 shared scenes, 600 episodes, groups `mustard` / `cube` / `size`; guide in [`docs/robolab/run_p_tests.md`](../docs/robolab/run_p_tests.md). |
+| `run_paper_tests.sh` | The ARR draft's tests (negation, switch, paraphrase, irrelevant content, distractor mention, spatial wording) in 3 shared scenes, 600 episodes, groups `mustard` / `cube` / `size`; guide and known gaps in [`docs/robolab/run_paper_tests.md`](../docs/robolab/run_paper_tests.md). |
 | `tasks/` | Subclasses of official tasks that only add instruction keys. |
 | `make_run_record.py`, `outcomes.py` | Per-run `episodes.jsonl` / `summary.csv` with which-object outcomes. |
 

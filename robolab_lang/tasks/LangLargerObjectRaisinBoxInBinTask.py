@@ -1,4 +1,4 @@
-"""LargerObjectRaisinBoxInBinTask with the language-stress instruction keys (robolab_lang, plan §4.2).
+"""LargerObjectRaisinBoxInBinTask with the language-stress instruction keys (robolab_lang; condition names follow the ARR draft's tests).
 
 Scene, terminations and subtasks are the official ones, unchanged; the official default / vague /
 specific strings are copied from the base class. Select a key with --instruction-type <key>.
@@ -16,7 +16,7 @@ class LangLargerObjectRaisinBoxInBinTask(_official.LargerObjectRaisinBoxInBinTas
         **_official.LargerObjectRaisinBoxInBinTask.instruction,
         "blank": ".",
         "no_target": "Place the object in the grey bin.",
-        "p3_neg": "Place the object that is not the butter in the grey bin.",
-        "p5_contrast": "Place the larger object in the grey bin, not the smaller one.",
-        "p5_len_ctrl": "Place the larger object in the grey bin, and let go gently.",
+        "negation": "Place the object that is not the butter in the grey bin.",
+        "distractor_mention": "Place the larger object in the grey bin, not the smaller one.",
+        "irrelevant_content": "Place the larger object in the grey bin, and let go gently.",
     }

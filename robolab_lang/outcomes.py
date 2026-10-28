@@ -47,6 +47,19 @@ for prefix in ("", "Lang"):
     SPECS[f"{prefix}BowlStackingLeftOnRightTask"] = dict(kind="stack", target="bowl_2", other="bowl_1")
     SPECS[f"{prefix}BowlStackingRightOnLeftTask"] = dict(kind="stack", target="bowl_1", other="bowl_2")
 
+# Object tasks with one container: (requested object, other object, container) per task, or per
+# (task, instruction key) where the sentence picks the object. "other" is the object that the paper's
+# tests count as the violation: the excluded one under negation, the non-requested one under switch.
+OBJECT_REQUESTS = {
+    "LangLargerObjectRaisinBoxInBinTask": ("raisin_box", "butter", "grey_bin"),
+    "LangSmallerObjectButterInBinTask": ("butter", "raisin_box", "grey_bin"),
+}
+for _key, _obj in (("switch_cube", "rubiks_cube"), ("switch_banana", "banana"),
+                   ("negation_not_banana", "rubiks_cube"), ("negation_not_cube", "banana"),
+                   ("distractor_cube", "rubiks_cube"), ("distractor_banana", "banana")):
+    _other = "banana" if _obj == "rubiks_cube" else "rubiks_cube"
+    OBJECT_REQUESTS[("LangRubiksCubeOrBananaTask", _key)] = (_obj, _other, "bowl")
+
 
 def pos(g, name):
     return g[f"states/rigid_object/{name}/root_pose"][:, :3].astype(float)

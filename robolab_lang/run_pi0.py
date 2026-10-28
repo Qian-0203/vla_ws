@@ -9,7 +9,7 @@ both the gate runs and the language conditions.
 Run inside the RoboLab image, from the RoboLab checkout:
 
     /workspace/isaaclab/_isaac_sim/python.sh /lang/run_pi0.py --policy pi05 --headless \
-        --lang-task /lang/tasks/LangMustardInLeftBinTask.py --instruction-type p3_neg_not \
+        --lang-task /lang/tasks/LangMustardInLeftBinTask.py --instruction-type negation \
         --num-envs 10 --num-runs 2 --output-folder-name <name>
 """
 

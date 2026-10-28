@@ -1,4 +1,4 @@
-"""RubiksCubeOrBananaTask with the language-stress instruction keys (robolab_lang, plan §4.2).
+"""RubiksCubeOrBananaTask with the language-stress instruction keys (robolab_lang; condition names follow the ARR draft's tests).
 
 Scene, terminations and subtasks are the official ones, unchanged; the official default / vague /
 specific strings are copied from the base class. Select a key with --instruction-type <key>.
@@ -16,10 +16,10 @@ class LangRubiksCubeOrBananaTask(_official.RubiksCubeOrBananaTask):
         **_official.RubiksCubeOrBananaTask.instruction,
         "blank": ".",
         "no_target": "Put the object in the bowl",
-        "p1_ask_cube": "Put the cube in the bowl",
-        "p1_ask_banana": "Put the banana in the bowl",
-        "p3_not_banana": "Put the object that is not the banana in the bowl",
-        "p3_not_cube": "Put the object that is not the cube in the bowl",
-        "p5_cube_not_banana": "Put the cube in the bowl, not the banana",
-        "p5_banana_not_cube": "Put the banana in the bowl, not the cube",
+        "switch_cube": "Put the cube in the bowl",
+        "switch_banana": "Put the banana in the bowl",
+        "negation_not_banana": "Put the object that is not the banana in the bowl",
+        "negation_not_cube": "Put the object that is not the cube in the bowl",
+        "distractor_cube": "Put the cube in the bowl, not the banana",
+        "distractor_banana": "Put the banana in the bowl, not the cube",
     }

@@ -10,6 +10,9 @@ Outcome fields per episode, from RoboLab's HDF5 (states/rigid_object/*/root_pose
 `lifted_objects` (root z > 3 cm above its first value at any step), `first_lifted`, `first_lift_step`,
 `in_container` ({object: container} at the last step: object centroid inside a container's bbox
 footprint and above its bottom), plus the mirror-pair labels of outcomes.py when the task has a spec.
+`requested_delivered` / `other_delivered`: the requested target, or the other one (the excluded object
+under negation, the non-requested one under switch), ends in the container. These are the paper's
+violation counts; for LangRubiksCubeOrBananaTask they replace RoboLab's `success` (any object counts).
 
 Usage (Python with h5py + numpy, e.g. the RoboLab image's):
     python make_run_record.py <run dir> [--meta key=value ...]
@@ -31,7 +34,7 @@ import h5py
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from outcomes import SPECS, label_dest, label_stack  # noqa: E402
+from outcomes import OBJECT_REQUESTS, SPECS, label_dest, label_stack  # noqa: E402
 
 LIFT = 0.03
 CONTAINER = re.compile(r"bowl|bin|plate|crate|basket|pot|mug|box_|storage_box|pail|shelf", re.I)
@@ -109,6 +112,16 @@ def main(argv=None) -> int:
                         lab = label_dest(g, spec) if spec["kind"] == "dest" else label_stack(g, spec)
                         row.update({f"pair_{k}": v for k, v in lab.items()},
                                    pair_target=spec["target"], pair_other=spec["other"])
+        req = OBJECT_REQUESTS.get((row["task"], key)) or OBJECT_REQUESTS.get(row["task"])
+        if req and "in_container" in row:
+            obj, other, cont = req
+            inside = {o for o, c in row["in_container"].items() if c == cont}
+            row.update(requested=obj, other=other, requested_delivered=obj in inside and other not in inside,
+                       other_delivered=other in inside)
+        elif "pair_delivered" in row:
+            row.update(requested=row["pair_target"], other=row["pair_other"],
+                       requested_delivered=row["pair_delivered"] == row["pair_target"],
+                       other_delivered=row["pair_delivered"] == row["pair_other"])
         rows.append(row)
 
     with open(os.path.join(run_dir, "episodes.jsonl"), "w") as f:
@@ -121,14 +134,16 @@ def main(argv=None) -> int:
     with open(os.path.join(run_dir, "summary.csv"), "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["run_id", "task", "instruction_key", "n", "successes", "sr", "sr_ci_lo", "sr_ci_hi",
-                    "mean_score", "wrong_object_grabbed_eps"])
+                    "mean_score", "wrong_object_grabbed_eps", "requested_delivered", "other_delivered"])
         for (task, key), rs in sorted(groups.items()):
             n, k = len(rs), sum(r["success"] for r in rs)
             lo, hi = wilson(k, n)
             sc = [r["score"] for r in rs if r["score"] is not None]
             wrong = sum(1 for r in rs if r["events"].get("WRONG_OBJECT_GRABBED"))
             w.writerow([run_id, task, key, n, k, f"{k / n:.4f}", f"{lo:.4f}", f"{hi:.4f}",
-                        f"{sum(sc) / len(sc):.4f}" if sc else "", wrong])
+                        f"{sum(sc) / len(sc):.4f}" if sc else "", wrong,
+                        sum(1 for r in rs if r.get("requested_delivered")) if any("requested" in r for r in rs) else "",
+                        sum(1 for r in rs if r.get("other_delivered")) if any("requested" in r for r in rs) else ""])
 
     raw_bytes = sum(os.path.getsize(os.path.join(dp, fn)) for dp, _, fns in os.walk(out) for fn in fns) \
         if os.path.isdir(out) else 0

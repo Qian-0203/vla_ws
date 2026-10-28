@@ -1,4 +1,4 @@
-"""SmallerObjectButterInBinTask with the language-stress instruction keys (robolab_lang, plan §4.2).
+"""SmallerObjectButterInBinTask with the language-stress instruction keys (robolab_lang; condition names follow the ARR draft's tests).
 
 Scene, terminations and subtasks are the official ones, unchanged; the official default / vague /
 specific strings are copied from the base class. Select a key with --instruction-type <key>.
@@ -16,7 +16,7 @@ class LangSmallerObjectButterInBinTask(_official.SmallerObjectButterInBinTask):
         **_official.SmallerObjectButterInBinTask.instruction,
         "blank": ".",
         "no_target": "Place the object in the grey bin.",
-        "p3_neg": "Place the object that is not the raisin box in the grey bin.",
-        "p5_contrast": "Place the smaller object in the grey bin, not the larger one.",
-        "p5_len_ctrl": "Place the smaller object in the grey bin, and let go gently.",
+        "negation": "Place the object that is not the raisin box in the grey bin.",
+        "distractor_mention": "Place the smaller object in the grey bin, not the larger one.",
+        "irrelevant_content": "Place the smaller object in the grey bin, and let go gently.",
     }

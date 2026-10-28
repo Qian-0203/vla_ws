@@ -3,7 +3,7 @@
 # Usage: GPU=0 PORT=8765 bash robolab_lang/run_robolab.sh <output_folder_name> [run_pi0.py args...]
 # e.g.   bash robolab_lang/run_robolab.sh gateA_pi05 --task BananaInBowlTask --num-envs 10 --num-runs 5
 #        bash robolab_lang/run_robolab.sh lang_pi05_neg --lang-task /lang/tasks/LangMustardInLeftBinTask.py \
-#             --instruction-type p3_neg_not --num-envs 10 --num-runs 2
+#             --instruction-type negation --num-envs 10 --num-runs 2
 # Outputs land in $WS/output/<output_folder_name>/ (RoboLab layout). Re-running the same name resumes.
 # The image runs as root (Isaac Lab base); every mounted directory is chowned back to the caller on exit.
 set -euo pipefail
