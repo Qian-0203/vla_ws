@@ -123,6 +123,56 @@ cd ~/robolab_ws && tar czf robolab_option_a_runs.tgz runs logs
 
 如果檔案太大，至少交回每個 run 的 `run.json`、`episodes.jsonl`、`summary.csv`、`SHA256SUMS`，以及 `robolab_output/episode_results.jsonl`。
 
+## 交回結果：用 PR（給執行的 agent）
+
+如果由 coding agent 代跑，請照下面的方式交回，**每跑完一個 run 就交一次**。這樣中途失敗時，已經跑完的部分也不會丟失。
+
+### 第一個 run 跑完時
+
+1. 開 handoff branch。這個 branch 以 `results-log/robolab` 為基礎，那裡的 `.gitignore` 已經允許 `results/robolab/`。
+
+   ```bash
+   cd vla_ws        # 步驟 1 clone 下來的 repo
+   git fetch origin results-log/robolab
+   git switch -c handoff/<機器名>-option-a origin/results-log/robolab
+   ```
+
+2. 複製每個跑完的 run 的小檔案。只複製這四個，`robolab_output/` 不放進 git。
+
+   ```bash
+   for d in ~/robolab_ws/runs/*_robolab_pi05_*; do
+       [ -f "$d/summary.csv" ] || continue              # 還沒跑完的 run 跳過
+       id=$(basename "$d"); mkdir -p "results/robolab/$id"
+       cp "$d"/{run.json,episodes.jsonl,summary.csv,SHA256SUMS} "results/robolab/$id/"
+   done
+   git add results/robolab && git commit -m "RoboLab Option A results from <機器名>: <已完成的 run_id>"
+   ```
+
+3. Push 並開 **draft PR**，目標 branch 是 `results-log/robolab`：
+   - 有 `Qian-0203/vla_ws` 的寫入權限：`git push -u origin HEAD`，然後
+     `gh pr create --repo Qian-0203/vla_ws --base results-log/robolab --draft --title "RoboLab Option A results: <機器名>" --body-file <說明檔>`
+   - 沒有寫入權限：先 `gh repo fork Qian-0203/vla_ws --remote`，push 到自己的 fork，再用同一個 `gh pr create`，加上 `--head <帳號>:handoff/<機器名>-option-a`。
+
+### 之後每個 run 跑完
+
+重複步驟 2，然後 `git push`。PR 會自動更新。
+
+### 全部跑完或確定跑不下去時
+
+1. 把 `~/robolab_ws/runs` 和 `~/robolab_ws/logs` 打包成 tgz（見上面的步驟 5），上傳到可以分享的雲端空間（Google Drive、OneDrive、NAS 等），取得**不用登入就能下載**的連結。
+2. 更新 PR 說明，把 PR 從 draft 改成 ready：`gh pr ready`。
+
+### PR 說明要寫的內容
+
+```
+機器 / GPU / 驅動版本：
+NUM_ENVS × NUM_RUNS：
+完成的 run_id（各幾集）：
+中斷、重跑或錯誤（附 log 片段）：
+大檔案連結（runs + logs 的 tgz）：
+每個 run 的 summary.csv 內容（直接貼上）：
+```
+
 ## 常見問題
 
 - **`ImportError` 或 transformers 版本錯**：container 一律帶 `-e PYTHONNOUSERSITE=1`（腳本已經加了）。
