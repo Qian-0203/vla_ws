@@ -1,0 +1,4 @@
+# RoboLab image plus ffmpeg (RoboLab's video writer needs it). Build after robolab:b6cfcf6:
+#   docker build -f robolab_lang/docker/Dockerfile.ffmpeg -t robolab:b6cfcf6-ffmpeg robolab_lang/docker
+FROM robolab:b6cfcf6
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
