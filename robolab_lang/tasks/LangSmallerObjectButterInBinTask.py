@@ -16,4 +16,7 @@ class LangSmallerObjectButterInBinTask(_official.SmallerObjectButterInBinTask):
         **_official.SmallerObjectButterInBinTask.instruction,
         "blank": ".",
         "no_target": "Place the object in the grey bin.",
+        "p3_neg": "Place the object that is not the raisin box in the grey bin.",
+        "p5_contrast": "Place the smaller object in the grey bin, not the larger one.",
+        "p5_len_ctrl": "Place the smaller object in the grey bin, and let go gently.",
     }

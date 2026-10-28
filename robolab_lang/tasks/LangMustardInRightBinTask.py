@@ -19,4 +19,10 @@ class LangMustardInRightBinTask(_official.MustardInRightBinTask):
         "p3_neg_not": "Put the mustard in the bin that is not on the left",
         "p5_contrast": "Put the mustard in the right bin, not the left one",
         "p5_len_ctrl": "Put the mustard in the right bin, and let go gently",
+        "p4_syn_common": "Put the mustard in the right container",
+        "p4_syn_rare": "Place the mustard in the right receptacle",
+        "p4_functional": "Put the mustard in the right thing you throw trash into",
+        "p4_zh": "把芥末醬放進右邊的桶子裡",
+        "p7_robot_frame": "Put the mustard in the bin on the robot's right",
+        "p7_image_frame": "Put the mustard in the bin on the right side of the image",
     }

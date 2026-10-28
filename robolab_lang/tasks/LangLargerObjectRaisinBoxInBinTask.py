@@ -16,4 +16,7 @@ class LangLargerObjectRaisinBoxInBinTask(_official.LargerObjectRaisinBoxInBinTas
         **_official.LargerObjectRaisinBoxInBinTask.instruction,
         "blank": ".",
         "no_target": "Place the object in the grey bin.",
+        "p3_neg": "Place the object that is not the butter in the grey bin.",
+        "p5_contrast": "Place the larger object in the grey bin, not the smaller one.",
+        "p5_len_ctrl": "Place the larger object in the grey bin, and let go gently.",
     }

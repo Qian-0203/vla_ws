@@ -41,7 +41,7 @@ for key in $KEYS; do
     mkdir -p "$run_dir"
     if [[ ! -f "$run_dir/run.json" ]]; then
         RUN_ID="$run_id" KEY="$key" N_TASKS="$n_tasks" GPU="$GPU" IMAGE="$IMAGE" STAGE="$STAGE" \
-            NUM_ENVS="$NUM_ENVS" NUM_RUNS="$NUM_RUNS" TASKS="$TASKS" python3 - "$run_dir/run.json" <<'EOF'
+            NUM_ENVS="$NUM_ENVS" NUM_RUNS="$NUM_RUNS" TASKS="$TASKS" PURPOSE="${PURPOSE:-}" python3 - "$run_dir/run.json" <<'EOF'
 import json, os, subprocess, sys
 e = os.environ
 gpu = subprocess.run(["nvidia-smi", "-i", e["GPU"], "--query-gpu=name,memory.total,driver_version",
@@ -58,7 +58,7 @@ json.dump({
     "checkpoint": "gs://openpi-assets-simeval/pi05_droid_jointpos", "openpi_repo": "xuningy/openpi",
     "openpi_commit": "aa6420561529593114160d05e5ad155792b272f3",
     "client": "RoboLab Pi0DroidJointposClient via robolab_lang/run_pi0.py",
-    "purpose": "RoboLab language pilot Option A (original shared scenes, paired instructions)",
+    "purpose": (e.get("PURPOSE") or "RoboLab language pilot Option A (original shared scenes, paired instructions)"),
     "tasks": e["TASKS"].split(), "instruction_key": e["KEY"], "num_envs": n_envs, "num_runs": n_runs,
     "episodes_planned": int(e["N_TASKS"]) * n_envs * n_runs,
     "raw_output_dir": f'runs/{e["RUN_ID"]}/robolab_output',
