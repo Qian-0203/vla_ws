@@ -120,3 +120,27 @@ User approved (2026-10-23, in this session): HF upload of the four existing runs
   added to qian's crontab on nj21; the two existing sync lines unchanged (previous crontab saved in
   `~/robolab_ws/logs/crontab.before.*`).
 - Laptop: full copy in `~/vla_results_backup/robolab/` verified against each run's `SHA256SUMS` (all four pass).
+
+### 2026-10-28 — Option A language screen, π0.5-DROID, on an AWS H200 (run by Wen-Han Hsieh)
+
+Our two cloud servers were unreachable, so the user handed the run kit (`robolab_lang/`, `docs/robolab/run_option_a.md`
+on branch `robolab/option-a-runkit`) to Wen-Han Hsieh, whose agent ran it and returned the records in
+[PR #9](https://github.com/Qian-0203/vla_ws/pull/9). Times are from each `run.json`.
+
+| Run ID | Key | Episodes | Started (UTC) | Records written (UTC) | Raw size |
+|---|---|---:|---|---|---:|
+| `20261028-0842_robolab_pi05_smoke_aws-h200_default` | `default` | 1 | 2026-10-28 08:43 (per PR) | 08:47 (per PR) | — |
+| `20261028-0848_robolab_pi05_screen_aws-h200_default` | `default` | 260 | 08:48 | 12:31 | 2.9 GB |
+| `20261028-0848_robolab_pi05_screen_aws-h200_blank` | `blank` | 260 | 12:32 | 15:56 | 3.8 GB |
+| `20261028-0848_robolab_pi05_screen_aws-h200_no_target` | `no_target` | 260 | 15:57 | 19:41 | 3.2 GB |
+
+Hardware and stack: GPU 0 of 8 × NVIDIA H200 143 GB, driver 580.126.09, `NUM_ENVS=10`, `NUM_RUNS=2`. **Differs from Gate
+A:** an H200 with Apptainer 1.5.5 instead of an RTX card with Docker (that account has no Docker group or sudo). Same
+Isaac Sim 5.0, Isaac Lab 2.2.0, RoboLab `b6cfcf6` and openpi `aa64205`; the Dockerfile's contents were reproduced with bind
+mounts and `pip --target`. Image `sif-sha256:2ae6ebb7…`. The PR reports no interruptions or reruns. Gate A was not
+repeated on this machine; `RubiksCubeAndBanana` `default` scored 18/20 here, 36/50 in Gate A.
+
+Checked on 2026-10-31: 260 rows per run, and `run.json`, `episodes.jsonl` and `summary.csv` match each run's `SHA256SUMS`.
+Not done: PR #9 is unmerged (commit `eec958b`); the tgz link in the PR is a placeholder (`TGZ_LINE`), so the raw HDF5 files
+and videos, and the Apptainer scripts packed with them, have not been received; nothing on HF or the laptop.
+Results in [`results.md`](results.md).
