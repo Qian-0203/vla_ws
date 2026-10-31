@@ -90,5 +90,5 @@
 | G5 | 和論文不完全同義。論文的 Δ 是對 LIBERO 分數，這裡是對同任務的 default。論文的 switch 句是訓練看過的，這裡不是。mustard 的 negation 是目的地，不是物體 | 寫論文時要說明 | 寫進方法段 |
 | G6 | 第三物體的場景控制（C6）沒有安排；和 LIBERO 分數的相關（C2）、排名改變（C4）需要多個模型 | 這三項驗證不到 | 待決定 |
 | G7 | 每格 20 集，論文每個條件 500 集 | 只能當篩選 | 有訊號的格子再加 |
-| G8 | 選項 A 已跑完（780 集），但 PR #9 還沒 merge；tgz 連結還是佔位字 `TGZ_LINE`，影片和 Apptainer 腳本都還沒拿到；HF 和筆電都沒有備份 | 影片無法查證，原始資料只在那台機器上 | `results.md`、eval_log 已更新（2026-10-31）；等 tgz 連結和 merge |
+| G8 | 選項 A 已跑完（780 集），PR #9 已 merge；tgz 連結還是佔位字 `TGZ_LINE`，影片和 Apptainer 腳本都還沒拿到；HF 和筆電都沒有備份 | 影片無法查證，原始資料只在那台機器上 | `results.md`、eval_log 已更新（2026-10-31）；等 tgz 連結 |
 | G9 | `no_target` 的 RoboLab 成功判定仍要求特定答案，三個空間任務還共用同一句 "near the bowl" | 34.2% 這類 no_target 總成功率不能和 default 比較 | 分析時改看 `first_lifted`、`in_container` |
