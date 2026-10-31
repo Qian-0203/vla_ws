@@ -42,8 +42,8 @@ also do: the object ended over the bowl but was still held, or rested on the rim
 ### Option A: `20261028-0848_robolab_pi05_screen_aws-h200_{default,blank,no_target}` — screen
 
 13 task files × 3 instruction keys × 20 episodes = 780 episodes (`NUM_ENVS=10`, `NUM_RUNS=2`), all recorded. Run by
-Wen-Han Hsieh on an AWS H200 with Apptainer, not the RTX + Docker setup of Gate A (`eval_log.md`). Records are in
-[PR #9](https://github.com/Qian-0203/vla_ws/pull/9) (commit `eec958b`, not merged yet) and were checked against each
+Wen-Han Hsieh on an AWS H200 with Apptainer, not the RTX + Docker setup of Gate A (`eval_log.md`). Records came through
+[PR #9](https://github.com/Qian-0203/vla_ws/pull/9) (merged 2026-10-31) and were checked against each
 run's `SHA256SUMS`. **Screen: each cell repeats one fixed object layout 20 times (below), so the Wilson CI understates
 the uncertainty. Not a result table.**
 
@@ -85,5 +85,5 @@ What the which-object fields show (`first_lifted`, `in_container`; limits as des
 - **`no_target` on the three spatial tasks.** All three use the same sentence, "Put the rubiks cube near the bowl",
   while each check requires one specific relation, so their 0/20 scores say nothing about spatial words.
 
-Sync: records in PR #9 only. HF and the laptop have no copy of the raw runs, and the PR's tgz link is still an
+Sync: records in `results/robolab/<run_id>/` on this branch. HF and the laptop have no copy of the raw runs, and the PR's tgz link is still an
 unfilled placeholder (`TGZ_LINE`), so rollout videos are not available for checking yet.

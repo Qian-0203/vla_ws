@@ -144,3 +144,8 @@ Checked on 2026-10-31: 260 rows per run, and `run.json`, `episodes.jsonl` and `s
 Not done: PR #9 is unmerged (commit `eec958b`); the tgz link in the PR is a placeholder (`TGZ_LINE`), so the raw HDF5 files
 and videos, and the Apptainer scripts packed with them, have not been received; nothing on HF or the laptop.
 Results in [`results.md`](results.md).
+
+### 2026-10-31 — PR #9 merged
+
+The user approved the merge. The Option A records are now in `results/robolab/` on this branch (merge commit `29ecbbd`).
+The tgz link is still missing, and there is still no copy on HF or the laptop.
