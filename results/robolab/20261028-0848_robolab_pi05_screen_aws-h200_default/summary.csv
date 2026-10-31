@@ -1,0 +1,14 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangBananaThenRubiksCubeTask,default,20,13,0.6500,0.4329,0.8188,0.8500,8
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangBowlStackingLeftOnRightTask,default,20,4,0.2000,0.0807,0.4160,0.2000,15
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangBowlStackingRightOnLeftTask,default,20,11,0.5500,0.3421,0.7418,0.5500,19
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangLargerObjectRaisinBoxInBinTask,default,20,0,0.0000,-0.0000,0.1611,0.0000,20
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangMustardInLeftBinTask,default,20,8,0.4000,0.2188,0.6134,0.4000,0
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangMustardInRightBinTask,default,20,8,0.4000,0.2188,0.6134,0.4000,0
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangRubiksCubeAndBananaTask,default,20,18,0.9000,0.6990,0.9721,0.9500,1
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangRubiksCubeBehindBowlTask,default,20,14,0.7000,0.4810,0.8545,0.9167,20
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangRubiksCubeInFrontOfBowlTask,default,20,0,0.0000,-0.0000,0.1611,0.4667,6
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangRubiksCubeLeftOfBowlTask,default,20,2,0.1000,0.0279,0.3010,0.6833,20
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangRubiksCubeOrBananaTask,default,20,20,1.0000,0.8389,1.0000,1.0000,0
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangRubiksCubeThenBananaTask,default,20,0,0.0000,-0.0000,0.1611,0.1750,19
+20261028-0848_robolab_pi05_screen_aws-h200_default,LangSmallerObjectButterInBinTask,default,20,18,0.9000,0.6990,0.9721,0.9000,1
