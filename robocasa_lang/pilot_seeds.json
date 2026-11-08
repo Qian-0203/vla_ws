@@ -1,0 +1,1231 @@
+{
+ "source": "XiaomiRobotics/Xiaomi-Robotics-1 eval_robocasa365/summary.json @0dd7aef (published results, not ours)",
+ "split": "pretrain",
+ "seed_rule": "7 + 50*task_index_in_target50 + episode",
+ "tasks": {
+  "NavigateKitchen": {
+   "horizon": 450,
+   "published_sr": 0.92,
+   "episodes": [
+    {
+     "episode": 0,
+     "seed": 207,
+     "success": true,
+     "steps": 129
+    },
+    {
+     "episode": 1,
+     "seed": 208,
+     "success": false,
+     "steps": 450
+    },
+    {
+     "episode": 2,
+     "seed": 209,
+     "success": true,
+     "steps": 224
+    },
+    {
+     "episode": 3,
+     "seed": 210,
+     "success": true,
+     "steps": 216
+    },
+    {
+     "episode": 4,
+     "seed": 211,
+     "success": true,
+     "steps": 121
+    },
+    {
+     "episode": 5,
+     "seed": 212,
+     "success": true,
+     "steps": 72
+    },
+    {
+     "episode": 6,
+     "seed": 213,
+     "success": true,
+     "steps": 145
+    },
+    {
+     "episode": 7,
+     "seed": 214,
+     "success": true,
+     "steps": 179
+    },
+    {
+     "episode": 8,
+     "seed": 215,
+     "success": true,
+     "steps": 139
+    },
+    {
+     "episode": 9,
+     "seed": 216,
+     "success": true,
+     "steps": 136
+    },
+    {
+     "episode": 10,
+     "seed": 217,
+     "success": true,
+     "steps": 126
+    },
+    {
+     "episode": 11,
+     "seed": 218,
+     "success": true,
+     "steps": 66
+    },
+    {
+     "episode": 12,
+     "seed": 219,
+     "success": true,
+     "steps": 157
+    },
+    {
+     "episode": 13,
+     "seed": 220,
+     "success": true,
+     "steps": 334
+    },
+    {
+     "episode": 14,
+     "seed": 221,
+     "success": true,
+     "steps": 79
+    },
+    {
+     "episode": 15,
+     "seed": 222,
+     "success": true,
+     "steps": 133
+    },
+    {
+     "episode": 16,
+     "seed": 223,
+     "success": false,
+     "steps": 450
+    },
+    {
+     "episode": 17,
+     "seed": 224,
+     "success": true,
+     "steps": 152
+    },
+    {
+     "episode": 18,
+     "seed": 225,
+     "success": true,
+     "steps": 197
+    },
+    {
+     "episode": 19,
+     "seed": 226,
+     "success": true,
+     "steps": 90
+    },
+    {
+     "episode": 20,
+     "seed": 227,
+     "success": true,
+     "steps": 209
+    },
+    {
+     "episode": 21,
+     "seed": 228,
+     "success": true,
+     "steps": 154
+    },
+    {
+     "episode": 22,
+     "seed": 229,
+     "success": true,
+     "steps": 108
+    },
+    {
+     "episode": 23,
+     "seed": 230,
+     "success": true,
+     "steps": 132
+    },
+    {
+     "episode": 24,
+     "seed": 231,
+     "success": true,
+     "steps": 96
+    },
+    {
+     "episode": 25,
+     "seed": 232,
+     "success": true,
+     "steps": 372
+    },
+    {
+     "episode": 26,
+     "seed": 233,
+     "success": true,
+     "steps": 166
+    },
+    {
+     "episode": 27,
+     "seed": 234,
+     "success": true,
+     "steps": 119
+    },
+    {
+     "episode": 28,
+     "seed": 235,
+     "success": true,
+     "steps": 282
+    },
+    {
+     "episode": 29,
+     "seed": 236,
+     "success": true,
+     "steps": 90
+    },
+    {
+     "episode": 30,
+     "seed": 237,
+     "success": true,
+     "steps": 78
+    },
+    {
+     "episode": 31,
+     "seed": 238,
+     "success": true,
+     "steps": 129
+    },
+    {
+     "episode": 32,
+     "seed": 239,
+     "success": true,
+     "steps": 97
+    },
+    {
+     "episode": 33,
+     "seed": 240,
+     "success": true,
+     "steps": 106
+    },
+    {
+     "episode": 34,
+     "seed": 241,
+     "success": true,
+     "steps": 251
+    },
+    {
+     "episode": 35,
+     "seed": 242,
+     "success": true,
+     "steps": 211
+    },
+    {
+     "episode": 36,
+     "seed": 243,
+     "success": true,
+     "steps": 109
+    },
+    {
+     "episode": 37,
+     "seed": 244,
+     "success": true,
+     "steps": 128
+    },
+    {
+     "episode": 38,
+     "seed": 245,
+     "success": true,
+     "steps": 124
+    },
+    {
+     "episode": 39,
+     "seed": 246,
+     "success": true,
+     "steps": 44
+    },
+    {
+     "episode": 40,
+     "seed": 247,
+     "success": true,
+     "steps": 112
+    },
+    {
+     "episode": 41,
+     "seed": 248,
+     "success": true,
+     "steps": 272
+    },
+    {
+     "episode": 42,
+     "seed": 249,
+     "success": true,
+     "steps": 226
+    },
+    {
+     "episode": 43,
+     "seed": 250,
+     "success": true,
+     "steps": 131
+    },
+    {
+     "episode": 44,
+     "seed": 251,
+     "success": false,
+     "steps": 450
+    },
+    {
+     "episode": 45,
+     "seed": 252,
+     "success": true,
+     "steps": 116
+    },
+    {
+     "episode": 46,
+     "seed": 253,
+     "success": true,
+     "steps": 151
+    },
+    {
+     "episode": 47,
+     "seed": 254,
+     "success": true,
+     "steps": 353
+    },
+    {
+     "episode": 48,
+     "seed": 255,
+     "success": true,
+     "steps": 120
+    },
+    {
+     "episode": 49,
+     "seed": 256,
+     "success": false,
+     "steps": 450
+    }
+   ]
+  },
+  "PickPlaceCounterToCabinet": {
+   "horizon": 750,
+   "published_sr": 0.86,
+   "episodes": [
+    {
+     "episode": 0,
+     "seed": 407,
+     "success": true,
+     "steps": 195
+    },
+    {
+     "episode": 1,
+     "seed": 408,
+     "success": true,
+     "steps": 190
+    },
+    {
+     "episode": 2,
+     "seed": 409,
+     "success": true,
+     "steps": 187
+    },
+    {
+     "episode": 3,
+     "seed": 410,
+     "success": true,
+     "steps": 193
+    },
+    {
+     "episode": 4,
+     "seed": 411,
+     "success": true,
+     "steps": 201
+    },
+    {
+     "episode": 5,
+     "seed": 412,
+     "success": true,
+     "steps": 192
+    },
+    {
+     "episode": 6,
+     "seed": 413,
+     "success": true,
+     "steps": 210
+    },
+    {
+     "episode": 7,
+     "seed": 414,
+     "success": true,
+     "steps": 196
+    },
+    {
+     "episode": 8,
+     "seed": 415,
+     "success": true,
+     "steps": 170
+    },
+    {
+     "episode": 9,
+     "seed": 416,
+     "success": true,
+     "steps": 254
+    },
+    {
+     "episode": 10,
+     "seed": 417,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 11,
+     "seed": 418,
+     "success": true,
+     "steps": 188
+    },
+    {
+     "episode": 12,
+     "seed": 419,
+     "success": true,
+     "steps": 204
+    },
+    {
+     "episode": 13,
+     "seed": 420,
+     "success": true,
+     "steps": 229
+    },
+    {
+     "episode": 14,
+     "seed": 421,
+     "success": true,
+     "steps": 197
+    },
+    {
+     "episode": 15,
+     "seed": 422,
+     "success": true,
+     "steps": 695
+    },
+    {
+     "episode": 16,
+     "seed": 423,
+     "success": true,
+     "steps": 185
+    },
+    {
+     "episode": 17,
+     "seed": 424,
+     "success": true,
+     "steps": 374
+    },
+    {
+     "episode": 18,
+     "seed": 425,
+     "success": true,
+     "steps": 255
+    },
+    {
+     "episode": 19,
+     "seed": 426,
+     "success": true,
+     "steps": 242
+    },
+    {
+     "episode": 20,
+     "seed": 427,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 21,
+     "seed": 428,
+     "success": true,
+     "steps": 189
+    },
+    {
+     "episode": 22,
+     "seed": 429,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 23,
+     "seed": 430,
+     "success": true,
+     "steps": 277
+    },
+    {
+     "episode": 24,
+     "seed": 431,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 25,
+     "seed": 432,
+     "success": true,
+     "steps": 198
+    },
+    {
+     "episode": 26,
+     "seed": 433,
+     "success": true,
+     "steps": 174
+    },
+    {
+     "episode": 27,
+     "seed": 434,
+     "success": true,
+     "steps": 205
+    },
+    {
+     "episode": 28,
+     "seed": 435,
+     "success": true,
+     "steps": 361
+    },
+    {
+     "episode": 29,
+     "seed": 436,
+     "success": true,
+     "steps": 206
+    },
+    {
+     "episode": 30,
+     "seed": 437,
+     "success": true,
+     "steps": 197
+    },
+    {
+     "episode": 31,
+     "seed": 438,
+     "success": true,
+     "steps": 250
+    },
+    {
+     "episode": 32,
+     "seed": 439,
+     "success": true,
+     "steps": 175
+    },
+    {
+     "episode": 33,
+     "seed": 440,
+     "success": true,
+     "steps": 177
+    },
+    {
+     "episode": 34,
+     "seed": 441,
+     "success": true,
+     "steps": 235
+    },
+    {
+     "episode": 35,
+     "seed": 442,
+     "success": true,
+     "steps": 274
+    },
+    {
+     "episode": 36,
+     "seed": 443,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 37,
+     "seed": 444,
+     "success": true,
+     "steps": 206
+    },
+    {
+     "episode": 38,
+     "seed": 445,
+     "success": true,
+     "steps": 202
+    },
+    {
+     "episode": 39,
+     "seed": 446,
+     "success": true,
+     "steps": 177
+    },
+    {
+     "episode": 40,
+     "seed": 447,
+     "success": true,
+     "steps": 194
+    },
+    {
+     "episode": 41,
+     "seed": 448,
+     "success": true,
+     "steps": 238
+    },
+    {
+     "episode": 42,
+     "seed": 449,
+     "success": true,
+     "steps": 190
+    },
+    {
+     "episode": 43,
+     "seed": 450,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 44,
+     "seed": 451,
+     "success": true,
+     "steps": 201
+    },
+    {
+     "episode": 45,
+     "seed": 452,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 46,
+     "seed": 453,
+     "success": true,
+     "steps": 196
+    },
+    {
+     "episode": 47,
+     "seed": 454,
+     "success": true,
+     "steps": 251
+    },
+    {
+     "episode": 48,
+     "seed": 455,
+     "success": true,
+     "steps": 647
+    },
+    {
+     "episode": 49,
+     "seed": 456,
+     "success": true,
+     "steps": 323
+    }
+   ]
+  },
+  "TurnOffStove": {
+   "horizon": 750,
+   "published_sr": 0.6,
+   "episodes": [
+    {
+     "episode": 0,
+     "seed": 707,
+     "success": true,
+     "steps": 436
+    },
+    {
+     "episode": 1,
+     "seed": 708,
+     "success": true,
+     "steps": 154
+    },
+    {
+     "episode": 2,
+     "seed": 709,
+     "success": true,
+     "steps": 282
+    },
+    {
+     "episode": 3,
+     "seed": 710,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 4,
+     "seed": 711,
+     "success": true,
+     "steps": 180
+    },
+    {
+     "episode": 5,
+     "seed": 712,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 6,
+     "seed": 713,
+     "success": true,
+     "steps": 241
+    },
+    {
+     "episode": 7,
+     "seed": 714,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 8,
+     "seed": 715,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 9,
+     "seed": 716,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 10,
+     "seed": 717,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 11,
+     "seed": 718,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 12,
+     "seed": 719,
+     "success": true,
+     "steps": 255
+    },
+    {
+     "episode": 13,
+     "seed": 720,
+     "success": true,
+     "steps": 193
+    },
+    {
+     "episode": 14,
+     "seed": 721,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 15,
+     "seed": 722,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 16,
+     "seed": 723,
+     "success": true,
+     "steps": 293
+    },
+    {
+     "episode": 17,
+     "seed": 724,
+     "success": true,
+     "steps": 349
+    },
+    {
+     "episode": 18,
+     "seed": 725,
+     "success": true,
+     "steps": 212
+    },
+    {
+     "episode": 19,
+     "seed": 726,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 20,
+     "seed": 727,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 21,
+     "seed": 728,
+     "success": true,
+     "steps": 338
+    },
+    {
+     "episode": 22,
+     "seed": 729,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 23,
+     "seed": 730,
+     "success": true,
+     "steps": 426
+    },
+    {
+     "episode": 24,
+     "seed": 731,
+     "success": true,
+     "steps": 285
+    },
+    {
+     "episode": 25,
+     "seed": 732,
+     "success": true,
+     "steps": 212
+    },
+    {
+     "episode": 26,
+     "seed": 733,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 27,
+     "seed": 734,
+     "success": true,
+     "steps": 292
+    },
+    {
+     "episode": 28,
+     "seed": 735,
+     "success": true,
+     "steps": 317
+    },
+    {
+     "episode": 29,
+     "seed": 736,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 30,
+     "seed": 737,
+     "success": true,
+     "steps": 296
+    },
+    {
+     "episode": 31,
+     "seed": 738,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 32,
+     "seed": 739,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 33,
+     "seed": 740,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 34,
+     "seed": 741,
+     "success": true,
+     "steps": 240
+    },
+    {
+     "episode": 35,
+     "seed": 742,
+     "success": true,
+     "steps": 291
+    },
+    {
+     "episode": 36,
+     "seed": 743,
+     "success": true,
+     "steps": 337
+    },
+    {
+     "episode": 37,
+     "seed": 744,
+     "success": true,
+     "steps": 418
+    },
+    {
+     "episode": 38,
+     "seed": 745,
+     "success": true,
+     "steps": 266
+    },
+    {
+     "episode": 39,
+     "seed": 746,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 40,
+     "seed": 747,
+     "success": true,
+     "steps": 662
+    },
+    {
+     "episode": 41,
+     "seed": 748,
+     "success": true,
+     "steps": 680
+    },
+    {
+     "episode": 42,
+     "seed": 749,
+     "success": true,
+     "steps": 332
+    },
+    {
+     "episode": 43,
+     "seed": 750,
+     "success": true,
+     "steps": 236
+    },
+    {
+     "episode": 44,
+     "seed": 751,
+     "success": true,
+     "steps": 261
+    },
+    {
+     "episode": 45,
+     "seed": 752,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 46,
+     "seed": 753,
+     "success": true,
+     "steps": 253
+    },
+    {
+     "episode": 47,
+     "seed": 754,
+     "success": false,
+     "steps": 750
+    },
+    {
+     "episode": 48,
+     "seed": 755,
+     "success": true,
+     "steps": 198
+    },
+    {
+     "episode": 49,
+     "seed": 756,
+     "success": true,
+     "steps": 276
+    }
+   ]
+  },
+  "OpenStandMixerHead": {
+   "horizon": 450,
+   "published_sr": 0.98,
+   "episodes": [
+    {
+     "episode": 0,
+     "seed": 357,
+     "success": true,
+     "steps": 90
+    },
+    {
+     "episode": 1,
+     "seed": 358,
+     "success": true,
+     "steps": 115
+    },
+    {
+     "episode": 2,
+     "seed": 359,
+     "success": true,
+     "steps": 69
+    },
+    {
+     "episode": 3,
+     "seed": 360,
+     "success": true,
+     "steps": 105
+    },
+    {
+     "episode": 4,
+     "seed": 361,
+     "success": true,
+     "steps": 101
+    },
+    {
+     "episode": 5,
+     "seed": 362,
+     "success": true,
+     "steps": 90
+    },
+    {
+     "episode": 6,
+     "seed": 363,
+     "success": true,
+     "steps": 89
+    },
+    {
+     "episode": 7,
+     "seed": 364,
+     "success": true,
+     "steps": 95
+    },
+    {
+     "episode": 8,
+     "seed": 365,
+     "success": true,
+     "steps": 98
+    },
+    {
+     "episode": 9,
+     "seed": 366,
+     "success": true,
+     "steps": 97
+    },
+    {
+     "episode": 10,
+     "seed": 367,
+     "success": true,
+     "steps": 100
+    },
+    {
+     "episode": 11,
+     "seed": 368,
+     "success": true,
+     "steps": 179
+    },
+    {
+     "episode": 12,
+     "seed": 369,
+     "success": true,
+     "steps": 101
+    },
+    {
+     "episode": 13,
+     "seed": 370,
+     "success": true,
+     "steps": 93
+    },
+    {
+     "episode": 14,
+     "seed": 371,
+     "success": true,
+     "steps": 103
+    },
+    {
+     "episode": 15,
+     "seed": 372,
+     "success": false,
+     "steps": 450
+    },
+    {
+     "episode": 16,
+     "seed": 373,
+     "success": true,
+     "steps": 96
+    },
+    {
+     "episode": 17,
+     "seed": 374,
+     "success": true,
+     "steps": 98
+    },
+    {
+     "episode": 18,
+     "seed": 375,
+     "success": true,
+     "steps": 126
+    },
+    {
+     "episode": 19,
+     "seed": 376,
+     "success": true,
+     "steps": 95
+    },
+    {
+     "episode": 20,
+     "seed": 377,
+     "success": true,
+     "steps": 91
+    },
+    {
+     "episode": 21,
+     "seed": 378,
+     "success": true,
+     "steps": 107
+    },
+    {
+     "episode": 22,
+     "seed": 379,
+     "success": true,
+     "steps": 108
+    },
+    {
+     "episode": 23,
+     "seed": 380,
+     "success": true,
+     "steps": 89
+    },
+    {
+     "episode": 24,
+     "seed": 381,
+     "success": true,
+     "steps": 113
+    },
+    {
+     "episode": 25,
+     "seed": 382,
+     "success": true,
+     "steps": 163
+    },
+    {
+     "episode": 26,
+     "seed": 383,
+     "success": true,
+     "steps": 105
+    },
+    {
+     "episode": 27,
+     "seed": 384,
+     "success": true,
+     "steps": 98
+    },
+    {
+     "episode": 28,
+     "seed": 385,
+     "success": true,
+     "steps": 280
+    },
+    {
+     "episode": 29,
+     "seed": 386,
+     "success": true,
+     "steps": 114
+    },
+    {
+     "episode": 30,
+     "seed": 387,
+     "success": true,
+     "steps": 103
+    },
+    {
+     "episode": 31,
+     "seed": 388,
+     "success": true,
+     "steps": 103
+    },
+    {
+     "episode": 32,
+     "seed": 389,
+     "success": true,
+     "steps": 158
+    },
+    {
+     "episode": 33,
+     "seed": 390,
+     "success": true,
+     "steps": 96
+    },
+    {
+     "episode": 34,
+     "seed": 391,
+     "success": true,
+     "steps": 103
+    },
+    {
+     "episode": 35,
+     "seed": 392,
+     "success": true,
+     "steps": 98
+    },
+    {
+     "episode": 36,
+     "seed": 393,
+     "success": true,
+     "steps": 409
+    },
+    {
+     "episode": 37,
+     "seed": 394,
+     "success": true,
+     "steps": 93
+    },
+    {
+     "episode": 38,
+     "seed": 395,
+     "success": true,
+     "steps": 94
+    },
+    {
+     "episode": 39,
+     "seed": 396,
+     "success": true,
+     "steps": 88
+    },
+    {
+     "episode": 40,
+     "seed": 397,
+     "success": true,
+     "steps": 104
+    },
+    {
+     "episode": 41,
+     "seed": 398,
+     "success": true,
+     "steps": 108
+    },
+    {
+     "episode": 42,
+     "seed": 399,
+     "success": true,
+     "steps": 101
+    },
+    {
+     "episode": 43,
+     "seed": 400,
+     "success": true,
+     "steps": 101
+    },
+    {
+     "episode": 44,
+     "seed": 401,
+     "success": true,
+     "steps": 98
+    },
+    {
+     "episode": 45,
+     "seed": 402,
+     "success": true,
+     "steps": 133
+    },
+    {
+     "episode": 46,
+     "seed": 403,
+     "success": true,
+     "steps": 97
+    },
+    {
+     "episode": 47,
+     "seed": 404,
+     "success": true,
+     "steps": 328
+    },
+    {
+     "episode": 48,
+     "seed": 405,
+     "success": true,
+     "steps": 108
+    },
+    {
+     "episode": 49,
+     "seed": 406,
+     "success": true,
+     "steps": 99
+    }
+   ]
+  }
+ }
+}
