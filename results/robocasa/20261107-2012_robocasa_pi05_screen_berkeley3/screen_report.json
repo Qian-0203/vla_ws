@@ -1,0 +1,96 @@
+{
+ "note": "Cells merged over their _a/_b halves. default_* cells come from the gate run 20261104-1530_robocasa_pi05_gate_berkeley3 (same seeds). PnP requested = the object the sentence asks for (distr_counter under target_swap, obj otherwise); 'delivered' = inside the cabinet with the gripper away.",
+ "cells": {
+  "default_NavigateKitchen": {
+   "n": 50,
+   "success": 0,
+   "example_instruction": "Navigate to the toaster oven."
+  },
+  "default_OpenStandMixerHead": {
+   "n": 50,
+   "success": 36,
+   "example_instruction": "Open the stand mixer head."
+  },
+  "default_PickPlaceCounterToCabinet": {
+   "n": 50,
+   "success": 28,
+   "requested_delivered": 28,
+   "other_delivered": 0,
+   "first_grasped_requested": 36,
+   "first_grasped_other": 0,
+   "no_grasp": 14,
+   "example_instruction": "Pick the bread from the counter and place it in the cabinet."
+  },
+  "default_TurnOffStove": {
+   "n": 50,
+   "success": 9,
+   "example_instruction": "Turn off the front left burner of the stove."
+  },
+  "mixer_paraphrase_syntactic": {
+   "n": 50,
+   "success": 19,
+   "example_instruction": "Open the head of the stand mixer."
+  },
+  "pnp_length_control_positive": {
+   "n": 50,
+   "success": 9,
+   "requested_delivered": 9,
+   "other_delivered": 0,
+   "first_grasped_requested": 33,
+   "first_grasped_other": 0,
+   "no_grasp": 17,
+   "example_instruction": "Pick the bread, slowly and carefully, from the counter and place it in the cabinet."
+  },
+  "pnp_negation_only": {
+   "n": 50,
+   "success": 16,
+   "requested_delivered": 16,
+   "other_delivered": 2,
+   "first_grasped_requested": 31,
+   "first_grasped_other": 3,
+   "no_grasp": 16,
+   "example_instruction": "Pick the object that is not the juice and place it in the cabinet."
+  },
+  "pnp_paraphrase_syntactic": {
+   "n": 50,
+   "success": 31,
+   "requested_delivered": 31,
+   "other_delivered": 0,
+   "first_grasped_requested": 39,
+   "first_grasped_other": 0,
+   "no_grasp": 11,
+   "example_instruction": "From the counter, pick the bread and place it in the cabinet."
+  },
+  "pnp_positive_contrast": {
+   "n": 50,
+   "success": 18,
+   "requested_delivered": 18,
+   "other_delivered": 1,
+   "first_grasped_requested": 35,
+   "first_grasped_other": 1,
+   "no_grasp": 14,
+   "example_instruction": "Pick the bread, not the juice, from the counter and place it in the cabinet."
+  },
+  "pnp_target_swap": {
+   "n": 40,
+   "success": 9,
+   "requested_delivered": 9,
+   "other_delivered": 16,
+   "first_grasped_requested": 11,
+   "first_grasped_other": 19,
+   "no_grasp": 10,
+   "skipped": 10,
+   "example_instruction": "Pick the juice from the counter and place it in the cabinet."
+  },
+  "pnp_verb_synonym": {
+   "n": 50,
+   "success": 7,
+   "requested_delivered": 7,
+   "other_delivered": 0,
+   "first_grasped_requested": 33,
+   "first_grasped_other": 0,
+   "no_grasp": 17,
+   "example_instruction": "Fetch the bread off the counter and stow it in the cabinet."
+  }
+ }
+}

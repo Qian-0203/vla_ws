@@ -1,0 +1,3 @@
+task,cell,condition,n,successes,sr
+NavigateKitchen,smoke_nav,default,1,0,0.0
+PickPlaceCounterToCabinet,smoke_pnp,default,1,0,0.0

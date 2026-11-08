@@ -1,0 +1,2 @@
+{"cell": "smoke_pnp", "env": "PickPlaceCounterToCabinet", "env_kwargs": {}, "horizon_task": "PickPlaceCounterToCabinet", "family": "pnp", "condition": "default", "seeds": [407], "n": 1, "require_valid": false}
+{"cell": "smoke_nav", "env": "NavigateKitchen", "env_kwargs": {}, "horizon_task": "NavigateKitchen", "family": "nav", "condition": "default", "seeds": [207], "n": 1, "require_valid": false}

@@ -1,0 +1,15 @@
+task,cell,condition,n,successes,sr
+OpenStandMixerHead,mixer_paraphrase_syntactic_a,paraphrase_syntactic,25,10,0.4
+OpenStandMixerHead,mixer_paraphrase_syntactic_b,paraphrase_syntactic,25,9,0.36
+PickPlaceCounterToCabinet,pnp_length_control_positive_a,length_control_positive,25,4,0.16
+PickPlaceCounterToCabinet,pnp_length_control_positive_b,length_control_positive,25,5,0.2
+PickPlaceCounterToCabinet,pnp_negation_only_a,negation_only,25,9,0.36
+PickPlaceCounterToCabinet,pnp_negation_only_b,negation_only,25,7,0.28
+PickPlaceCounterToCabinet,pnp_paraphrase_syntactic_a,paraphrase_syntactic,25,15,0.6
+PickPlaceCounterToCabinet,pnp_paraphrase_syntactic_b,paraphrase_syntactic,25,16,0.64
+PickPlaceCounterToCabinet,pnp_positive_contrast_a,positive_contrast,25,9,0.36
+PickPlaceCounterToCabinet,pnp_positive_contrast_b,positive_contrast,25,9,0.36
+PickPlaceCounterToCabinet,pnp_target_swap_a,target_swap,22,5,0.2273
+PickPlaceCounterToCabinet,pnp_target_swap_b,target_swap,18,4,0.2222
+PickPlaceCounterToCabinet,pnp_verb_synonym_a,verb_synonym,25,3,0.12
+PickPlaceCounterToCabinet,pnp_verb_synonym_b,verb_synonym,25,4,0.16

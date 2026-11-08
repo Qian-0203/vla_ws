@@ -1,0 +1,19 @@
+{
+ "run_id": "20261107-2012_robocasa_pi05_screen_berkeley3",
+ "platform": "robocasa",
+ "model": "pi05",
+ "checkpoint": "robocasa/robocasa365_checkpoints:pi05_pretrain_human300/multitask_learning/75000 (params + assets)",
+ "config": "pi05_pretrain_human300",
+ "server": "robocasa_lang/servers/pi05_server.py (openpi fork robocasa-benchmark/openpi @ 5a6beda)",
+ "client": "robocasa_lang/run_lang_eval.py --policy pi05 (replan 5, 224 px, 3 cameras)",
+ "robocasa": "4f8a298",
+ "robosuite": "5ce6643f",
+ "mujoco": "3.3.1",
+ "split": "pretrain",
+ "host": "berkeley-3 (ip-172-31-64-36, 8x H200)",
+ "gpus": "0 1 2",
+ "started": "2026-11-07T20:12:50Z",
+ "ended": "2026-11-07T20:54:06Z",
+ "episodes": 340,
+ "skipped": 10
+}

@@ -30,6 +30,29 @@ Instructions and scene hashes reconstructed after the run (upstream client); no 
 laptop — all three. An earlier attempt, `20261023-0915_robocasa_xr1_gate_berkeley2`, aborted before any episode (port held
 by a leftover process).
 
+### `20261104-1530_robocasa_pi05_gate_berkeley3` — gate, **passed**
+
+π0.5 (`robocasa/robocasa365_checkpoints` `pi05_pretrain_human300/multitask_learning/75000`), our client
+`robocasa_lang/run_lang_eval.py --policy pi05`, Xiaomi-Robotics-1's seed rule, `berkeley-3` GPUs 0–2. π0.5 publishes
+only its Atomic-Seen mean, so the rule is: mean over the 18 Atomic-Seen tasks (first 10 seeds each) within 7 pts of 39.6.
+
+| Task | n | SR (first 10) | | Task | n | SR (first 10) |
+|---|--:|--:|---|---|--:|--:|
+| CloseBlenderLid | 10 | 0% | | PickPlaceCounterToCabinet | 50 | 80% (56% on 50) |
+| CloseFridge | 10 | 40% | | PickPlaceCounterToStove | 10 | 70% |
+| CloseToasterOvenDoor | 10 | 10% | | PickPlaceDrawerToCounter | 10 | 40% |
+| CoffeeSetupMug | 10 | 30% | | PickPlaceSinkToCounter | 10 | 100% |
+| NavigateKitchen | 50 | 0% (0% on 50) | | PickPlaceToasterToCounter | 10 | 0% |
+| OpenCabinet | 10 | 50% | | SlideDishwasherRack | 10 | 50% |
+| OpenDrawer | 10 | 60% | | TurnOffStove | 50 | 40% (18% on 50) |
+| OpenStandMixerHead | 50 | 70% (72% on 50) | | TurnOnElectricKettle | 10 | 10% |
+| | | | | TurnOnMicrowave | 10 | 10% |
+| | | | | TurnOnSinkFaucet | 10 | 50% |
+| **Mean (18 tasks)** | 180 | **39.4%** (published 39.6%) | | | | |
+
+Only PickPlaceCounterToCabinet (28/50) and OpenStandMixerHead (36/50) reach the 50% default floor for language cells.
+Sync: repo only so far (HF and laptop pending).
+
 ## Screens, smoke and exploratory runs (not results)
 
 ### `20261023-1002_robocasa_xr1_screen_berkeley2` — screen (20 episodes per cell)
@@ -83,3 +106,33 @@ with `num_trials=2`), **not** the published seeds, so not comparable with the le
 Instruction and scene hash were reconstructed afterwards on the laptop (not logged by the upstream client); no
 outcome fields. Sync status (2026-10-23): HF `robocasa/20261021-1636_robocasa_xr1_smoke_berkeley2/` (12 files incl. videos),
 repo `results/robocasa/…`, laptop backup — all three.
+
+### `20261107-2012_robocasa_pi05_screen_berkeley3` — screen (50 episodes per cell)
+
+π0.5, as the gate run above; same 50 seeds as each task's default (defaults from the gate run). "Requested" = the
+object the sentence asks for is in the cabinet and the other is not; "other" = the other object is in the cabinet.
+Per-cell counts: `screen_report.json`.
+
+| Cell | Condition | Example instruction (seed 407 scene) | n | Requested | Other | First grasp: requested / other / none |
+|---|---|---|--:|--:|--:|---|
+| default (gate run) | default | Pick the bread from the counter and place it in the cabinet. | 50 | 28 | 0 | 36 / 0 / 14 |
+| pnp_target_swap | target_swap | Pick the juice from the counter and place it in the cabinet. | 40 | 9 | **16** | 11 / 19 / 10 |
+| pnp_negation_only | negation_only | Pick the object that is not the juice and place it in the cabinet. | 50 | 16 | 2 | 31 / 3 / 16 |
+| pnp_positive_contrast | positive_contrast | Pick the bread, not the juice, from the counter and place it in the cabinet. | 50 | 18 | 1 | 35 / 1 / 14 |
+| pnp_length_control_positive | length_control_positive | Pick the bread, slowly and carefully, from the counter and place it in the cabinet. | 50 | 9 | 0 | 33 / 0 / 17 |
+| pnp_paraphrase_syntactic | paraphrase_syntactic | From the counter, pick the bread and place it in the cabinet. | 50 | 31 | 0 | 39 / 0 / 11 |
+| pnp_verb_synonym | verb_synonym | Fetch the bread off the counter and stow it in the cabinet. | 50 | 7 | 0 | 33 / 0 / 17 |
+
+| Cell | Instruction | n | Success |
+|---|---|--:|--:|
+| default (gate run) | Open the stand mixer head. | 50 | 36 |
+| mixer_paraphrase_syntactic | Open the head of the stand mixer. | 50 | 19 |
+
+In `pnp_target_swap`, "requested" is the object the default sentence does *not* name (`distr_counter`) and "other" is
+the original target; 10 of the 50 seeds have no usable second object and are skipped (`skipped.jsonl`).
+Sync: repo only so far (HF and laptop pending).
+
+### `20261104-1528_robocasa_pi05_smoke_berkeley3` — smoke
+
+π0.5 install check on `berkeley-3`: PickPlaceCounterToCabinet seed 407 and NavigateKitchen seed 207, both failed to the
+horizon; pipeline and records complete.

@@ -125,6 +125,64 @@ Design and condition definitions: `docs/robocasa/plan.md`. Machine and environme
 - **Files:** server `~/vla_robocasa/runs/20261023-1002_robocasa_xr1_screen_berkeley2/` (417 files + `SHA256SUMS`, 306 MB); HF `robocasa/20261023-1002_robocasa_xr1_screen_berkeley2/` (418 files,
   identical to the local list); laptop backup; repo `results/robocasa/20261023-1002_robocasa_xr1_screen_berkeley2/`.
 
+## 2026-11-04 — Setup and smoke: π0.5 on `berkeley-3`, 2 episodes (smoke, not a result)
+
+- **Why π0.5:** meeting 2026-10-28 asked for one model family across LIBERO-Spatial, RoboLab and RoboCasa365. RoboCasa's
+  own π0.5 checkpoint, not the DROID one used on RoboLab.
+- **Machine:** `berkeley-3` (AWS 8× H200, no docker, no sudo). Everything under `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robocasa_ws/` on the persistent volume.
+- **Stack:** sim venv `.venv-sim` (uv, Python 3.11: robocasa `4f8a298`, robosuite `5ce6643`, MuJoCo 3.3.1, numpy 2.2.5,
+  openpi-client); kitchen assets 23 GB (`download_kitchen_assets --type all`). Server venv = the openpi fork
+  `robocasa-benchmark/openpi` @ `5a6beda` (`uv sync --no-install-package av`: PyAV has no wheel here and is only used to
+  load training data; plus robocasa/robosuite `--no-deps` and numpy 2.2.5, which robocasa asserts).
+- **Model:** HF `robocasa/robocasa365_checkpoints`, `pi05_pretrain_human300/multitask_learning/75000`, `params/` + `assets/`
+  only (12 GB; the training state is not needed). Config `pi05_pretrain_human300`. Served by
+  `robocasa_lang/servers/pi05_server.py`, which clears the config's `data_dirs` so that the norm stats come from the
+  checkpoint's `assets/norm_stats.json` instead of the Human300 datasets (not downloaded). CPU-only check before any GPU
+  use: loads in 9 s, one inference returns a 50 × 12 action chunk.
+- **Client:** `robocasa_lang/run_lang_eval.py --policy pi05` (`robocasa_lang/pi05_policy.py`: three cameras padded to
+  224, state = eef pos + eef rot + base pos + base rot + gripper qpos, replan every 5 steps, as the fork's
+  `examples/robocasa/main.py`). Launcher `robocasa_lang/run_pi05_b3.sh`.
+- **Run:** `20261104-1528_robocasa_pi05_smoke_berkeley3`, PickPlaceCounterToCabinet seed 407 and NavigateKitchen seed 207,
+  GPUs 0–1. Approval: user, in chat, 2026-11-04 (steps 0–2: smoke, gate, defaults).
+- **Result:** pipeline passed (both episodes logged with scene hash and outcome fields); both failed to the horizon
+  (PnP reached the bread within 2.3 cm, no grasp; Nav never came closer than 2.98 m).
+- **Files:** server `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robocasa_ws/runs/20261104-1528_robocasa_pi05_smoke_berkeley3/`; repo
+  `results/robocasa/20261104-1528_robocasa_pi05_smoke_berkeley3/`. Not yet on HF or the laptop.
+
+## 2026-11-04 — Gate: π0.5, 18 Atomic-Seen tasks × 10 episodes (+ defaults to 50 on 4 tasks) — **passed**
+
+- **Run:** `20261104-1530_robocasa_pi05_gate_berkeley3` (stage gate). Approval: as the smoke entry above.
+- **Machine:** `berkeley-3` GPUs 0–2, one server per GPU (ports 8800–8802, `XLA_PYTHON_CLIENT_MEM_FRACTION=0.2`, ~29 GB
+  each), 9 client workers (3 per GPU), one cell per job. GPUs 0–2 also carried another user's jobs (~89 GB each).
+- **Gate rule:** π0.5 publishes only its Atomic-Seen mean (39.6%, robocasa 1.0.0; no per-task numbers in the leaderboard
+  repo or the robocasa docs), so the gate is the mean of the 18 Atomic-Seen tasks over each task's first 10 seeds, within
+  7 pts of 39.6. Seeds follow Xiaomi-Robotics-1's published rule, 7 + 50 × task index + episode, so the four screen tasks
+  share seeds with the XR-1 runs (`robocasa_lang/pi05_gate_cells.py`).
+- **Ran:** 15:30–16:07 UTC, no errors, 340 episodes, none skipped.
+- **Result:** mean **39.4%** vs published 39.6% → **passed** (`robocasa_lang/pi05_gate_report.py`). Defaults on 50
+  episodes: PickPlaceCounterToCabinet 28/50, OpenStandMixerHead 36/50, TurnOffStove 9/50, NavigateKitchen 0/50. Only the
+  first two reach the 50% floor and are used for the language cells.
+- **Files:** server `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robocasa_ws/runs/20261104-1530_robocasa_pi05_gate_berkeley3/` (390 files + `SHA256SUMS`, 111 MB incl. 340
+  videos; checksums verified); repo `results/robocasa/20261104-1530_robocasa_pi05_gate_berkeley3/` (`run.json`,
+  `episodes.jsonl`, `summary.csv`, `cells.jsonl`, `gate.json`). Not yet on HF or the laptop.
+
+## 2026-11-07 — Screen: π0.5, 7 language cells × 50 episodes (screen, not a result)
+
+- **Run:** `20261107-2012_robocasa_pi05_screen_berkeley3` (stage screen). Approval: user, in chat, 2026-11-08 (Taiwan
+  time; "run it, then shut the servers down").
+- **Machine / stack / model:** as the gate; 9 workers; servers stopped by the launcher right after the run (20:54 UTC).
+- **Cells:** `robocasa_lang/pi05_screen_cells.py`, each on the default's 50 seeds (split into halves _a/_b): PnP
+  target_swap (`PnPCounterToCabinetSwap`, require_valid: 10 seeds skipped, no usable second object), negation_only,
+  positive_contrast, length_control_positive, paraphrase_syntactic, verb_synonym; mixer paraphrase_syntactic.
+- **Ran:** 20:12–20:54 UTC, no errors, 340 episodes + 10 skipped.
+- **Headlines (vs default 28/50 on the same seeds; requested / other object delivered):** target_swap 9/40 vs the
+  original object 16/40; negation_only 16/50, negated object 2/50; positive_contrast 18/50 (other 1); length control
+  ("slowly and carefully") 9/50; paraphrase_syntactic 31/50; verb_synonym ("fetch … stow") 7/50; mixer paraphrase 19/50
+  (default 36/50). The object choice rarely flips; rewording costs success. Full table: `docs/robocasa/results.md`.
+- **Files:** server `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robocasa_ws/runs/20261107-2012_robocasa_pi05_screen_berkeley3/` (375 files, 126 MB incl. videos;
+  `SHA256SUMS` verified; `screen_report.json` and `skipped.jsonl` were derived afterwards and are not in it); repo
+  `results/robocasa/20261107-2012_robocasa_pi05_screen_berkeley3/`. Not yet on HF or the laptop.
+
 ---
 
 ## Servers & environments (maintained in place)
@@ -133,6 +191,7 @@ Design and condition definitions: `docs/robocasa/plan.md`. Machine and environme
 |---|---|---|---|---|
 | Laptop (RTX 5060 Laptop 8 GB, 24 threads) | EGL rendering only | `~/vla_robocasa/.venv` (uv, Python 3.11): robocasa `4f8a298` (1.0.1), robosuite `5ce6643` (1.5.2), MuJoCo 3.3.1, numpy 2.2.5; lerobot pulled torch 2.7.1+cu126 | kitchen assets 23 GB (`download_kitchen_assets --type all`) | simulator-only checks: `docs/robocasa/scene_probe_2026-10-21/`, `pair_check_2026-10-21/`, `stove_direction_2026-10-21/`. No policy |
 | `berkeley-2` = GCP `g4-zzst-1016-mig-uswest3-s4mp` (34.185.64.167), boots from the old `berkeley-2` disk | GPU 0 only (GPUs 1–3: another user's vLLM, 65–85 GB each, 2026-10-21) | `~/vla_robocasa/.venv`, same pins as the laptop (setup script `~/vla_robocasa/setup_robocasa.sh`, log `setup.log`) | kitchen assets 23 GB; `~/vla_robocasa/checkpoints/Xiaomi-Robotics-1-RoboCasa365` (HF revision `3a6d029`, 21 files, sizes checked against the HF listing, 9.5 GiB); `~/vla_robocasa/Xiaomi-Robotics-1` @ `0dd7aef` | RoboCasa pilot host (plan §5.3). Set up 2026-10-21 15:04–15:08 UTC, downloads only; no GPU used. Root disk 92% full after setup (328 GB free) |
+| `berkeley-3` = AWS `ip-172-31-64-36` (18.88.135.19), 8× H200 143 GB, no docker / sudo | GPUs 0–2 (shared with another user's jobs) | `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robocasa_ws/.venv-sim` (uv, Python 3.11), same pins as `berkeley-2` | kitchen assets 23 GB; π0.5 checkpoint `pi05_pretrain_human300/multitask_learning/75000` (params + assets, 12 GB); openpi fork @ `5a6beda` with its own `.venv` | π0.5 smoke, gate and screen, 2026-11-04 → 11-07. Set up 2026-11-04 (downloads and CPU only) |
 
 Notes:
 - The Xiaomi-Robotics-1 checkpoint loads with `trust_remote_code=True` (`modeling_mibot.py`, `processing_mibot.py`,

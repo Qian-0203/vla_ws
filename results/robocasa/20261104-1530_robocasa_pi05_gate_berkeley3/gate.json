@@ -1,0 +1,138 @@
+{
+ "tasks": {
+  "CloseBlenderLid": {
+   "n_gate": 10,
+   "gate_sr": 0.0,
+   "n_all": 10,
+   "sr_all": 0.0,
+   "screen_task": false
+  },
+  "CloseFridge": {
+   "n_gate": 10,
+   "gate_sr": 40.0,
+   "n_all": 10,
+   "sr_all": 40.0,
+   "screen_task": false
+  },
+  "CloseToasterOvenDoor": {
+   "n_gate": 10,
+   "gate_sr": 10.0,
+   "n_all": 10,
+   "sr_all": 10.0,
+   "screen_task": false
+  },
+  "CoffeeSetupMug": {
+   "n_gate": 10,
+   "gate_sr": 30.0,
+   "n_all": 10,
+   "sr_all": 30.0,
+   "screen_task": false
+  },
+  "NavigateKitchen": {
+   "n_gate": 10,
+   "gate_sr": 0.0,
+   "n_all": 50,
+   "sr_all": 0.0,
+   "screen_task": true
+  },
+  "OpenCabinet": {
+   "n_gate": 10,
+   "gate_sr": 50.0,
+   "n_all": 10,
+   "sr_all": 50.0,
+   "screen_task": false
+  },
+  "OpenDrawer": {
+   "n_gate": 10,
+   "gate_sr": 60.0,
+   "n_all": 10,
+   "sr_all": 60.0,
+   "screen_task": false
+  },
+  "OpenStandMixerHead": {
+   "n_gate": 10,
+   "gate_sr": 70.0,
+   "n_all": 50,
+   "sr_all": 72.0,
+   "screen_task": true
+  },
+  "PickPlaceCounterToCabinet": {
+   "n_gate": 10,
+   "gate_sr": 80.0,
+   "n_all": 50,
+   "sr_all": 56.0,
+   "screen_task": true
+  },
+  "PickPlaceCounterToStove": {
+   "n_gate": 10,
+   "gate_sr": 70.0,
+   "n_all": 10,
+   "sr_all": 70.0,
+   "screen_task": false
+  },
+  "PickPlaceDrawerToCounter": {
+   "n_gate": 10,
+   "gate_sr": 40.0,
+   "n_all": 10,
+   "sr_all": 40.0,
+   "screen_task": false
+  },
+  "PickPlaceSinkToCounter": {
+   "n_gate": 10,
+   "gate_sr": 100.0,
+   "n_all": 10,
+   "sr_all": 100.0,
+   "screen_task": false
+  },
+  "PickPlaceToasterToCounter": {
+   "n_gate": 10,
+   "gate_sr": 0.0,
+   "n_all": 10,
+   "sr_all": 0.0,
+   "screen_task": false
+  },
+  "SlideDishwasherRack": {
+   "n_gate": 10,
+   "gate_sr": 50.0,
+   "n_all": 10,
+   "sr_all": 50.0,
+   "screen_task": false
+  },
+  "TurnOffStove": {
+   "n_gate": 10,
+   "gate_sr": 40.0,
+   "n_all": 50,
+   "sr_all": 18.0,
+   "screen_task": true
+  },
+  "TurnOnElectricKettle": {
+   "n_gate": 10,
+   "gate_sr": 10.0,
+   "n_all": 10,
+   "sr_all": 10.0,
+   "screen_task": false
+  },
+  "TurnOnMicrowave": {
+   "n_gate": 10,
+   "gate_sr": 10.0,
+   "n_all": 10,
+   "sr_all": 10.0,
+   "screen_task": false
+  },
+  "TurnOnSinkFaucet": {
+   "n_gate": 10,
+   "gate_sr": 50.0,
+   "n_all": 10,
+   "sr_all": 50.0,
+   "screen_task": false
+  }
+ },
+ "mean_sr": 39.4,
+ "published_mean_sr": 39.6,
+ "tasks_complete": 18,
+ "gate_pass": true,
+ "screen_tasks_kept": [
+  "PickPlaceCounterToCabinet",
+  "OpenStandMixerHead"
+ ]
+}
