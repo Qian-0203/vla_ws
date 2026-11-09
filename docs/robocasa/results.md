@@ -51,7 +51,7 @@ only its Atomic-Seen mean, so the rule is: mean over the 18 Atomic-Seen tasks (f
 | **Mean (18 tasks)** | 180 | **39.4%** (published 39.6%) | | | | |
 
 Only PickPlaceCounterToCabinet (28/50) and OpenStandMixerHead (36/50) reach the 50% default floor for language cells.
-Sync: repo only so far (HF and laptop pending).
+Sync: repo, laptop backup (checked against `SHA256SUMS`) and HF `robocasa/<run_id>/`, 2026-11-09.
 
 ## Screens, smoke and exploratory runs (not results)
 
@@ -130,7 +130,7 @@ Per-cell counts: `screen_report.json`.
 
 In `pnp_target_swap`, "requested" is the object the default sentence does *not* name (`distr_counter`) and "other" is
 the original target; 10 of the 50 seeds have no usable second object and are skipped (`skipped.jsonl`).
-Sync: repo only so far (HF and laptop pending).
+Sync: repo, laptop backup (checked against `SHA256SUMS`) and HF `robocasa/<run_id>/`, 2026-11-09.
 
 ### `20261104-1528_robocasa_pi05_smoke_berkeley3` — smoke
 

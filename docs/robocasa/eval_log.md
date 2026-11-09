@@ -183,6 +183,14 @@ Design and condition definitions: `docs/robocasa/plan.md`. Machine and environme
   `SHA256SUMS` verified; `screen_report.json` and `skipped.jsonl` were derived afterwards and are not in it); repo
   `results/robocasa/20261107-2012_robocasa_pi05_screen_berkeley3/`. Not yet on HF or the laptop.
 
+## 2026-11-09 — Records: π0.5 runs backed up to HF and the laptop
+
+- `20261104-1528_robocasa_pi05_smoke_berkeley3` (11 files), `20261104-1530_robocasa_pi05_gate_berkeley3` (390 files, 111 MB)
+  and `20261107-2012_robocasa_pi05_screen_berkeley3` (375 files, 126 MB): copied from `berkeley-3` to the laptop
+  (`~/vla_results_backup/robocasa/<run_id>/`, each verified against its `SHA256SUMS`), then uploaded from the laptop to HF
+  `Qian0203/vla_ws-eval-results` (dataset), `robocasa/<run_id>/`, one commit per run; remote file counts equal the local
+  ones. Approval: user, in chat, 2026-11-09. This supersedes "Not yet on HF or the laptop" in the three entries above.
+
 ---
 
 ## Servers & environments (maintained in place)
