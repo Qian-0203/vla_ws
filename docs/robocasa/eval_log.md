@@ -191,6 +191,22 @@ Design and condition definitions: `docs/robocasa/plan.md`. Machine and environme
   `Qian0203/vla_ws-eval-results` (dataset), `robocasa/<run_id>/`, one commit per run; remote file counts equal the local
   ones. Approval: user, in chat, 2026-11-09. This supersedes "Not yet on HF or the laptop" in the three entries above.
 
+## 2026-11-14 — Screen: π0.5, negation of the usual object (1 cell × 50 seeds, screen, not a result)
+
+- **Run:** `20261114-1319_robocasa_pi05_screen_berkeley3` (stage screen). Approval: user, in chat, 2026-11-14.
+- **Why:** in `pnp_negation_only` ("…not the {distractor}…") the answer is the object π0.5 takes anyway (nearer the
+  robot in 48/50 scenes), so ignoring "not" still succeeds (16/50, negated object 2/50). The new condition
+  `negation_swap` negates the usual object instead ("Pick the object that is not the {target} and place it in the
+  cabinet."), scored on the distractor by `PnPCounterToCabinetSwap`, as LIBERO's `negation_swap`.
+- **Machine / stack / model:** as the 2026-11-04 gate; one server on GPU 0, 2 workers; server stopped after the run.
+  Cells: `robocasa_lang/pi05_screen_cells.py` (`pnp_negation_swap`), same 50 seeds as the default; require_valid
+  skipped 10 (same seeds as `pnp_target_swap`).
+- **Ran:** 13:19–13:40 UTC, no errors, 40 episodes + 10 skipped.
+- **Headline:** requested object delivered **0/40**; the negated (usual) object delivered **22/40**; first grasp: usual
+  26, requested 0, none 14. Matches LIBERO π0.5 `negation_swap` (0/50).
+- **Files:** server `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robocasa_ws/runs/20261114-1319_robocasa_pi05_screen_berkeley3/` (`SHA256SUMS` verified); repo
+  `results/robocasa/20261114-1319_robocasa_pi05_screen_berkeley3/`. Not yet on HF or the laptop.
+
 ---
 
 ## Servers & environments (maintained in place)

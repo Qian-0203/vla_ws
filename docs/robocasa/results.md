@@ -136,3 +136,15 @@ Sync: repo, laptop backup (checked against `SHA256SUMS`) and HF `robocasa/<run_i
 
 π0.5 install check on `berkeley-3`: PickPlaceCounterToCabinet seed 407 and NavigateKitchen seed 207, both failed to the
 horizon; pipeline and records complete.
+
+### `20261114-1319_robocasa_pi05_screen_berkeley3` — screen (negation of the usual object)
+
+π0.5, as above. Same 50 seeds as the default; 10 skipped (no usable second object). "Requested" = the counter
+distractor; "usual" = the object the default sentence names.
+
+| Cell | Condition | Example instruction (seed 407 scene) | n | Requested | Usual (negated) | First grasp: requested / usual / none |
+|---|---|---|--:|--:|--:|---|
+| pnp_negation_swap | negation_swap | Pick the object that is not the bread and place it in the cabinet. | 40 | **0** | **22** | 0 / 26 / 14 |
+
+With `pnp_negation_only` (the answer is the usual object) π0.5 scores 16/50; with the usual object negated it never
+delivers the requested object. Negation failure is visible only when ignoring "not" leads to the wrong object.
