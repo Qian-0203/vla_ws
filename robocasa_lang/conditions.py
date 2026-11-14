@@ -20,6 +20,8 @@ PNP = {
     "no_target": "Pick the object from the {src} and place it in the {dst}.",
     "blank": "",
     "negation_only": "Pick the object that is not the {D} and place it in the {dst}.",
+    # negates the usual object; scored on the distractor (PnPCounterToCabinetSwap), as LIBERO's negation_swap
+    "negation_swap": "Pick the object that is not the {T} and place it in the {dst}.",
     "negation_except": "Pick any object on the {src} except the {D} and place it in the {dst}.",
     "negation_other": "Pick the other object, not the {D}, and place it in the {dst}.",
     "positive_contrast": "Pick the {T}, not the {D}, from the {src} and place it in the {dst}.",
@@ -123,6 +125,7 @@ def _self_check():
     pnp = dict(target="mug", distractor="apple", src="counter", dst="cabinet")
     assert make("pnp", "default", **pnp) == "Pick the mug from the counter and place it in the cabinet."
     assert make("pnp", "target_swap", **pnp) == "Pick the apple from the counter and place it in the cabinet."
+    assert make("pnp", "negation_swap", **pnp) == "Pick the object that is not the mug and place it in the cabinet."
     assert make("pnp", "blank", **pnp) == ""
     for fam, slots in [("pnp", pnp),
                        ("nav", dict(target="sink", distractor="fridge")),

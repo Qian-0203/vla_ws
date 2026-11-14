@@ -20,6 +20,9 @@ CELLS = [  # (name, env, task, family, condition, require_valid)
     ("pnp_paraphrase_syntactic", PNP, PNP, "pnp", "paraphrase_syntactic", False),      # paraphrase (order)
     ("pnp_verb_synonym", PNP, PNP, "pnp", "verb_synonym", False),                      # paraphrase (words)
     ("mixer_paraphrase_syntactic", MIX, MIX, "other", "paraphrase_syntactic", False),  # paraphrase (order)
+    # added 2026-11-14: negation_only's answer is the usual (nearer) object, so ignoring "not" still succeeds;
+    # negating the usual object instead makes ignoring "not" fail (LIBERO negation_swap)
+    ("pnp_negation_swap", "PnPCounterToCabinetSwap", PNP, "pnp", "negation_swap", True),
 ]
 
 
