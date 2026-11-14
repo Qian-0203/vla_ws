@@ -207,6 +207,13 @@ Design and condition definitions: `docs/robocasa/plan.md`. Machine and environme
 - **Files:** server `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robocasa_ws/runs/20261114-1319_robocasa_pi05_screen_berkeley3/` (`SHA256SUMS` verified); repo
   `results/robocasa/20261114-1319_robocasa_pi05_screen_berkeley3/`. Not yet on HF or the laptop.
 
+## 2026-11-14 — Records: negation-swap run backed up to HF and the laptop
+
+- `20261114-1319_robocasa_pi05_screen_berkeley3` (49 files, 19 MB): copied to the laptop
+  (`~/vla_results_backup/robocasa/`, verified against `SHA256SUMS`) and uploaded to HF `Qian0203/vla_ws-eval-results`,
+  `robocasa/20261114-1319_robocasa_pi05_screen_berkeley3/`; remote file count equals the local one. Approval: user, in
+  chat, 2026-11-14. Supersedes "Not yet on HF or the laptop" in the entry above.
+
 ---
 
 ## Servers & environments (maintained in place)

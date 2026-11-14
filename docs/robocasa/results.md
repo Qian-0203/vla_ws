@@ -148,3 +148,4 @@ distractor; "usual" = the object the default sentence names.
 
 With `pnp_negation_only` (the answer is the usual object) π0.5 scores 16/50; with the usual object negated it never
 delivers the requested object. Negation failure is visible only when ignoring "not" leads to the wrong object.
+Sync: repo, laptop backup (checked against `SHA256SUMS`) and HF `robocasa/<run_id>/`, 2026-11-14.
