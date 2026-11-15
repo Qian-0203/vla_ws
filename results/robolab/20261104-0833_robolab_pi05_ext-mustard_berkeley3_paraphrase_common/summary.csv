@@ -1,0 +1,3 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps,requested_delivered,other_delivered
+20261104-0833_robolab_pi05_ext-mustard_berkeley3_paraphrase_common,LangMustardInLeftBinTask,paraphrase_common,20,5,0.2500,0.1119,0.4687,0.2500,0,5,0
+20261104-0833_robolab_pi05_ext-mustard_berkeley3_paraphrase_common,LangMustardInRightBinTask,paraphrase_common,20,18,0.9000,0.6990,0.9721,0.9000,0,18,0

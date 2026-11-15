@@ -1,0 +1,2 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps,requested_delivered,other_delivered
+smoke_robolab_pi05_ext-cube-rand10_berkeley3_switch_cube,LangRubiksCubeOrBananaRand10Task,switch_cube,1,1,1.0000,0.2065,1.0000,1.0000,0,1,0

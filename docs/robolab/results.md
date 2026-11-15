@@ -87,3 +87,56 @@ What the which-object fields show (`first_lifted`, `in_container`; limits as des
 
 Sync: records in `results/robolab/<run_id>/` on this branch. HF and the laptop have no copy of the raw runs, and the PR's tgz link is still an
 unfilled placeholder (`TGZ_LINE`), so rollout videos are not available for checking yet.
+
+### Language tests: `20261104-0833_robolab_pi05_ext-{cube,mustard,size}_berkeley3_<key>` — screen
+
+π0.5-DROID on three original RoboLab scenes, one sentence per key (`robolab_lang/tasks/`). 20 episodes per task and key,
+one fixed layout per cell (gap G1). "Requested" = the asked-for object (or bin) is in the container and the other is not;
+"other" = the other object or bin received it. RoboLab's own success for the cube/banana task accepts either object, so
+it is not used here. Defaults are from the Option A screen above.
+
+**Cube or banana into the bowl** (per key, n = 20)
+
+| Key | Sentence | Requested | Other |
+|---|---|--:|--:|
+| switch_cube | Put the cube in the bowl | 20 | 0 |
+| switch_banana | Put the banana in the bowl | 20 | 0 |
+| negation_not_banana | Put the object that is not the banana in the bowl | 1 | **17** |
+| negation_not_cube | Put the object that is not the cube in the bowl | 0 | **20** |
+| distractor_cube | Put the cube in the bowl, not the banana | 20 | 0 |
+| distractor_banana | Put the banana in the bowl, not the cube | 20 | 0 |
+
+**Larger / smaller object** (target: raisin box / butter; n = 20 each)
+
+| Key | Larger: requested / butter | Smaller: requested / other |
+|---|--:|--:|
+| default (Option A) | 0 / — (butter lifted first 19/20) | 18 / — |
+| negation ("not the butter" / "not the raisin box") | 1 / 16 | 12 / 1 |
+| distractor_mention | 0 / 17 | 16 / 0 |
+| irrelevant_content | 1 / 17 | 17 / 0 |
+
+**Mustard into the left or right bin** (n = 20 per bin; default 8 + 8 = 16/40)
+
+| Key | Left | Right | Total | Wrong bin |
+|---|--:|--:|--:|--:|
+| negation ("the bin that is not on the right/left") | 3 | 0 | 3 | 7 |
+| distractor_mention | 6 | 9 | 15 | 2 |
+| irrelevant_content | 7 | 3 | 10 | 4 |
+| paraphrase_common ("container") | 5 | 18 | 23 | 0 |
+| paraphrase_rare ("receptacle") | 4 | 8 | 12 | 0 |
+| paraphrase_functional | 3 | 5 | 8 | 0 |
+| paraphrase_zh | 0 | 0 | **0** | 0 |
+| spatial_robot ("on the robot's left") | 9 | 14 | 23 | 0 |
+| spatial_image ("on the left side of the image") | 6 | 4 | 10 | 3 |
+
+Reading (two-sided Fisher tests against the default; optimistic, because each cell repeats one layout):
+
+- **Clear:** negation in the cube scene (the excluded object is delivered 37/40); the Chinese sentence (0/40 vs 16/40,
+  p < 0.001); the two wordings of the same bin (robot frame 23/40 vs image frame 10/40, p = 0.006).
+- **Not clear:** the English rewordings (8–23/40, p = 0.09–0.48), filler (10/40, p = 0.23) and distractor mention
+  (15/40) against the default; neither spatial wording differs clearly from the default (p = 0.18 and 0.23).
+- **Switch is followed** in the cube/banana scene, which has no habitual answer. The size task picks the butter
+  whatever the size word says; that is a test of size words, not of switching.
+- **Mustard negation is confounded** with the pull toward the robot's left bin.
+- The policy's camera sees left and right as the robot does (checked on one frame), so "the robot's left" and "the left
+  side of the image" name the same bin; the viewer videos are mirrored.

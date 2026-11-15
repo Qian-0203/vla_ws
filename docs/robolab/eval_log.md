@@ -149,3 +149,37 @@ Results in [`results.md`](results.md).
 
 The user approved the merge. The Option A records are now in `results/robolab/` on this branch (merge commit `29ecbbd`).
 The tgz link is still missing, and there is still no copy on HF or the laptop.
+
+### 2026-11-04 — Language tests on the original scenes, π0.5-DROID, on `berkeley-3` (18 runs, 600 episodes)
+
+Recorded on 2026-11-15; the runs themselves are from 2026-11-04 (times below from the GPU job logs, UTC).
+
+- **Machine:** `berkeley-3` (ip-172-31-64-36), the same 8 × H200 host as Option A (`aws-h200`), GPUs 0–2; driver 580.126.09.
+  No Docker or sudo: Wen-Han Hsieh's Apptainer setup was copied to our folder on the persistent volume
+  (`isaac-lab-2.2.0.sif`, image `sif-sha256:2ae6ebb7…`, bind mounts for RoboLab and site-packages); the openpi venv was
+  rebuilt with uv in our folder. Same Isaac Sim 5.0 / Isaac Lab 2.2.0, RoboLab `b6cfcf6`, openpi `aa64205`,
+  `pi05_droid_jointpos`.
+- **Launcher:** `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robolab_ws/paper_tests_gpu.sh` (calls `robolab_lang/run_paper_tests.sh` → `run_option_a.sh`, Apptainer
+  variant), one policy server per GPU (ports 8765–8767), `NUM_ENVS=5`, `NUM_RUNS=4`, `HOST_TAG=berkeley3`. Task files:
+  `robolab_lang/tasks/Lang*Task.py` at `e80d6ca` (branch `robolab/option-a-runkit`). Approval: user, in chat, 2026-11-04.
+- **Smoke (before 08:33):** `smoke_robolab_pi05_ext-mustard_berkeley3_paraphrase_zh` (2 episodes, the Chinese sentence)
+  and `smoke_robolab_pi05_ext-cube-rand10_berkeley3_switch_cube` (1 episode, ±10 cm variant); both completed with the
+  `requested_delivered` / `other_delivered` columns. Their run IDs use `RUN_PREFIX=smoke` instead of a timestamp.
+- **Launch order:**
+
+  | GPU | Group | Keys | Ran (UTC) |
+  |---|---|---|---|
+  | 0 | mustard | negation, distractor_mention, irrelevant_content, paraphrase_common, paraphrase_rare | 08:33–13:22 |
+  | 1 | mustard | paraphrase_functional, paraphrase_zh, spatial_robot, spatial_image | 08:33–12:23 |
+  | 1 | cube | switch_cube, switch_banana | 12:23–12:57 |
+  | 2 | cube | negation_not_banana, negation_not_cube, distractor_cube, distractor_banana | 08:33–09:54 |
+  | 2 | size | negation, distractor_mention, irrelevant_content | 09:54–12:16 |
+
+- **Checks:** all 18 runs exit 0; 20 episodes per task and key (cube 20, mustard and size 40 per key); each run's
+  `SHA256SUMS` verified on the server and, for the copied files, again on 2026-11-15. Fixed initial poses (gap G1): every
+  cell repeats one layout.
+- **Headline:** negation is followed as a pointer in the cube scene ("not the banana" → banana 17/20; "not the cube" →
+  cube 20/20); the switch requests are followed (40/40); the Chinese sentence never gets the mustard into a bin (0/40).
+  Full tables: [`results.md`](results.md).
+- **Files:** server `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robolab_ws/runs/` (18 runs + 2 smoke, about 6.1 GB incl. videos); repo `results/robolab/<run_id>/` (`run.json`,
+  `episodes.jsonl`, `summary.csv`, `SHA256SUMS`). Not yet on HF or the laptop.

@@ -1,0 +1,32 @@
+{
+ "run_id": "20261104-0833_robolab_pi05_ext-mustard_berkeley3_spatial_robot",
+ "stage": "ext-mustard",
+ "host": "ip-172-31-64-36",
+ "gpu": "1 (NVIDIA H200, 143771 MiB, 580.126.09)",
+ "started_utc": "2026-11-04T10:31:51Z",
+ "operator": "qian",
+ "isaac_sim": "5.0.0-rc.45",
+ "isaac_lab": "2.2.0",
+ "robolab_commit": "b6cfcf6ccd2113c4cd1216d35b33024a7d5691da",
+ "image": "apptainer:nvcr.io/nvidia/isaac-lab:2.2.0+binds (see run_robolab_apptainer.sh)",
+ "image_id": "sif-sha256:2ae6ebb77a94adca304bef55859f7dabf1744d47103ecf58369f1e2f04815438",
+ "policy": "pi05",
+ "policy_config": "pi05_droid_jointpos",
+ "checkpoint": "gs://openpi-assets-simeval/pi05_droid_jointpos",
+ "openpi_repo": "xuningy/openpi",
+ "openpi_commit": "aa6420561529593114160d05e5ad155792b272f3",
+ "client": "RoboLab Pi0DroidJointposClient via robolab_lang/run_pi0.py",
+ "purpose": "RoboLab extension of the ARR draft's tests, original shared scenes, pi0.5-DROID",
+ "tasks": [
+  "LangMustardInLeftBinTask",
+  "LangMustardInRightBinTask"
+ ],
+ "instruction_key": "spatial_robot",
+ "num_envs": 5,
+ "num_runs": 4,
+ "episodes_planned": 40,
+ "raw_output_dir": "/runs/20261104-0833_robolab_pi05_ext-mustard_berkeley3_spatial_robot/robolab_output",
+ "episodes_recorded": 40,
+ "raw_output_bytes": 555285076,
+ "record_written_utc": "2026-11-04T11:20:35Z"
+}

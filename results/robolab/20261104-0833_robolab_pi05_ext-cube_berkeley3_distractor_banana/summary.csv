@@ -1,0 +1,2 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps,requested_delivered,other_delivered
+20261104-0833_robolab_pi05_ext-cube_berkeley3_distractor_banana,LangRubiksCubeOrBananaTask,distractor_banana,20,18,0.9000,0.6990,0.9721,0.9000,0,20,0

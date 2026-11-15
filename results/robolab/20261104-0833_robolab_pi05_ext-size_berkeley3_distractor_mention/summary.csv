@@ -1,0 +1,3 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps,requested_delivered,other_delivered
+20261104-0833_robolab_pi05_ext-size_berkeley3_distractor_mention,LangLargerObjectRaisinBoxInBinTask,distractor_mention,20,1,0.0500,0.0089,0.2361,0.0500,19,0,17
+20261104-0833_robolab_pi05_ext-size_berkeley3_distractor_mention,LangSmallerObjectButterInBinTask,distractor_mention,20,16,0.8000,0.5840,0.9193,0.8000,0,16,0
