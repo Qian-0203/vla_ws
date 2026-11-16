@@ -191,7 +191,7 @@ Recorded on 2026-11-15; the runs themselves are from 2026-11-04 (times below fro
   `Qian0203/vla_ws-eval-results`, `robolab/<run_id>/`; remote file count equals the local one for all 20. Approval: user,
   in chat, 2026-11-15. Supersedes "Not yet on HF or the laptop" in the entry above.
 
-### 2026-11-15 — Scene changes A1, A3, A4: random layouts, bowl stacking, swapped size scene, π0.5-DROID, on `berkeley-3` (15 runs, 520 episodes)
+### 2026-11-15 — Scene changes A1, A3, A4: random layouts, bowl stacking, swapped size scene, π0.5-DROID, on `berkeley-3` (15 runs, 500 episodes)
 
 - **Machine and stack:** as the 2026-11-04 entry (`berkeley-3`, Apptainer, RoboLab `b6cfcf6`, openpi `aa64205`,
   `pi05_droid_jointpos`, `NUM_ENVS=5`, `NUM_RUNS=4`, 20 episodes per task and key). GPUs 0–2, one policy server each
