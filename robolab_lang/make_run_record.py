@@ -50,8 +50,8 @@ def wilson(k, n, z=1.96):
 
 
 def base_task(name):
-    """Pose-randomized variants (e.g. LangMustardInLeftBinRand10Task) share their base task's outcome spec."""
-    return name.replace("Rand10Task", "Task")
+    """Pose-randomized and swapped-scene variants (e.g. LangMustardInLeftBinRand10Task) share their base task's outcome spec."""
+    return name.replace("Rand10Task", "Task").replace("SwappedTask", "Task")
 
 
 def generic_outcome(g):

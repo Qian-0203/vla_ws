@@ -58,6 +58,9 @@ class Outcome:
             self.cands = [n for n in ("obj", "distr_counter", "obj_a", "obj_b") if n in names]
             self.settle = {n: float(k.sim.data.body_xpos[k.obj_body_id[n]][2]) for n in self.cands}
             self.min_d = {n: float("inf") for n in self.cands}
+            eef0 = np.array(k.sim.data.site_xpos[k.robots[0].eef_site_id["right"]])
+            self.init_d = {n: round(float(np.linalg.norm(eef0 - np.array(k.sim.data.body_xpos[k.obj_body_id[n]]))), 3)
+                           for n in self.cands}  # gripper-to-object distance after reset ("which one is nearer")
             self.approach = {n: None for n in self.cands}
             self.grasp = {n: None for n in self.cands}
         elif family == "nav":
@@ -111,7 +114,7 @@ class Outcome:
                          and self.OU.gripper_obj_far(k, obj_name=n)] if hasattr(k, "cab") else None
             return dict(candidates={n: k.get_obj_lang(n) for n in self.cands}, first_approached=fa,
                         first_approached_step=fas, first_grasped=fg, first_grasp_step=fgs, delivered=delivered,
-                        min_dist_by_obj={n: round(v, 3) for n, v in self.min_d.items()},
+                        min_dist_by_obj={n: round(v, 3) for n, v in self.min_d.items()}, init_dist_by_obj=self.init_d,
                         approach_step_by_obj=self.approach, grasp_step_by_obj=self.grasp)
         if self.family == "nav":
             fr, frs = self._first(self.reached)
