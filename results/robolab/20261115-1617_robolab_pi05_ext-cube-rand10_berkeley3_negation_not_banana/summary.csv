@@ -1,0 +1,2 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps,requested_delivered,other_delivered
+20261115-1617_robolab_pi05_ext-cube-rand10_berkeley3_negation_not_banana,LangRubiksCubeOrBananaRand10Task,negation_not_banana,20,18,0.9000,0.6990,0.9721,0.9000,0,0,19

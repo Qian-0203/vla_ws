@@ -1,0 +1,3 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps,requested_delivered,other_delivered
+20261115-1617_robolab_pi05_ext-size-swapped_berkeley3_no_target,LangLargerObjectRaisinBoxInBinSwappedTask,no_target,20,0,0.0000,-0.0000,0.1611,0.0000,20,0,18
+20261115-1617_robolab_pi05_ext-size-swapped_berkeley3_no_target,LangSmallerObjectButterInBinSwappedTask,no_target,20,12,0.6000,0.3866,0.7812,0.6000,2,18,0

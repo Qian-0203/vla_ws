@@ -132,7 +132,8 @@ it is not used here. Defaults are from the Option A screen above.
 Reading (two-sided Fisher tests against the default; optimistic, because each cell repeats one layout):
 
 - **Clear:** negation in the cube scene (the excluded object is delivered 37/40); the Chinese sentence (0/40 vs 16/40,
-  p < 0.001); the two wordings of the same bin (robot frame 23/40 vs image frame 10/40, p = 0.006).
+  p < 0.001); the two wordings of the same bin (robot frame 23/40 vs image frame 10/40, p = 0.006). *(Did not replicate with random
+  layouts, 2026-11-15: 12/40 vs 10/40, p = 0.80; see the A1 section below.)*
 - **Not clear:** the English rewordings (8–23/40, p = 0.09–0.48), filler (10/40, p = 0.23) and distractor mention
   (15/40) against the default; neither spatial wording differs clearly from the default (p = 0.18 and 0.23).
 - **Switch is followed** in the cube/banana scene, which has no habitual answer. The size task picks the butter
@@ -140,3 +141,66 @@ Reading (two-sided Fisher tests against the default; optimistic, because each ce
 - **Mustard negation is confounded** with the pull toward the robot's left bin.
 - The policy's camera sees left and right as the robot does (checked on one frame), so "the robot's left" and "the left
   side of the image" name the same bin; the viewer videos are mirrored.
+
+### Scene changes, 2026-11-15: `20261115-1617_robolab_pi05_ext-*_berkeley3_<key>` — screen
+
+π0.5-DROID, same stack and scoring as the language tests above; 20 episodes per task and key. Three changes, decided in
+the scene assessment of 2026-11-15: **A1** reruns the main keys with RoboLab's ±10 cm initial-pose randomization
+(`*Rand10Task`), so every episode has its own layout (closes gap G1 for these keys); **A3** tries the bowl-stacking
+scene as a second left/right task; **A4** swaps the butter and the raisin box (each keeps its own height and
+orientation) to separate an object habit from a position habit.
+
+**A1, cube or banana into the bowl** (n = 20 per key; fixed-layout numbers from the section above)
+
+| Key | Sentence | Requested | Other (excluded) | Fixed layout: requested / other |
+|---|---|--:|--:|---|
+| default | Put the cube or the banana in the bowl | cube 8, banana 12 | — | — |
+| switch_cube | Put the cube in the bowl | 19 | 0 | 20 / 0 |
+| switch_banana | Put the banana in the bowl | 20 | 0 | 20 / 0 |
+| negation_not_banana | Put the object that is not the banana in the bowl | 0 | **19** | 1 / 17 |
+| negation_not_cube | Put the object that is not the cube in the bowl | 2 | **16** | 0 / 20 |
+
+**A1, mustard into the left or right bin** (n = 20 per bin; requested bin)
+
+| Key | Left | Right | Total | Wrong bin | Fixed layout total |
+|---|--:|--:|--:|--:|--:|
+| default | 6 | 7 | 13 (success 10) | 0 | 16 |
+| negation | 1 | 0 | 1 | 10 | 3 |
+| paraphrase_zh | 0 | 0 | **0** | 0 | 0 |
+| spatial_robot | 5 | 7 | 12 | 1 | 23 |
+| spatial_image | 5 | 5 | 10 | 2 | 10 |
+
+The default total counts the mustard in the requested bin (13); RoboLab's success also needs it released upright, 3 + 7
+= 10/40. Fisher tests below use success.
+
+**A1, larger / smaller object** (n = 20 each; requested / other delivered)
+
+| Key | Larger (raisin box) | Smaller (butter) |
+|---|---|---|
+| default ("Place the larger/smaller object in the grey bin.") | 2 / 12 | 16 / 0 |
+| negation ("…not the butter" / "…not the raisin box") | 1 / 16 | 15 / 3 |
+
+**A4, swapped positions** (n = 20 each; requested / other delivered; first object lifted)
+
+| Key | Sentence | Larger: raisin box / butter | Smaller: butter / raisin box | First lifted |
+|---|---|---|---|---|
+| default | Place the larger/smaller object in the grey bin. | 0 / 14 | 18 / 0 | butter 40/40 |
+| no_target | Place the object in the grey bin. | 0 / 18 | 18 / 0 | butter 40/40 |
+
+**A3, bowl stacking** (default only): "Stack the left bowl on the right bowl" 2/20, "Stack the right bowl on the left
+bowl" 7/20; 9/40 in total, below the 50% bar for adding language keys.
+
+Reading (two-sided Fisher tests; n = 40 per comparison unless stated):
+
+- **Holds with random layouts:** cube negation (the excluded object is delivered 35/40, fixed layout 37/40); the switch
+  (39/40); the Chinese sentence (0/40).
+- **Does not replicate:** robot frame vs image frame (12/40 vs 10/40, p = 0.80; fixed layout 23 vs 10, p = 0.006). The
+  fixed-layout gap was a property of that one layout; the claim is withdrawn.
+- **Mustard default drops** to 10/40 (fixed 16/40, p = 0.23), below 50%, so the mustard keys other than Chinese are weak
+  evidence either way.
+- **Object habit, not position habit:** after the swap the butter is still lifted first in every episode, and the
+  larger-object sentence delivers the butter as often as a sentence that names no object (14/20 vs 18/20, p = 0.24). The
+  size task therefore measures this butter preference, not the understanding of size words.
+- **Bowl stacking is not usable** as a language task for π0.5 (9/40).
+
+Sync: records in `results/robolab/<run_id>/` on this branch; laptop copy verified. HF upload pending approval.

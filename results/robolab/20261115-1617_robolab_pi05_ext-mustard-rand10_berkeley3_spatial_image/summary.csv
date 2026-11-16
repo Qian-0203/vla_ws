@@ -1,0 +1,3 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps,requested_delivered,other_delivered
+20261115-1617_robolab_pi05_ext-mustard-rand10_berkeley3_spatial_image,LangMustardInLeftBinRand10Task,spatial_image,20,5,0.2500,0.1119,0.4687,0.2500,0,5,0
+20261115-1617_robolab_pi05_ext-mustard-rand10_berkeley3_spatial_image,LangMustardInRightBinRand10Task,spatial_image,20,5,0.2500,0.1119,0.4687,0.2500,0,5,2

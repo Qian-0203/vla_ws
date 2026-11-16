@@ -1,0 +1,3 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps,requested_delivered,other_delivered
+20261115-1617_robolab_pi05_ext-bowls_berkeley3_default,LangBowlStackingLeftOnRightTask,default,20,2,0.1000,0.0279,0.3010,0.1000,13,2,0
+20261115-1617_robolab_pi05_ext-bowls_berkeley3_default,LangBowlStackingRightOnLeftTask,default,20,7,0.3500,0.1812,0.5671,0.3500,20,7,0

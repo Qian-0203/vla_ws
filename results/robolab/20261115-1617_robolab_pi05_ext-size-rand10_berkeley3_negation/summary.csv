@@ -1,0 +1,3 @@
+run_id,task,instruction_key,n,successes,sr,sr_ci_lo,sr_ci_hi,mean_score,wrong_object_grabbed_eps,requested_delivered,other_delivered
+20261115-1617_robolab_pi05_ext-size-rand10_berkeley3_negation,LangLargerObjectRaisinBoxInBinRand10Task,negation,20,0,0.0000,-0.0000,0.1611,0.0000,17,1,16
+20261115-1617_robolab_pi05_ext-size-rand10_berkeley3_negation,LangSmallerObjectButterInBinRand10Task,negation,20,16,0.8000,0.5840,0.9193,0.8000,1,15,3

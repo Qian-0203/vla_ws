@@ -183,3 +183,43 @@ Recorded on 2026-11-15; the runs themselves are from 2026-11-04 (times below fro
   Full tables: [`results.md`](results.md).
 - **Files:** server `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robolab_ws/runs/` (18 runs + 2 smoke, about 6.1 GB incl. videos); repo `results/robolab/<run_id>/` (`run.json`,
   `episodes.jsonl`, `summary.csv`, `SHA256SUMS`). Not yet on HF or the laptop.
+
+### 2026-11-15 — Records: the 2026-11-04 runs backed up to HF and the laptop
+
+- The 18 runs `20261104-0833_robolab_pi05_ext-*` and the two smoke runs (incl. raw videos): copied to the laptop
+  (`~/vla_results_backup/robolab/`, every run checked against its `SHA256SUMS`) and uploaded to HF
+  `Qian0203/vla_ws-eval-results`, `robolab/<run_id>/`; remote file count equals the local one for all 20. Approval: user,
+  in chat, 2026-11-15. Supersedes "Not yet on HF or the laptop" in the entry above.
+
+### 2026-11-15 — Scene changes A1, A3, A4: random layouts, bowl stacking, swapped size scene, π0.5-DROID, on `berkeley-3` (15 runs, 520 episodes)
+
+- **Machine and stack:** as the 2026-11-04 entry (`berkeley-3`, Apptainer, RoboLab `b6cfcf6`, openpi `aa64205`,
+  `pi05_droid_jointpos`, `NUM_ENVS=5`, `NUM_RUNS=4`, 20 episodes per task and key). GPUs 0–2, one policy server each
+  (ports 8765–8767). `RUN_PREFIX=20261115-1617`. Approval: user, in chat, 2026-11-15 ("A1, A2, A4 and A3 default").
+- **Code:** branch `robolab/option-a-runkit`, committed after the runs together with these records (swapped scene
+  `robolab_lang/scenes/butter_raisin_box_grey_bin_swapped.usda` from `scenes/make_swapped_scene.py`, tasks
+  `Lang{LargerObjectRaisinBox,SmallerObjectButter}InBinSwappedTask.py`, `make_run_record.py` base-task mapping);
+  the server copies matched the committed files (md5 checked 2026-11-16).
+- **Launch order:**
+
+  | GPU | Change | Group / tasks | Keys | Ran (UTC) |
+  |---|---|---|---|---|
+  | 0 | A1 (`VARIANT=rand10`, ±10 cm initial poses) | mustard | default, negation, paraphrase_zh, spatial_robot, spatial_image | 16:17–19:32 |
+  | 1 | A1 (`VARIANT=rand10`) | cube, then size | cube: default, switch ×2, negation ×2; size: default, negation | 16:17–18:43 |
+  | 2 | A3 (bowl stacking, original scene) | `LangBowlStacking{LeftOnRight,RightOnLeft}Task` via `run_option_a.sh`, `STAGE=ext-bowls` | default | 16:21–17:14 |
+  | 2 | A4 (butter and raisin box positions swapped) | `Lang*SwappedTask` via `run_option_a.sh`, `STAGE=ext-size-swapped` | default, no_target | 16:34–18:21 |
+
+  A1 ran through `paper_tests_gpu.sh` (`VARIANT=rand10 ONLY_KEYS=...`); the policy servers were stopped by
+  `logs/a_finisher.sh` at 19:33. GPU 2's policy server was shared by A3 and A4; the RoboCasa A2 run used its own server on
+  the same GPU.
+- **Smoke:** `smoke_robolab_pi05_ext-size-swapped_berkeley3_default` (1 episode, larger-object sentence): objects start
+  at the swapped positions (0.0 cm drift over 20 steps, checked separately), butter delivered.
+- **Checks:** all 15 runs exit 0, 20 episodes per task and key; `SHA256SUMS` verified on the server and on the laptop
+  copy (2026-11-16).
+- **Headline:** with random layouts the cube negation failure (excluded object 35/40) and the switch (39/40) hold, the
+  Chinese sentence stays at 0/40, but the robot-frame vs image-frame gap does not (12 vs 10 of 40). In the swapped
+  scene π0.5 still takes the butter (default 14/20 butter on the larger-object task; with no object named, 36/40). Bowl
+  stacking default 9/40, below the 50% bar, so no language keys follow. Tables: [`results.md`](results.md).
+- **Files:** server `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robolab_ws/runs/20261115-1617_*` (15 runs, 5.1 GB incl.
+  videos) and the smoke run; laptop `~/vla_results_backup/robolab/` (verified); repo `results/robolab/<run_id>/`
+  (`run.json`, `episodes.jsonl`, `summary.csv`, `SHA256SUMS`). Not yet on HF.
