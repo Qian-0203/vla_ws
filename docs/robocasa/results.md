@@ -149,3 +149,34 @@ distractor; "usual" = the object the default sentence names.
 With `pnp_negation_only` (the answer is the usual object) π0.5 scores 16/50; with the usual object negated it never
 delivers the requested object. Negation failure is visible only when ignoring "not" leads to the wrong object.
 Sync: repo, laptop backup (checked against `SHA256SUMS`) and HF `robocasa/<run_id>/`, 2026-11-14.
+
+### `20261115-1620_robocasa_pi05_screen_berkeley3` — screen (two-object scene, nearness balanced)
+
+π0.5, as above. Scene `PnPCounterToCabPair`: two graspable objects from the same counter placement; the instruction
+names slot a or b, and success needs the named object in the cabinet and the other not. Same 50 seeds for every cell, so
+slots a and b see the same scenes. The named object started nearer to the gripper in 50/100 default episodes.
+"Named" / "other" = the slot the sentence names / the other slot (for negation, "named" is the correct, non-negated
+object).
+
+| Cell | Condition | Example (seed 407: saucepan lid = a, bottled drink = b) | n | Success | Named delivered | Other delivered |
+|---|---|---|--:|--:|--:|--:|
+| pair_default_a | default | Pick the saucepan lid from the counter and place it in the cabinet. | 50 | 21 | 25 | 8 |
+| pair_default_b | default | Pick the bottled drink … | 50 | 20 | 22 | 4 |
+| pair_negation_a | negation_only | Pick the object that is not the bottled drink … | 50 | 8 | 9 | 13 |
+| pair_negation_b | negation_only | Pick the object that is not the saucepan lid … | 50 | 8 | 8 | 16 |
+| pair_contrast_a | positive_contrast | Pick the saucepan lid, not the bottled drink, from the counter … | 50 | 16 | 19 | 10 |
+| pair_lenctrl_a | length_control_positive | Pick the saucepan lid, slowly and very carefully, from the counter … | 50 | 7 | 7 | 3 |
+
+Nearness (default cells, 100 episodes): the nearer object was delivered 37 times, the farther 22.
+
+Reading (two-sided Fisher tests):
+
+- **Switch is followed when nearness is balanced:** object a is delivered 25/50 when named and 4/50 when b is named
+  (p < 0.001). The weak switch in `PnPCounterToCabinetSwap` (9/40) came from the requested object being the farther one.
+- **Negation is not followed:** the mentioned (negated) object is delivered 29/100, the correct one 17/100. Mentioning
+  under "not" lowers delivery of that object from 47/100 (default) to 29/100 (p = 0.013), but it does not turn into
+  choosing the other one (17 vs 29, binomial p = 0.10).
+- **Distractor mention:** 16/50 vs 21/50 (p = 0.41), no clear effect.
+- **Filler hurts more than the mention:** 7/50 vs 21/50 (p = 0.003), as in the 2026-11-07 screen (9/50).
+
+Sync: repo and laptop backup (checked against `SHA256SUMS`); HF upload pending approval.

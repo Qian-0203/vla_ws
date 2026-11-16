@@ -214,6 +214,29 @@ Design and condition definitions: `docs/robocasa/plan.md`. Machine and environme
   `robocasa/20261114-1319_robocasa_pi05_screen_berkeley3/`; remote file count equals the local one. Approval: user, in
   chat, 2026-11-14. Supersedes "Not yet on HF or the laptop" in the entry above.
 
+## 2026-11-15 — A2: two-object pick-and-place scene, π0.5, on `berkeley-3` (300 episodes)
+
+- **Why:** in `PickPlaceCounterToCabinet` the requested object is the nearer one in 48/50 scenes, so "take the nearer
+  object" passes `negation_only` and fails `target_swap`. `PnPCounterToCabPair` (`robocasa_lang/envs.py`) places two
+  graspable objects from the same counter region and names slot a or b, so nearness no longer predicts the answer.
+- **Stack:** as the 2026-11-07 screen (π0.5 `pi05_pretrain_human300/multitask_learning/75000`, openpi fork `5a6beda`,
+  robocasa `4f8a298`, robosuite `5ce6643`, MuJoCo 3.3.1). One server on GPU 2 (port 8802). The outcome now also records
+  `init_dist_by_obj` (end-effector to each object at reset). Code: `robocasa_lang/pi05_pair_cells.py` and the
+  `run_lang_eval.py` change, committed after the run with these records; server copies matched (md5, 2026-11-16).
+  Approval: user, in chat, 2026-11-15 ("A1, A2, A4 and A3 default").
+- **Cells:** `pair_default_a/b`, `pair_negation_a/b` (`negation_only`), `pair_contrast_a` (`positive_contrast`),
+  `pair_lenctrl_a` (`length_control_positive`); seeds 407–456 (the task's default seeds), each cell split in halves
+  `_1/_2`; 50 episodes per cell, none skipped.
+- **Smoke:** `20261115-1619_robocasa_pi05_smoke_berkeley3` (2 episodes, slot b): "not the saucepan lid" delivered the
+  saucepan lid.
+- **Ran:** 2026-11-15 16:20–17:57 UTC; every cell exit 0; servers stopped after the run.
+- **Headline:** naming slot a vs slot b moves the choice (object a delivered 25/50 vs 4/50, p < 0.001), so π0.5 follows
+  the object name once nearness is balanced; under "not the X" the negated object is delivered 29/100 and the correct
+  one 17/100; same-length filler drops success to 7/50 (default 21/50, p = 0.003). Tables: [`results.md`](results.md).
+- **Files:** server `/mnt/dt-vol-00494956a3ff3a063-20000G/qian/robocasa_ws/runs/20261115-1620_robocasa_pi05_screen_berkeley3/` (139 MB, `SHA256SUMS`
+  verified) and the smoke run; laptop `~/vla_results_backup/robocasa/` (verified 2026-11-16); repo
+  `results/robocasa/<run_id>/`. Not yet on HF.
+
 ---
 
 ## Servers & environments (maintained in place)

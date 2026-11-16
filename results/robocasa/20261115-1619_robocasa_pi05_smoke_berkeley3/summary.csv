@@ -1,0 +1,3 @@
+task,cell,condition,n,successes,sr
+PickPlaceCounterToCabinet,pair_default_b_1,default,1,0,0.0
+PickPlaceCounterToCabinet,pair_negation_b_1,negation_only,1,0,0.0
